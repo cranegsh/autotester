@@ -11,21 +11,21 @@ DIR_SRC = ./src
 #DIR_SRC = ./
 
 # build common flags
-CC = $(CROSS_COMPILE)gcc
-CFLAGS = -Wall -I$(DIR_INC) -lrt #-ggdb # the option "-lrt" is for using the timer related APIs
+#CC = $(CROSS_COMPILE)gcc
+#CFLAGS = -Wall -I$(DIR_INC) -lrt #-ggdb # the option "-lrt" is for using the timer related APIs
 # -g might not generate debug information for some file, instead use -ggdb
+CFLAGS = -Wall -lrt #-ggdb # the option "-lrt" is for using the timer related APIs
 
 # specify path to standard headers
-CFLAGS += --sysroot=/opt/poky/0.1/sysroots/cortexa76-poky-linux
+#CFLAGS += --sysroot=/opt/poky/0.1/sysroots/cortexa76-poky-linux
 #LDFLAGS += --sysroot=/opt/poky/0.1/sysroots/cortexa76-poky-linux
 
 CFLAGS += -D__ARM_PCS_VFP
 
 # specify path to specific libraries
 #LDFLAGS += -L./lib
-# not needed any more as all libraries are copied from lib folder to sysroot library directory
 # specify specific libraries
-LIBS = -lpcanbasic
+#LIBS = -lpcanbasic
 
 #OBJS += canfdTest.o
 OBJS += $(DIR_SRC)/utility.o
@@ -34,7 +34,7 @@ OBJS += $(DIR_SRC)/app_config.o $(DIR_SRC)/app_log.o $(DIR_SRC)/app_timer.o
 OBJS += $(DIR_SRC)/app_file.o
 OBJS += $(DIR_SRC)/farview_main.o
 
-TARGET = farviewpcan
+TARGET = farview
 all := $(TARGET)
 
 %.o: %.c 
@@ -42,7 +42,8 @@ all := $(TARGET)
 
 $(TARGET): $(OBJS) 
 #	$(CC) $(CFLAGS) $(LDFLAGS) $(LIBS) -o $@ $^
-	$(CC) $(CFLAGS) -o $@  $^ $(LDFLAGS) $(LIBS)
+#	$(CC) $(CFLAGS) -o $@  $^ $(LDFLAGS) $(LIBS)
+	$(CC) $(CFLAGS) -o $@  $^ $(LDFLAGS)
 
 clean:
 	rm -f $(TARGET) $(OBJS)
