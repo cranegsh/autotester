@@ -22,7 +22,7 @@ CFLAGS += --sysroot=/opt/poky/0.1/sysroots/cortexa76-poky-linux
 CFLAGS += -D__ARM_PCS_VFP
 
 # specify path to specific libraries
-LDFLAGS += -L./lib
+#LDFLAGS += -L./lib
 # specify specific libraries
 LIBS = -lpcanbasic
 
