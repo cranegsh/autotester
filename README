@@ -1,0 +1,7 @@
+Auto Tester application
+
+dev dependency: PCAN package libraries and headers.
+run dependency: PCAN package driver and shared libraries, actually only libpcanbasic.so.
+
+It is for development and source control of this application to place these libraries together with source files.
+They are supposed to copied to /usr/lib when using this application.
