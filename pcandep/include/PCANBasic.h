@@ -46,6 +46,7 @@
 
 #if defined(__linux__)
 /* include pcan.h but renaming TPCANMsg structure */
+#include <stdint.h>
 #ifndef TPCANMsg
 #define TPCANMsg _TPCANMsg
 #include <pcan.h> /* handle DWORD and other definitions from Windows */
