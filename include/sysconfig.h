@@ -16,6 +16,15 @@
 //#define PROJECT_CAN_G3
 #endif
 
+#define PROJECT_ARGU_ID4		"id4"		/* argument: id4 */
+#define PROJECT_ARGU_G3			"g3"		/* argument: g3 */
+#define PROJECT_ARGU_G4R		"g4r"		/* argument: g4r */
+#define PROJECT_ARGU_C3			"c3"		/* argument: c3 */
+#define PROJECT_ID_ID4			1		/* argument: id4 */
+#define PROJECT_ID_G3			2		/* argument: g3 */
+#define PROJECT_ID_G4R			3		/* argument: g4r */
+#define PROJECT_ID_C3			4		/* argument: c3 */
+
 /* debug configurations */
 #define MAIN_LOOP_DISPLAY_DOT           0           /* display only . */
 #define MAIN_LOOP_DISPLAY_DEVICE        1           /* display device running status */

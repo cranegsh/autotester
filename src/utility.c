@@ -11,6 +11,8 @@
 #include "utility.h"
 #include "sysconfig.h"
 
+uint32_t idProject;
+
 struct debugData dData = {
     .mark = 0,
     .buffer = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0},

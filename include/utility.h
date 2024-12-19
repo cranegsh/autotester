@@ -12,6 +12,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+/* For identifying the project */
+extern uint32_t idProject;
+
 /* For storing the debug information */
 #define DEBUG_BUFF_SIZE         100
 struct debugData {

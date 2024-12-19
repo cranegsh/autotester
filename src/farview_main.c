@@ -30,7 +30,7 @@ typedef struct {
 
 static void help(const char *app) {
 	fprintf(stderr,
-		"Usage: %s options <param>\n"
+		"Usage: %s [ options <param> ] argument\n"
 		"Options:\n"
 		"\t -l <number>: loop numbers (must option, 0 for infinite loop).\n"
 		"\t -i <number>: interval time (millisecond, default in source code). \n"
@@ -47,7 +47,12 @@ static void help(const char *app) {
 		"\t -r <number>: Send Current (V).\n"
 		"\t -o <number>: Send Op Mode (0 or 1).\n"
 #endif
-		"\t -u: display usage information.\n",
+		"\t -H: display usage information.\n"
+		"Argument (must):\n"
+		"\t id4: id4 project\n"
+		"\t g3:  g3 project\n"
+		"\t g4r: g4r project\n"
+		"\t c3:  c3 project\n",
 		app);
 }
 
@@ -113,7 +118,7 @@ int main(int argc, char *argv[]) {
 
 	/* get the option and parameters if needed (followed with :) */
 //	dPrintf("\r\nGetting %d arguments and the option is %d\n", argc, ret);
-	while(-1 != (ret = getopt(argc, argv, "l:i:p:f:a:v:c:s:t:h:d:r:o:u"))) {
+	while(-1 != (ret = getopt(argc, argv, "l:i:p:f:a:v:c:s:t:h:d:r:o:H"))) {
 		ndPrintf("\r\nGet %d arguments and the option is %c\n", argc, ret);
 		switch(ret) {
 			case 'l':
@@ -216,7 +221,7 @@ int main(int argc, char *argv[]) {
 				timer_num++;
 				break;
 #endif
-			case 'u':
+			case 'H':
 				help(argv[0]);
 				return 0;
 				//break;
@@ -231,6 +236,32 @@ int main(int argc, char *argv[]) {
 				//return -1;
 				break;
 		}
+	}
+
+	/* get the argument */
+	if(optind < argc) {
+		if(0 == strcmp(PROJECT_ARGU_ID4, argv[optind])) {
+			idProject = 1;
+		}
+		else if(0 == strcmp(PROJECT_ARGU_G3, argv[optind])) {
+			idProject = 2;
+		}
+		else if(0 == strcmp(PROJECT_ARGU_G4R, argv[optind])) {
+			idProject = 3;
+		}
+		else if(0 == strcmp(PROJECT_ARGU_C3, argv[optind])) {
+			idProject = 4;
+		}
+		else {
+			idProject = 0;
+			printf("Error in command: wrong argument! Please check help.\r\n");
+			return -1;
+		}
+		printf("Non-option argument:%s %d\r\n", argv[optind], idProject);
+	}
+	else {
+		printf("Error in command: missing argument! Please check help.\r\n");
+		return -1;
 	}
 
 #ifdef DEVELOP_VERSION
