@@ -56,22 +56,22 @@ static void help(const char *app) {
 		app);
 }
 
-volatile sig_atomic_t print_flag = false;
+volatile BOOL_INT32 print_flag = BOOL_FALSE;
 timer_t timer_display;
 int timer_display_ori = 0;
 
 msg_opt_t msg[CAN_VEH_MSG_NUM] = {
-	{ .timer_count = 0, .timer_mark = true },
-	{ .timer_count = 0, .timer_mark = true },
-	{ .timer_count = 0, .timer_mark = true },
-	{ .timer_count = 0, .timer_mark = true },
-	{ .timer_count = 0, .timer_mark = true },
-	{ .timer_count = 0, .timer_mark = true },
-	{ .timer_count = 0, .timer_mark = true },
+	{ .timer_count = 0, .timer_mark = BOOL_TRUE },
+	{ .timer_count = 0, .timer_mark = BOOL_TRUE },
+	{ .timer_count = 0, .timer_mark = BOOL_TRUE },
+	{ .timer_count = 0, .timer_mark = BOOL_TRUE },
+	{ .timer_count = 0, .timer_mark = BOOL_TRUE },
+	{ .timer_count = 0, .timer_mark = BOOL_TRUE },
+	{ .timer_count = 0, .timer_mark = BOOL_TRUE },
 #ifdef PROJECT_C3
-	{ .timer_count = 0, .timer_mark = true },
-	{ .timer_count = 0, .timer_mark = true },
-	{ .timer_count = 0, .timer_mark = true },
+	{ .timer_count = 0, .timer_mark = BOOL_TRUE },
+	{ .timer_count = 0, .timer_mark = BOOL_TRUE },
+	{ .timer_count = 0, .timer_mark = BOOL_TRUE },
 #endif
 };
 int timer_num = 0;
@@ -91,7 +91,7 @@ void app_displayLog(struct sysData *sysdata);
 void display_handler(int signo, siginfo_t *info);
 
 void enable_display(int signum) {
-	print_flag = true;
+	print_flag = BOOL_TRUE;
 }
 
 void start_timer(msg_opt_t (*appid)[CAN_VEH_MSG_NUM], int index, int total);
@@ -260,8 +260,8 @@ int main(int argc, char *argv[]) {
 		printf("Non-option argument:%s %d\r\n", argv[optind], idProject);
 	}
 	else {
-		printf("Error in command: missing argument! Please check help.\r\n");
-		return -1;
+		idProject = PROJECT_ID_DEFAULT;
+		//printf("Error in command: missing argument! Please check help.\r\n");	return -1;
 	}
 
 #ifdef DEVELOP_VERSION
@@ -277,7 +277,7 @@ int main(int argc, char *argv[]) {
 	ndPrintf("Mode: %d | %d * %d | Total msg #: %d\n", opt.mode, opt.interval, opt.num, timer_num);
 
 	/* init devices */
-	if(msg_canfd_init()) {
+	if(BOOL_TRUE == msg_canfd_init()) {
 		canfd_status = 0;
 		iPrintf("\r\nCAN functions are available!\n");
 	}
@@ -310,7 +310,7 @@ int main(int argc, char *argv[]) {
 			ndPrintf("\n Sending data '%c' to CAN ...", input_value);
 			msg_canfd_send_tester(input_value);
 			ndPrintf("\n data '%c' to CAN sent!", input_value);
-			farview_data.dataCan->updated = false;
+			farview_data.dataCan->updated = BOOL_FALSE;
 		}
     }
     else
@@ -401,12 +401,12 @@ int main(int argc, char *argv[]) {
     		for(int i=0; i<timer_num; i++) {
     			/* search all the timer to check if any one completed the submission */
         		if( (msg[i].timer_count >= msg[i].num) && (0 != msg[i].num) ) {
-        			if(msg[i].timer_mark) {
+        			if(BOOL_TRUE == msg[i].timer_mark) {
         				/* if this timer is not stopped, stop it */
         				stop_timer(&msg[i].timer_id);
 
         				/* mark it after it is stopped */
-            			msg[i].timer_mark = false;
+        				msg[i].timer_mark = BOOL_FALSE;
 
             			/* update the total number of the timer left */
             			timer_stopped++;
@@ -428,11 +428,11 @@ int main(int argc, char *argv[]) {
 				msg_canfd_receive();
 			}
 
-//			if(print_flag) {
+//			if(BOOL_TRUE == print_flag) {
 //				/* display data */
 //				app_displayData(&farview_data, i);
 //				/* reset the flag */
-//				print_flag = false;
+//				print_flag = BOOL_FALSE;
 //
 //				/* reset the alarm in seconds */
 //				alarm(1);
@@ -459,10 +459,10 @@ int app_commandP(void)
 			ndPrintf("\r\n Config received");
 		struct canfdData *temp;
 		temp = msg_canfd_getData();
-		pwmConfig_check(&temp->id4DataIn_Cfg.data.pwmCanConfig, pwmConfig_get(), false);
-		pwmConfig_get()->configUpdated = true;
-		petdConfig_check(&temp->id4DataIn_Cfg.data.petdCanConfig, petdConfig_get(), false);
-		petdConfig_get()->configUpdated = true;
+		pwmConfig_check(&temp->id4DataIn_Cfg.data.pwmCanConfig, pwmConfig_get(), BOOL_FALSE);
+		pwmConfig_get()->configUpdated = BOOL_TRUE;
+		petdConfig_check(&temp->id4DataIn_Cfg.data.petdCanConfig, petdConfig_get(), BOOL_FALSE);
+		petdConfig_get()->configUpdated = BOOL_TRUE;
 		pwmConfig_print();
 		petdConfig_print();
 	}

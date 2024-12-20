@@ -4,7 +4,6 @@
  *  Created on: Apr. 8, 2023
  *      Author: Crane Shao
  */
-#include <stdbool.h>
 #include <stdint.h>
 
 #include "app_log.h"
@@ -59,13 +58,13 @@ union sysConfigsUnion {
 struct sysConfigsLog {
     union sysConfigsUnion configsLog;
     uint16_t logCount;
-    bool writeEnabled;
+    BOOL_INT32 writeEnabled;
 };
 
 /* data to log for debugging */
 struct debugLog {
-    bool writeEnabled;
-    bool buffUpdated;
+	BOOL_INT32 writeEnabled;
+	BOOL_INT32 buffUpdated;
     uint16_t logCount;
     uint16_t buff_value[LOG_BUFF_SIZE];
 #ifdef DATA_LOG_TIME
@@ -82,34 +81,34 @@ struct dataLogger {
 #ifdef LOG_IN_FILE
     FILE *fp;
 #endif
-    bool writeEnabled;
-    bool roomFilled;
+    BOOL_INT32 writeEnabled;
+    BOOL_INT32 roomFilled;
 };
 
 /* For configs logging */
 struct sysConfigsLog logBuf_configs = {
     .logCount = 0,
-    .writeEnabled = false,
+    .writeEnabled = BOOL_FALSE,
 };
 
 /* For error logging */
 struct errInfoLog logBuf_error = {
     .errorCount = 0,
-    .writeEnabled = false,
+    .writeEnabled = BOOL_FALSE,
     .logPosi = 0,
 };
 
 /* For buff logging */
 static struct debugLog logBuff = {
-    .writeEnabled = false,
-    .buffUpdated = false,
+    .writeEnabled = BOOL_FALSE,
+    .buffUpdated = BOOL_FALSE,
     .logCount = 0
 };
 
 /* For FRAM logging */
 static struct dataLogger framdataLogger = {
-    .writeEnabled = false,
-    .roomFilled = false
+    .writeEnabled = BOOL_FALSE,
+    .roomFilled = BOOL_FALSE
 };
 
 /* Function to log data to FRAM */
@@ -117,32 +116,32 @@ void dataLogfram_write(void)
 {
 #ifdef PROJECT_ID4
     /* Log the configs first */
-    static bool configLoged = true;
+    static BOOL_INT32 configLoged = BOOL_TRUE;
     if(logBuf_configs.writeEnabled)
     {
-        configLoged = false;
+        configLoged = BOOL_FALSE;
     }
     if(!configLoged)
     {
         if(dataLogfram_configsWrite())
         {
-            configLoged = true;
+            configLoged = BOOL_TRUE;
         }
         return;
     }
 #endif
 
     /* Log the error info secondly */
-    static bool errorLoged = true;
+    static BOOL_INT32 errorLoged = BOOL_TRUE;
     if(logBuf_error.writeEnabled)
     {
-        errorLoged = false;
+        errorLoged = BOOL_FALSE;
     }
     if(!errorLoged)
     {
         if(dataLogfram_errorWrite())
         {
-            errorLoged = true;
+            errorLoged = BOOL_TRUE;
         }
         return;
     }
@@ -169,7 +168,7 @@ void dataLogfram_write(void)
         {
             iPrintf("Data %u logging to FRAM complete!", number-1);
             number = 0;
-            framdataLogger.writeEnabled = false;
+            framdataLogger.writeEnabled = BOOL_FALSE;
         }
     }
 }
@@ -198,8 +197,8 @@ void dataLog_buff(uint16_t *data)
 	logBuff.logCount++;
 	if(LOG_BUFF_SIZE <= logBuff.logCount)
 	{
-		logBuff.writeEnabled = false;
-		logBuff.buffUpdated = true;
+		logBuff.writeEnabled = BOOL_FALSE;
+		logBuff.buffUpdated = BOOL_TRUE;
 	}
 #else
 	uint16_t value;
@@ -219,23 +218,23 @@ void dataLog_buff(uint16_t *data)
 	logBuff.logCount++;
 	if(LOG_BUFF_SIZE * 2 <= logBuff.logCount)
 	{
-		logBuff.writeEnabled = false;
-		logBuff.buffUpdated = true;
+		logBuff.writeEnabled = BOOL_FALSE;
+		logBuff.buffUpdated = BOOL_TRUE;
 	}
 #endif
 }
 
 void dataLogbuff_enable()
 {
-    logBuff.writeEnabled = true;
+    logBuff.writeEnabled = BOOL_TRUE;
     logBuff.logCount = 0;
 }
 
-inline void dataLogbuff_disable()               { logBuff.writeEnabled = false; }
-inline void dataLogbuff_clearfilled()           { logBuff.buffUpdated = false; }
+inline void dataLogbuff_disable()               { logBuff.writeEnabled = BOOL_FALSE; }
+inline void dataLogbuff_clearfilled()           { logBuff.buffUpdated = BOOL_FALSE; }
 
 /* Function to read RAM in word */
-bool dataLogbuff_print_word(uint16_t addr, uint16_t num)
+BOOL_INT32 dataLogbuff_print_word(uint16_t addr, uint16_t num)
 {
     uint16_t i;
 
@@ -249,11 +248,11 @@ bool dataLogbuff_print_word(uint16_t addr, uint16_t num)
         iPrintf("%u", logBuff.buff_value3[addr+i]);
     }
 
-    return true;
+    return BOOL_TRUE;
 }
 
 /* Function to read RAM in byte */
-bool dataLogbuff_print_byte(uint16_t addr, uint16_t num)
+BOOL_INT32 dataLogbuff_print_byte(uint16_t addr, uint16_t num)
 {
     uint16_t i;
     uint16_t value = 0;
@@ -273,7 +272,7 @@ bool dataLogbuff_print_byte(uint16_t addr, uint16_t num)
         iPrintf("%u\t", value);               /* for human */
     }
 
-    return true;
+    return BOOL_TRUE;
 }
 
 /* Function to use log buff data to simulate the phase shift curve
@@ -303,7 +302,7 @@ uint16_t dataLogbuff_read(void)
 
 #ifdef PROJECT_ID4
 /* Function to copy configs to buff */
-bool dataLogfram_configsCopy(void)
+BOOL_INT32 dataLogfram_configsCopy(void)
 {
     struct petdConfig *temp_cfg;
     temp_cfg = petdConfig_get();
@@ -334,16 +333,15 @@ bool dataLogfram_configsCopy(void)
     logBuf_configs.configsLog.logsysConfigs.pwmlogConfig.compensation_up3 = temp_pwm_cfg->compensation_up3;
     logBuf_configs.configsLog.logsysConfigs.pwmlogConfig.compensation_up4 = temp_pwm_cfg->compensation_up4;
 
-    return true;
+    return BOOL_TRUE;
 }
 
 /* Function to log configs to FRAM */
-bool dataLogfram_configsWrite(void)
+BOOL_INT32 dataLogfram_configsWrite(void)
 {
-	//static bool copied = false;//static uint16_t number = 0;
     if(logBuf_configs.writeEnabled)
     {
-    	static bool copied = false;
+    	static BOOL_INT32 copied = BOOL_FALSE;
         uint16_t value;
         static uint32_t addr_start;
 
@@ -363,7 +361,7 @@ bool dataLogfram_configsWrite(void)
             dataLogger_writeWord(addr_start, 1, &value); /* int16_t is 2 bytes */
 
             /* set the flag */
-            copied = true;
+            copied = BOOL_TRUE;
 
             /* set the start address for writing configs data */
             addr_start += 2;
@@ -379,22 +377,22 @@ bool dataLogfram_configsWrite(void)
             {   /* writing complete and reset the flags */
                 iPrintf("\t===>Logging %u configs complete!", number);
                 number = 0;
-                copied = false;
-                logBuf_configs.writeEnabled = false;
+                copied = BOOL_FALSE;
+                logBuf_configs.writeEnabled = BOOL_FALSE;
 
-                return true;
+                return BOOL_TRUE;
             }
         }
     }
 
-    return false;
+    return BOOL_FALSE;
 }
 
 //#define TEST_PETDCONFIG_CHECK_FALSE
 /* Function to read parameters from FRAM */
-bool dataLogfram_configDisplay(void)
+BOOL_INT32 dataLogfram_configDisplay(void)
 {
-    bool status = true;
+	BOOL_INT32 status = BOOL_TRUE;
     uint16_t value;
     uint32_t addr_start;
 
@@ -404,7 +402,7 @@ bool dataLogfram_configDisplay(void)
     if(LOG_MARK_CONFIGS != value)
     {
         iPrintf("\r\n\nNo valid configs to read!");
-        return false;
+        return BOOL_FALSE;
     }
 
     /* read the count */
@@ -413,7 +411,7 @@ bool dataLogfram_configDisplay(void)
     if((!status) || (LOG_CONFIGS_SIZE != value))
     {
         iPrintf("\r\n\nError in reading logged config count!");
-        return false;
+        return BOOL_FALSE;
     }
 
     /* read the config value */
@@ -429,7 +427,7 @@ bool dataLogfram_configDisplay(void)
         else
         {
             iPrintf("\r\n\nError in reading logged config!");
-            return false;
+            return BOOL_FALSE;
         }
     }
 
@@ -447,11 +445,11 @@ bool dataLogfram_configDisplay(void)
     temp_cfg.thCout = 20;//0;
     temp_cfg.checkCout = 0;//1;
     temp_cfg.configUpdated = 1;
-    petdConfig_check(&temp_cfg, petdConfig_get(), false);
+    petdConfig_check(&temp_cfg, petdConfig_get(), BOOL_FALSE);
 #else
     /* copy and check the configs */
-    pwmConfig_check(&logBuf_configs.configsLog.logsysConfigs.pwmlogConfig, pwmConfig_get(), false);
-    petdConfig_check(&logBuf_configs.configsLog.logsysConfigs.petdlogConfig, petdConfig_get(), false);
+    pwmConfig_check(&logBuf_configs.configsLog.logsysConfigs.pwmlogConfig, pwmConfig_get(), BOOL_FALSE);
+    petdConfig_check(&logBuf_configs.configsLog.logsysConfigs.petdlogConfig, petdConfig_get(), BOOL_FALSE);
 #endif
 
     /* display the configs */
@@ -459,20 +457,20 @@ bool dataLogfram_configDisplay(void)
     pwmConfig_print();
     petdConfig_print();
 
-    return true;
+    return BOOL_TRUE;
 }
 #endif	/* #ifdef PROJECT_ID4 */
 
-inline void dataLogfram_writeEnable_configs(void)   {  logBuf_configs.writeEnabled = true;   }
+inline void dataLogfram_writeEnable_configs(void)   {  logBuf_configs.writeEnabled = BOOL_TRUE;   }
 
 inline struct errInfoLog *logBuf_error_get(void)  { return &logBuf_error; }
 
 /* Function to log error info to FRAM */
-bool dataLogfram_errorWrite(void)
+BOOL_INT32 dataLogfram_errorWrite(void)
 {
     if(logBuf_error.writeEnabled)
     {
-        static bool marked = false;
+        static BOOL_INT32 marked = BOOL_FALSE;
         uint16_t value;
         static uint32_t addr_start;
 
@@ -494,7 +492,7 @@ bool dataLogfram_errorWrite(void)
             dataLogger_writeWord(addr_start, 1, &value);
 
             /* set the flag */
-            marked = true;
+            marked = BOOL_TRUE;
 
             /* set the start address for writing error data */
             addr_start += 2;
@@ -511,8 +509,8 @@ bool dataLogfram_errorWrite(void)
             {   /* completed writing this error info */
                 iPrintf("Logging error info with code #%u to FRAM complete!", logBuf_error.errorLog.logerrorInfo.errno);
                 number = 0;
-                marked = false;
-                logBuf_error.writeEnabled = false;
+                marked = BOOL_FALSE;
+                logBuf_error.writeEnabled = BOOL_FALSE;
 
                 logBuf_error.logPosi++;
                 if(LOG_ERROR_NUMBER <= logBuf_error.logPosi)
@@ -520,12 +518,12 @@ bool dataLogfram_errorWrite(void)
                     logBuf_error.logPosi = 0;
                 }
 
-                return true;
+                return BOOL_TRUE;
             }
         }
     }
 
-    return false;
+    return BOOL_FALSE;
 }
 
 void dataLogfram_errorPrint(void)
@@ -549,9 +547,9 @@ void dataLogfram_errorPrint(void)
 }
 
 /* Function to read logged error info from FRAM */
-bool dataLogfram_errorDisplay(void)
+BOOL_INT32 dataLogfram_errorDisplay(void)
 {
-    bool status;
+	BOOL_INT32 status;
     uint16_t value;
     uint32_t addr_start;
 
@@ -561,7 +559,7 @@ bool dataLogfram_errorDisplay(void)
     if((LOG_MARK_ERRORINFO != value) || !status)
     {
         iPrintf("\r\n\nFailed to read error info from FRAM! status %d | addr %u | value %X", status, addr_start, value);
-        return false;
+        return BOOL_FALSE;
     }
 
     /* read and check error info size */
@@ -570,7 +568,7 @@ bool dataLogfram_errorDisplay(void)
     if((LOG_ERROR_SIZE != value) || !status)
     {
         iPrintf("\r\n\nError info size not right!");
-        return false;
+        return BOOL_FALSE;
     }
 
     /* force the error count if something wrong with it or for debugging to set the count */
@@ -588,7 +586,7 @@ bool dataLogfram_errorDisplay(void)
         iPrintf("\r\n\nTotally %u errors caused!", value);
         if(0 == value)
         {   /* no error stored */
-            return true;
+            return BOOL_TRUE;
         }
     }
 
@@ -624,18 +622,18 @@ bool dataLogfram_errorDisplay(void)
         dataLogfram_errorPrint();
     }
 
-    return true;
+    return BOOL_TRUE;
 }
 
-inline void dataLogfram_writeEnable_error(void)     { logBuf_error.writeEnabled = true;  }
+inline void dataLogfram_writeEnable_error(void)     { logBuf_error.writeEnabled = BOOL_TRUE;  }
 
-inline void dataLogfram_writeEnable_buff(void)     { framdataLogger.writeEnabled = true; }
+inline void dataLogfram_writeEnable_buff(void)     { framdataLogger.writeEnabled = BOOL_TRUE; }
 
 /* Function to write words from FRAM to logBuff */
-bool dataLogfram_write2buff_word(void)
+BOOL_INT32 dataLogfram_write2buff_word(void)
 {
     uint16_t i;
-    bool status = true;
+    BOOL_INT32 status = BOOL_TRUE;
     uint16_t value = 0;
     uint32_t addr_temp = 0;
 
@@ -667,7 +665,7 @@ bool dataLogfram_write2buff_word(void)
 }
 
 /* Function to write word from logBuff to FRAM */
-bool dataLogfram_readfmbuff_word(uint32_t addr, uint16_t num_No)
+BOOL_INT32 dataLogfram_readfmbuff_word(uint32_t addr, uint16_t num_No)
 {
     uint16_t i;
     uint16_t Value = 0;
@@ -678,11 +676,11 @@ bool dataLogfram_readfmbuff_word(uint32_t addr, uint16_t num_No)
 
     dataLogger_writeWord(addr+i*2, 1, &Value);
 
-    return true;
+    return BOOL_TRUE;
 }
 
 /* Function to write N words (up to 4) from logBuff to FRAM */
-bool dataLogfram_readfmbuff_wordn(uint32_t addr, uint16_t num_No)
+BOOL_INT32 dataLogfram_readfmbuff_wordn(uint32_t addr, uint16_t num_No)
 {
     uint16_t i;
     uint16_t value = 0, value1 = 0, value2 = 0, value3 = 0;
@@ -704,13 +702,13 @@ bool dataLogfram_readfmbuff_wordn(uint32_t addr, uint16_t num_No)
 //        iPrintf("\r\n%d, %d, %d, %u", value1, value2, value3, value4);
     }
 
-    return true;
+    return BOOL_TRUE;
 }
 
-bool dataLogger_writeByte(uint32_t addr, uint16_t num, uint16_t *data)
+BOOL_INT32 dataLogger_writeByte(uint32_t addr, uint16_t num, uint16_t *data)
 {
     uint16_t i;
-    bool status = true;
+    BOOL_INT32 status = BOOL_TRUE;
     uint32_t addr_temp = 0;
 
     if(FRAM_SIZE/2 <= addr)
@@ -743,10 +741,10 @@ bool dataLogger_writeByte(uint32_t addr, uint16_t num, uint16_t *data)
     return status;
 }
 
-bool dataLogger_writeWord(uint32_t addr, uint16_t num, uint16_t *data)
+BOOL_INT32 dataLogger_writeWord(uint32_t addr, uint16_t num, uint16_t *data)
 {
     uint16_t i;
-    bool status = true;
+    BOOL_INT32 status = BOOL_TRUE;
     uint32_t addr_temp = 0;
 
     if(FRAM_SIZE/2 <= addr)
@@ -780,10 +778,10 @@ bool dataLogger_writeWord(uint32_t addr, uint16_t num, uint16_t *data)
 }
 
 /* Function to read word from FRAM */
-bool dataLogger_readWord(uint32_t addr, uint16_t num, uint16_t *data)
+BOOL_INT32 dataLogger_readWord(uint32_t addr, uint16_t num, uint16_t *data)
 {
     uint16_t i;
-    bool status = true;
+    BOOL_INT32 status = BOOL_TRUE;
     uint16_t value = 0;
     uint32_t addr_temp = 0;
 
@@ -813,10 +811,10 @@ bool dataLogger_readWord(uint32_t addr, uint16_t num, uint16_t *data)
 }
 
 /* Function to print N words (up to 4) from FRAM */
-bool dataLogger_print_wordn(uint32_t addr, uint16_t num)
+BOOL_INT32 dataLogger_print_wordn(uint32_t addr, uint16_t num)
 {
     uint16_t i;
-    bool status1 = true, status2 = true, status3 = true, status4 = true;
+    BOOL_INT32 status1 = BOOL_TRUE, status2 = BOOL_TRUE, status3 = BOOL_TRUE, status4 = BOOL_TRUE;
     uint16_t value1 = 0, value2 = 0, value3 = 0, value4 = 0;
     uint32_t addr_temp = 0;
 
@@ -885,10 +883,10 @@ bool dataLogger_print_wordn(uint32_t addr, uint16_t num)
 }
 
 /* Function to print word from FRAM */
-bool dataLogger_print_word(uint32_t addr, uint16_t num)
+BOOL_INT32 dataLogger_print_word(uint32_t addr, uint16_t num)
 {
     uint16_t i;
-    bool status = true;
+    BOOL_INT32 status = BOOL_TRUE;
     uint16_t value = 0;
     uint32_t addr_temp = 0;
 
@@ -918,10 +916,10 @@ bool dataLogger_print_word(uint32_t addr, uint16_t num)
 }
 
 /* Function to print byte from FRAM */
-bool dataLogger_print_byte(uint32_t addr, uint16_t num)
+BOOL_INT32 dataLogger_print_byte(uint32_t addr, uint16_t num)
 {
     uint16_t i;
-    bool status = true;
+    BOOL_INT32 status = BOOL_TRUE;
     uint16_t value = 0;
     uint32_t addr_temp = 0;
 

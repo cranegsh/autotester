@@ -10,7 +10,8 @@
 
 #include <stdio.h>
 #include <stdint.h>
-#include <stdbool.h>
+
+#include "sysconfig.h"
 
 /* For identifying the project */
 extern uint32_t idProject;
@@ -64,7 +65,7 @@ void print_array_byte(uint8_t *dat, uint16_t num);
 void print_array(uint16_t *dat, uint16_t num);
 
 /* Functions to convert integer and float to a string */
-void itostr(char* str, int32_t number, bool flag);
+void itostr(char* str, int32_t number, BOOL_INT32 flag);
 void ftostr(char* str, double number, float bit_num);
 
 /* Functions to calculate */
@@ -72,7 +73,7 @@ uint32_t powerof10(uint8_t num);
 float round_float(float x);
 
 /* Functions to convert decimal to hex string */
-bool dec2hex(uint32_t n, char *ans);
+BOOL_INT32 dec2hex(uint32_t n, char *ans);
 char* dec2hex_word(uint32_t n, char *ans);
 char* dec2hex_byte(uint16_t n, char *ans);
 

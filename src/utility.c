@@ -5,7 +5,6 @@
  *      Author: Crane Shao
  */
 #include <stdint.h>
-#include <stdbool.h>
 #include <string.h>
 
 #include "utility.h"
@@ -69,7 +68,7 @@ float round_float(float x)
 }
 
 /* Function to convert 32-bit integer to hex string */
-bool dec2hex(uint32_t n, char *ans)
+BOOL_INT32 dec2hex(uint32_t n, char *ans)
 {
     // ch variable to store character temporarily
     char ch;
@@ -79,7 +78,7 @@ bool dec2hex(uint32_t n, char *ans)
     if(0 == n)
     {
         ans[0] = '0'; ans[1]='\0';
-        return true;
+        return BOOL_TRUE;
     }
 
     while (n != 0) {
@@ -116,7 +115,7 @@ bool dec2hex(uint32_t n, char *ans)
       j--;
     }
 
-    return true;
+    return BOOL_TRUE;
 }
 
 /* Function to convert 32-bit integer to hex string */

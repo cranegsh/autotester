@@ -4,7 +4,6 @@
  *  Created on: Aug. 23, 2022
  *      Author: Crane Shao
  */
-#include <stdbool.h>
 #include <stdio.h>
 
 #include "app_config.h"
@@ -28,10 +27,10 @@
 #define TH_RES_WINDSHIELD                       52              /* in Ohms */
 
 /* definitions */
-#define MODE_OP_DEICE               true
-#define MODE_OP_DEFOG               false
-#define MODE_CTRL_CLOSE_LOOP        true
-#define MODE_CTRL_OPEN_LOOP         false
+#define MODE_OP_DEICE               BOOL_TRUE
+#define MODE_OP_DEFOG               BOOL_FALSE
+#define MODE_CTRL_CLOSE_LOOP        BOOL_TRUE
+#define MODE_CTRL_OPEN_LOOP         BOOL_FALSE
 /* control configurations for ID4 project */
 #define DEFAULT_OPERATION_MODE      MODE_OP_DEICE
 #define DEFAULT_CONTROL_MODE        MODE_CTRL_CLOSE_LOOP//MODE_CTRL_OPEN_LOOP//
@@ -67,10 +66,10 @@
 /* dead band config (*10ns) */
 #define DEADBAND_MIN                    0   // *10ns
 #define DEADBAND_MAX                    100 // *10ns
-#define DEADBAND_RED_PWM1_EN            true
-#define DEADBAND_FED_PWM1_EN            true
-#define DEADBAND_RED_PWM2_EN            true
-#define DEADBAND_FED_PWM2_EN            true
+#define DEADBAND_RED_PWM1_EN            BOOL_TRUE
+#define DEADBAND_FED_PWM1_EN            BOOL_TRUE
+#define DEADBAND_RED_PWM2_EN            BOOL_TRUE
+#define DEADBAND_FED_PWM2_EN            BOOL_TRUE
 #define DEADBAND_RED_PWM1               10  // realization is *10ns (irrelevant to PWM freq)
 #define DEADBAND_FED_PWM1               10  // realization is *10ns (irrelevant to PWM freq)
 #define DEADBAND_RED_PWM2               20  // realization is *10ns (irrelevant to PWM freq)
@@ -111,26 +110,26 @@ struct powerConfig powerUartConfig = {
   .thCurrentPeak = TH_CURRENT_IN_PEAK,
   .thCurrentRms  = TH_CURRENT_IN_RMS,
   .thRes = TH_RES_WINDSHIELD,
-  .checkVoltage = true,
-  .checkCurrent = true,
-  .checkRes = true,
-  .configUpdated = false,
+  .checkVoltage = BOOL_TRUE,
+  .checkCurrent = BOOL_TRUE,
+  .checkRes = BOOL_TRUE,
+  .configUpdated = BOOL_FALSE,
 };
 #endif
 
 #ifdef PROJECT_ID4
 struct petdConfig petdUartConfig = {
-  .configUpdated = false,
+  .configUpdated = BOOL_FALSE,
   .VoutTarget = DEFAULT_VOUTPUT_TARGET,
   .runtime = DEFAULT_RUN_TIME,
-  .forceRuntime = false,
+  .forceRuntime = BOOL_FALSE,
   .thTempTransfo = (uint16_t)TEMP_TRANSFORMER_RUN,
-  .checkTempransfo = true,
+  .checkTempransfo = BOOL_TRUE,
   .thReshigh = WINDSHIELD_RES_MAX,
   .thReslow = WINDSHIELD_RES_MIN,
-  .checkRes = true,
-  .checkHV = true,
-  .checkCout = true,
+  .checkRes = BOOL_TRUE,
+  .checkHV = BOOL_TRUE,
+  .checkCout = BOOL_TRUE,
   .modeControl = DEFAULT_CONTROL_MODE,
   .psTarget = DEFAULT_PHASESHIFT_TARGET,
   .addRuntime = DEFAULT_ADD_RUNTIME,
@@ -156,7 +155,7 @@ void clearStdin()
 {
     // keep reading 1 more char as long as the end of the stream, indicated by the newline char,
     // has NOT been reached
-    while (true)
+    while (1)
     {
         int c = getc(stdin);
         if (c == EOF || c == '\n')
@@ -253,10 +252,10 @@ void powerConfig_updateCan(void)
 	temp->navyOut.data.tempOn = powerUartConfig.tempOn;
 	temp->navyOut.data.mode = powerUartConfig.mode;
 
-	temp->updated = true;
+	temp->updated = BOOL_TRUE;
 }
 
-bool powerConfig_input(void)
+BOOL_INT32 powerConfig_input(void)
 {
     struct powerConfig temp_cfg;
 
@@ -286,13 +285,13 @@ bool powerConfig_input(void)
     /* check and copy the updated configuration */
     if(('y' == hitkey) || ('Y' == hitkey))
     {   /* copy the input */
-        powerConfig_check(&temp_cfg, &powerUartConfig, true);
+        powerConfig_check(&temp_cfg, &powerUartConfig, BOOL_TRUE);
         iPrintf("\r\nConfiguration confirmed!\r\n");
-        petdUartConfig.configUpdated = true;
-        return true;
+        petdUartConfig.configUpdated = BOOL_TRUE;
+        return BOOL_TRUE;
     }
 
-    return false;
+    return BOOL_FALSE;
 }
 #endif	/* #ifdef PROJECT_NAVY */
 
@@ -314,10 +313,10 @@ void petdConfig_updateCan(void)
 //	temp->id4DataOut_cfgPetd.data.addRuntime = petdUartConfig.addRuntime;
 	temp->id4DataOut_cfgPetd.data = petdUartConfig;
 
-	temp->updated = true;
+	temp->updated = BOOL_TRUE;
 }
 
-bool petdConfig_input(void)
+BOOL_INT32 petdConfig_input(void)
 {
     iPrintf("\r\n\nPETD Configuration:");
     //iPrintf("\r\nPress ENTER to pass!\r\n");
@@ -382,13 +381,13 @@ bool petdConfig_input(void)
     /* assign the updated configuration */
     if(('y' == hitkey) || ('Y' == hitkey))
     {   /* copy the input */
-        petdConfig_check(&temp_cfg, &petdUartConfig, true);
+        petdConfig_check(&temp_cfg, &petdUartConfig, BOOL_TRUE);
         iPrintf("\r\nConfiguration confirmed!\r\n");
-        petdUartConfig.configUpdated = true;
-        return true;
+        petdUartConfig.configUpdated = BOOL_TRUE;
+        return BOOL_TRUE;
     }
 
-    return false;
+    return BOOL_FALSE;
 }
 
 void pwmConfig_updateCan(void)
@@ -407,10 +406,10 @@ void pwmConfig_updateCan(void)
 	temp->id4DataOut_cfgPwm.data.compensation_n = pwmUartConfig.compensation_n;
 	temp->id4DataOut_cfgPwm.data.compensation_rload = pwmUartConfig.compensation_rload;
 
-	temp->updated = true;
+	temp->updated = BOOL_TRUE;
 }
 
-bool pwmConfig_input(void)
+BOOL_INT32 pwmConfig_input(void)
 {
     iPrintf("\r\n\nPWM Configuration");
     iPrintf("\r\nPress ENTER to pass!\r\n");
@@ -462,15 +461,15 @@ bool pwmConfig_input(void)
     if(('y' == hitkey) || ('Y' == hitkey))
     {
         iPrintf("\r\nConfiguration confirmed!");
-        pwmConfig_check(&temp_cfg, &pwmUartConfig, true);
+        pwmConfig_check(&temp_cfg, &pwmUartConfig, BOOL_TRUE);
     }
     else
     {
         iPrintf("\r\nConfiguration ignored!");
-        return false;
+        return BOOL_FALSE;
     }
 
-    return true;
+    return BOOL_TRUE;
 }
 #endif	/* #ifdef PROJECT_ID4 */
 
@@ -511,7 +510,7 @@ int app_config()
 			case (COMMAND_P - 32):
 				/* display some information */
         		msg_canfd_getData()->id4DataOut_command.data.debugValue = 999;
-        		msg_canfd_getData()->updated = true;
+				msg_canfd_getData()->updated = BOOL_TRUE;
         		//while(1)
         			{ msg_canfd_send_tester(COMMAND_P); }
 				ret = COMMAND_P;
@@ -552,13 +551,13 @@ int app_config()
 		            msg_canfd_getData()->id4DataOut_command.data.addrStart = position;
 		            msg_canfd_getData()->id4DataOut_command.data.dataNum = number;
 	            	msg_canfd_getData()->id4DataOut_command.data.debugValue = dData.display;
-	            	msg_canfd_getData()->updated = true;
+	            	msg_canfd_getData()->updated = BOOL_TRUE;
 	            	ret = COMMAND_D;
 				}
 				else if (333 == dData.display)
 				{	/* request error data */
 	            	msg_canfd_getData()->id4DataOut_command.data.debugValue = dData.display;
-	            	msg_canfd_getData()->updated = true;
+	            	msg_canfd_getData()->updated = BOOL_TRUE;
 	            	ret = COMMAND_D;
 				}
 				else {
@@ -577,7 +576,7 @@ int app_config()
 		        if(3 == dData.display) {
 				    dData.number = UART_Read_Number("\r\nAmbient Temp. (-30°C - 30°C)");
 		        }
-		        msg_canfd_getData()->updated = true;
+		        msg_canfd_getData()->updated = BOOL_TRUE;
 				ret = COMMAND_S;
 				break;
 #endif
@@ -694,7 +693,7 @@ int app_config()
 
 void writeLogging(void)
 {
-    bool status;
+	BOOL_INT32 status;
     uint32_t address = 0;
     uint16_t number = 0x10, value = 0;
     char hitkey;
@@ -725,7 +724,7 @@ void writeLogging(void)
 
 void printLogging(void)
 {
-    bool status;
+	BOOL_INT32 status;
     uint32_t address = 0;
     uint16_t number = 0x10;
     char hitkey;
@@ -806,9 +805,9 @@ void powerConfig_print(void)
     iPrintf("\r\nCurrent rms check: \t[ %d ] A, \t%s", powerUartConfig.thCurrentRms, powerUartConfig.checkCurrent?"Enabled":"Disabled");
 }
 
-bool powerConfig_check(struct powerConfig *configIn, struct powerConfig *configOut, bool ignore)
+BOOL_INT32 powerConfig_check(struct powerConfig *configIn, struct powerConfig *configOut, BOOL_INT32 ignore)
 {
-    bool status;
+	BOOL_INT32 status;
 
     if(INVALID_INPUT != configIn->mode)
     {
@@ -823,7 +822,7 @@ bool powerConfig_check(struct powerConfig *configIn, struct powerConfig *configO
             {
                 configOut->mode = MODE_OP_DEFAULT;
             }
-            status = false;
+            status = BOOL_FALSE;
         }
     }
 
@@ -840,7 +839,7 @@ bool powerConfig_check(struct powerConfig *configIn, struct powerConfig *configO
             {
                 configOut->tempOff = POWER_OFF_TEMP;
             }
-            status = false;
+            status = BOOL_FALSE;
         }
     }
 
@@ -858,7 +857,7 @@ bool powerConfig_check(struct powerConfig *configIn, struct powerConfig *configO
             {
                 configOut->tempOn = POWER_ON_TEMP;
             }
-            status = false;
+            status = BOOL_FALSE;
         }
     }
 
@@ -867,12 +866,12 @@ bool powerConfig_check(struct powerConfig *configIn, struct powerConfig *configO
         if( 0 == configIn->thRes)
         {
             configOut->thRes = 0;
-            configOut->checkRes = false;
+            configOut->checkRes = BOOL_FALSE;
         }
         else if((0 <= configIn->thRes) && (TH_RES_WINDSHIELD >= configIn->thRes))
         {
             configOut->thRes = configIn->thRes;
-            configOut->checkRes = true;
+            configOut->checkRes = BOOL_TRUE;
         }
         else
         {
@@ -880,9 +879,9 @@ bool powerConfig_check(struct powerConfig *configIn, struct powerConfig *configO
             if(!ignore)
             {
                 configOut->thRes = TH_RES_WINDSHIELD;
-                configOut->checkRes = true;
+                configOut->checkRes = BOOL_TRUE;
             }
-            status = false;
+            status = BOOL_FALSE;
         }
     }
 
@@ -891,12 +890,12 @@ bool powerConfig_check(struct powerConfig *configIn, struct powerConfig *configO
         if( 0 == configIn->thVoltagePeak)
         {
             configOut->thVoltagePeak = 0;
-            configOut->checkVoltage = false;
+            configOut->checkVoltage = BOOL_FALSE;
         }
         else if((0 <= configIn->thVoltagePeak) && (TH_VOLTAGE_IN_PEAK >= configIn->thVoltagePeak))
         {
             configOut->thVoltagePeak = configIn->thVoltagePeak;
-            configOut->checkVoltage = true;
+            configOut->checkVoltage = BOOL_TRUE;
         }
         else
         {
@@ -904,9 +903,9 @@ bool powerConfig_check(struct powerConfig *configIn, struct powerConfig *configO
             if(!ignore)
             {
                 configOut->thVoltagePeak = TH_VOLTAGE_IN_PEAK;
-                configOut->checkVoltage = true;
+                configOut->checkVoltage = BOOL_TRUE;
             }
-            status = false;
+            status = BOOL_FALSE;
         }
     }
 
@@ -915,12 +914,12 @@ bool powerConfig_check(struct powerConfig *configIn, struct powerConfig *configO
         if( 0 == configIn->thVoltageRms)
         {
             configOut->thVoltageRms = 0;
-            configOut->checkVoltage = false;
+            configOut->checkVoltage = BOOL_FALSE;
         }
         else if((0 <= configIn->thVoltageRms) && (TH_VOLTAGE_IN_RMS >= configIn->thVoltageRms))
         {
             configOut->thVoltageRms = configIn->thVoltageRms;
-            configOut->checkVoltage = true;
+            configOut->checkVoltage = BOOL_TRUE;
         }
         else
         {
@@ -928,9 +927,9 @@ bool powerConfig_check(struct powerConfig *configIn, struct powerConfig *configO
             if(!ignore)
             {
                 configOut->thVoltageRms = TH_VOLTAGE_IN_RMS;
-                configOut->checkVoltage = true;
+                configOut->checkVoltage = BOOL_TRUE;
             }
-            status = false;
+            status = BOOL_FALSE;
         }
     }
 
@@ -939,12 +938,12 @@ bool powerConfig_check(struct powerConfig *configIn, struct powerConfig *configO
         if( 0 == configIn->thCurrentPeak)
         {
             configOut->thCurrentPeak = 0;
-            configOut->checkCurrent = false;
+            configOut->checkCurrent = BOOL_FALSE;
         }
         else if((0 <= configIn->thCurrentPeak) && (TH_CURRENT_IN_PEAK >= configIn->thCurrentPeak))
         {
             configOut->thCurrentPeak = configIn->thCurrentPeak;
-            configOut->checkCurrent = true;
+            configOut->checkCurrent = BOOL_TRUE;
         }
         else
         {
@@ -952,9 +951,9 @@ bool powerConfig_check(struct powerConfig *configIn, struct powerConfig *configO
             if(!ignore)
             {
                 configOut->thCurrentPeak = TH_CURRENT_IN_PEAK;
-                configOut->checkVoltage = true;
+                configOut->checkVoltage = BOOL_TRUE;
             }
-            status = false;
+            status = BOOL_FALSE;
         }
     }
 
@@ -963,12 +962,12 @@ bool powerConfig_check(struct powerConfig *configIn, struct powerConfig *configO
         if( 0 == configIn->thCurrentRms)
         {
             configOut->thCurrentRms = 0;
-            configOut->checkCurrent = false;
+            configOut->checkCurrent = BOOL_FALSE;
         }
         else if((0 <= configIn->thCurrentRms) && (TH_CURRENT_IN_RMS >= configIn->thCurrentRms))
         {
             configOut->thCurrentRms = configIn->thCurrentRms;
-            configOut->checkCurrent = true;
+            configOut->checkCurrent = BOOL_TRUE;
         }
         else
         {
@@ -976,9 +975,9 @@ bool powerConfig_check(struct powerConfig *configIn, struct powerConfig *configO
             if(!ignore)
             {
                 configOut->thCurrentRms = TH_CURRENT_IN_RMS;
-                configOut->checkVoltage = true;
+                configOut->checkVoltage = BOOL_TRUE;
             }
-            status = false;
+            status = BOOL_FALSE;
         }
     }
 
@@ -1022,9 +1021,9 @@ void petdConfig_print(void)
  * @ ignore: if true, ignore the input and keep the original value; if false, assign the default value
  * if the config value is 0, this parameter control is disabled.
  */
-bool petdConfig_check(struct petdConfig *configIn, struct petdConfig *configOut, bool ignore)
+BOOL_INT32 petdConfig_check(struct petdConfig *configIn, struct petdConfig *configOut, BOOL_INT32 ignore)
 {
-    bool status;
+	BOOL_INT32 status;
 
     configOut->modeControl = configIn->modeControl;
 
@@ -1061,7 +1060,7 @@ bool petdConfig_check(struct petdConfig *configIn, struct petdConfig *configOut,
                 {
                     configOut->VoutTarget = DEFAULT_VOUTPUT_TARGET;
                 }
-                status = false;
+                status = BOOL_FALSE;
             }
         }
     }
@@ -1071,12 +1070,12 @@ bool petdConfig_check(struct petdConfig *configIn, struct petdConfig *configOut,
         if (0 == configIn->runtime)
         {
             configOut->runtime = 0;
-            configOut->forceRuntime = false;
+            configOut->forceRuntime = BOOL_FALSE;
         }
         else if((RUN_TIME_MIN < configIn->runtime) && (RUN_TIME_MAX >= configIn->runtime))
         {
             configOut->runtime = configIn->runtime;
-            configOut->forceRuntime = true;
+            configOut->forceRuntime = BOOL_TRUE;
         }
         else
         {
@@ -1084,9 +1083,9 @@ bool petdConfig_check(struct petdConfig *configIn, struct petdConfig *configOut,
             if(!ignore)
             {
                 configOut->runtime = DEFAULT_RUN_TIME;
-                configOut->forceRuntime = false;
+                configOut->forceRuntime = BOOL_FALSE;
             }
-            status = false;
+            status = BOOL_FALSE;
         }
     }
 
@@ -1103,7 +1102,7 @@ bool petdConfig_check(struct petdConfig *configIn, struct petdConfig *configOut,
             {
                 configOut->addRuntime = DEFAULT_ADD_RUNTIME;
             }
-            status = false;
+            status = BOOL_FALSE;
         }
     }
 
@@ -1112,12 +1111,12 @@ bool petdConfig_check(struct petdConfig *configIn, struct petdConfig *configOut,
         if( 0 == configIn->thTempTransfo)
         {
             configOut->thTempTransfo = 0;
-            configOut->checkTempransfo = false;
+            configOut->checkTempransfo = BOOL_FALSE;
         }
         else if((TEMP_TRANSFO_MIN <= configIn->thTempTransfo) && (TEMP_TRANSFO_MAX >= configIn->thTempTransfo))
         {
             configOut->thTempTransfo = configIn->thTempTransfo;
-            configOut->checkTempransfo = true;
+            configOut->checkTempransfo = BOOL_TRUE;
         }
         else
         {
@@ -1125,9 +1124,9 @@ bool petdConfig_check(struct petdConfig *configIn, struct petdConfig *configOut,
             if(!ignore)
             {
                 configOut->thTempTransfo = TEMP_TRANSFORMER_RUN;
-                configOut->checkTempransfo = true;
+                configOut->checkTempransfo = BOOL_TRUE;
             }
-            status = false;
+            status = BOOL_FALSE;
         }
     }
 
@@ -1135,20 +1134,20 @@ bool petdConfig_check(struct petdConfig *configIn, struct petdConfig *configOut,
     {
         if(0 == configIn->checkHV)
         {
-            configOut->checkHV = false;
+            configOut->checkHV = BOOL_FALSE;
         }
         else if(1 == configIn->checkHV)
         {
-            configOut->checkHV = true;
+            configOut->checkHV = BOOL_TRUE;
         }
         else
         {
             iPrintf("\r\nHV input invalid, ignored!");
             if(!ignore)
             {
-                configOut->checkHV = true;
+                configOut->checkHV = BOOL_TRUE;
             }
-            status = false;
+            status = BOOL_FALSE;
         }
     }
 
@@ -1157,12 +1156,12 @@ bool petdConfig_check(struct petdConfig *configIn, struct petdConfig *configOut,
         if(0 == configIn->thReslow)
         {
             configOut->thReslow = 0;
-            configOut->checkRes = false;
+            configOut->checkRes = BOOL_FALSE;
         }
         else if((WINDSHIELD_RES_LOW_MIN < configIn->thReslow) && (WINDSHIELD_RES_LOW_MAX > configIn->thReslow))
         {
             configOut->thReslow = configIn->thReslow;
-            configOut->checkRes = true;
+            configOut->checkRes = BOOL_TRUE;
         }
         else
         {
@@ -1170,9 +1169,9 @@ bool petdConfig_check(struct petdConfig *configIn, struct petdConfig *configOut,
             if(!ignore)
             {
                 configOut->thReslow = WINDSHIELD_RES_MIN;
-                configOut->checkRes = true;
+                configOut->checkRes = BOOL_TRUE;
             }
-            status = false;
+            status = BOOL_FALSE;
         }
     }
 
@@ -1189,7 +1188,7 @@ bool petdConfig_check(struct petdConfig *configIn, struct petdConfig *configOut,
             {
                 configOut->thReslow = WINDSHIELD_RES_MAX;
             }
-            status = false;
+            status = BOOL_FALSE;
         }
     }
 
@@ -1204,12 +1203,12 @@ bool petdConfig_check(struct petdConfig *configIn, struct petdConfig *configOut,
         if(0 == configIn->thCout)
         {
             configOut->thCout = 0;
-            configOut->checkCout = false;
+            configOut->checkCout = BOOL_FALSE;
         }
         else if((CURRETNT_OUTPUT_MAX > configIn->thCout) && (CURRETNT_OUTPUT_MIN < configIn->thCout))
         {
             configOut->thCout = configIn->thCout;
-            configOut->checkCout = true;
+            configOut->checkCout = BOOL_TRUE;
         }
         else
         {
@@ -1217,9 +1216,9 @@ bool petdConfig_check(struct petdConfig *configIn, struct petdConfig *configOut,
             if(!ignore)
             {
                 configOut->thCout = CURRETNT_OUTPUT_MAX;
-                configOut->checkCout = true;
+                configOut->checkCout = BOOL_TRUE;
             }
-            status = false;
+            status = BOOL_FALSE;
         }
     }
 
@@ -1248,7 +1247,7 @@ struct pwmConfig* pwmConfig_get(void)
     return &pwmUartConfig;
 }
 
-bool pwmConfig_check(struct pwmConfig *configIn, struct pwmConfig *configOut, bool ignore)
+BOOL_INT32 pwmConfig_check(struct pwmConfig *configIn, struct pwmConfig *configOut, BOOL_INT32 ignore)
 {
     if((FREQ_INIT_MIN <= configIn->freq) && (FREQ_INIT_MAX >= configIn->freq))
     {
@@ -1370,7 +1369,7 @@ bool pwmConfig_check(struct pwmConfig *configIn, struct pwmConfig *configOut, bo
         }
     }
 
-    return true;
+    return BOOL_TRUE;
 }
 
 #endif	/* #ifdef PROJECT_ID4 */

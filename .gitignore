@@ -5,3 +5,5 @@ farview
 farviewpcan
 .project
 .cproject
+.settings
+.settings/*

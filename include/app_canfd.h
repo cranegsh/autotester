@@ -95,7 +95,7 @@ typedef struct {
 	msg_mode_t mode;
 	timer_t timer_id;
 	int timer_count;
-	bool timer_mark;
+	BOOL_INT32 timer_mark;
 } msg_opt_t;
 /*
  * struct canfdFilter {
@@ -105,8 +105,8 @@ typedef struct {
     int16_t sid11_mask;
     int32_t eid;
     int32_t eid_mask;
-    bool ide;
-    bool ide_check;
+    BOOL_INT32 ide;
+    BOOL_INT32 ide_check;
     CAN_FIFO_CHANNEL fifo_chan;
     CAN_FILTER filter_num;
 };
@@ -136,8 +136,8 @@ struct id4DataVeh_type {
     float humidity;
     uint16_t fsh;
     uint16_t countMsg;
-    bool speedQbit;
-    bool tempOutsideQbit;
+    BOOL_INT32 speedQbit;
+    BOOL_INT32 tempOutsideQbit;
 };
 
 /* These are the data sent from tester */
@@ -199,7 +199,7 @@ union dataOut_cfgPwm_type {
 #define CAN_DATA_IN_LEN    MEM_ALIGN_SIZE(sizeof(struct id4DataIn_type))
 union dataIn_type {
     struct id4DataIn_type {
-        bool updated;
+        BOOL_INT16 updated;
         uint16_t mode;
         uint16_t hitCount;
         uint16_t vin;
@@ -228,7 +228,7 @@ union dataIn_type {
 #define CAN_DATA_IN_CFG_LEN    MEM_ALIGN_SIZE(sizeof(struct id4DataIn_Cfg_type))
 union dataIn_Cfg_type {
     struct id4DataIn_Cfg_type {
-        bool updated;
+        BOOL_INT16 updated;
         struct petdConfig petdCanConfig;
         struct pwmConfig pwmCanConfig;
     } data;
@@ -239,7 +239,7 @@ union dataIn_Cfg_type {
 #define CAN_DATA_IN_CTL_LEN    MEM_ALIGN_SIZE(sizeof(struct id4DataIn_Ctl_type))
 union dataIn_Ctl_type {
     struct id4DataIn_Ctl_type {
-        bool updated;
+        BOOL_INT16 updated;
         uint16_t mode;
         uint16_t hitCount;
         uint16_t veh_fsh;
@@ -251,7 +251,7 @@ union dataIn_Ctl_type {
 #define CAN_DATA_IN_ENV_LEN    MEM_ALIGN_SIZE(sizeof(struct id4DataIn_Env_type))
 union dataIn_Env_type {
     struct id4DataIn_Env_type {
-        bool updated;
+        BOOL_INT16 updated;
         uint16_t vin;
         uint16_t veh_voltage;
         uint16_t veh_stateCharge;
@@ -267,7 +267,7 @@ union dataIn_Env_type {
 #define CAN_DATA_IN_RES_LEN    MEM_ALIGN_SIZE(sizeof(struct id4DataIn_Res_type))
 union dataIn_Res_type {
     struct id4DataIn_Res_type {
-        bool updated;
+        BOOL_INT16 updated;
         int16_t tempTro;
         uint16_t vout;
         uint16_t cout;
@@ -354,7 +354,7 @@ union dataIn {
 #define CAN_DATA_LOG_LEN    sizeof(struct navyDataLog)
 union dataLog {
     struct navyDataLog {
-        bool updated;
+        BOOL_INT16 updated;
         uint16_t count;
         int16_t voltagePeak;
         uint16_t voltageRms;
@@ -394,7 +394,7 @@ struct canfdData {
     union dataLog navyLog;
     union dataOut navyOut;
 #endif
-    bool updated;
+    BOOL_INT32 updated;
 };
 
 struct canfdnode *msg_canfd_getNode(void);
@@ -412,6 +412,6 @@ int16_t msg_canfd_rcvCanConfigs(void);
 void msg_canfd_receive(void);
 
 /* Function to initialize CAN FD device */
-bool msg_canfd_init(void);
+BOOL_INT32 msg_canfd_init(void);
 
 #endif /* APPLICATION_CANFDCOMM_H_ */

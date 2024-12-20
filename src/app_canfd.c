@@ -6,7 +6,6 @@
  *      Author: Crane Shao
  */
 #include <stdio.h>
-#include <stdbool.h>
 #include <unistd.h>
 #include <time.h>
 
@@ -144,7 +143,7 @@ static struct canfdData canfdio = {
 		{ TEMP_01, "Amb. Temp.", 1000, 0 },
 		{ BMS_20<<CANFD_EID_BITS, "Voltage", 200, 0 },
 //		{ BMS_22, "S. of Charge", 1000, 0 },
-		{ LiSi_01, "SW on Dashboard", 100, 0 },
+		{ LiSi_01, "SW on Dash", 100, 0 },
 		{ ESP_21<<CANFD_EID_BITS, "Veh. Speed", 100, 0 },
 		{ KLIMA_03<<CANFD_EID_BITS, "Cab. Temp.", 1000, 0 },
 		{ KLIMA_S_01<<CANFD_EID_BITS, "Humidity", 1000, 0 }
@@ -180,7 +179,7 @@ static struct canfdData canfdio = {
 #ifdef PROJECT_NAVY
    .navyOut = { {0, 0, 0, 0}, },
    .navyIn = { {0, 0, 0, 0, 0, 0, 0, 0}, },
-   .updated = false,
+   .updated = BOOL_FALSE,
 #endif
 };
 
@@ -241,42 +240,7 @@ union CANMSG_ESP21 {
     uint16_t hword[4];
     uint8_t byte[8];
 };
-/*
-static struct canfdnode canNode = {
-    .spi_device = SPICAN_DEVICE_NODE, // /dev/spidev0.0", -> not used for now!!!
-    // Filter: SID, SID mask, SID11, SID11 mask, EID, EID mask, IDE, IDE check, FIFO ch, Filter # /
-    .vwmsgFilter = {
-#ifdef PROJECT_ID4
-    { BMS_20,                 SID_MASK, 0, 0, 0, 0,                            false, true, CAN_RX_FIFO, CAN_FILTER0 },
-//    { (BMS_22 >> EID_BITS),   SID_MASK, 0, 0, (BMS_22 & EID_MASK), EID_MASK,   true,  true, CAN_RX_FIFO, CAN_FILTER1 },
-    { (LiSi_01 >> EID_BITS),   SID_MASK, 0, 0, (LiSi_01 & EID_MASK), EID_MASK,   true,  true, CAN_RX_FIFO, CAN_FILTER1 },
-    { ESP_21,                 SID_MASK, 0, 0, 0, 0,                            false, true, CAN_RX_FIFO, CAN_FILTER2 },
-    { KLIMA_03,               SID_MASK, 0, 0, 0, 0,                            false, true, CAN_RX_FIFO, CAN_FILTER3 },
-    { (KLIMA_16 >> EID_BITS), SID_MASK, 0, 0, (KLIMA_16 & EID_MASK), EID_MASK, true,  true, CAN_RX_FIFO, CAN_FILTER4 },
-    { KLIMA_S_01,             SID_MASK, 0, 0, 0, 0,                            false, true, CAN_RX_FIFO, CAN_FILTER5 },
-    { (TEMP_01 >> EID_BITS),  SID_MASK, 0, 0, (TEMP_01 & EID_MASK), EID_MASK,  true,  true, CAN_RX_FIFO, CAN_FILTER6 },
-    { SYSTEMINFO_01,          SID_MASK, 0, 0, 0, 0,                            false, true, CAN_RX_FIFO, CAN_FILTER7 },
-#ifdef CAN_STANDARD_ONLY
-    { 0, 0, 0, 0, 0, EID_MASK, false, true,  CAN_RX_FIFO, CAN_FILTER8 },  // receive only standard frames, no extended frames /
-#else
-    { 0, 0, 0, 0, 0, 0,        true,  true,  CAN_RX_FIFO, CAN_FILTER8 },  // receive only extended frames, no standard frames /
-#endif
-    { 0, 0, 0, 0, 0, 0,        false, false, CAN_RX_FIFO, CAN_FILTER9 },  // receive all frames /
-#endif
-	{ ID_RCV_DATA,            SID_MASK, 0, 0, 0, 0,                            false, true, CAN_RX_FIFO, CAN_FILTER10 },
-	{ ID_RCV_LOG,             SID_MASK, 0, 0, 0, 0,                            false, true, CAN_RX_FIFO, CAN_FILTER11 },
-	{ ID_RCV_ERROR,           SID_MASK, 0, 0, 0, 0,                            false, true, CAN_RX_FIFO, CAN_FILTER12 },
-	{ ID_RCV_DATA_CFG,        SID_MASK, 0, 0, 0, 0,                            false, true, CAN_RX_FIFO, CAN_FILTER13 },
-	{ ID_RCV_DATA_CTL,        SID_MASK, 0, 0, 0, 0,                            false, true, CAN_RX_FIFO, CAN_FILTER14 },
-	{ ID_RCV_DATA_ENV,        SID_MASK, 0, 0, 0, 0,                            false, true, CAN_RX_FIFO, CAN_FILTER15 },
-	{ ID_RCV_DATA_RES,        SID_MASK, 0, 0, 0, 0,                            false, true, CAN_RX_FIFO, CAN_FILTER16 },
-#ifdef PROJECT_C3
-	{ CAN_CUR,        		  SID_MASK, 0, 0, 0, 0,                            false, true, CAN_RX_FIFO, CAN_FILTER17 },
-	{ CAN_OP_MODE,        	  SID_MASK, 0, 0, 0, 0,                            false, true, CAN_RX_FIFO, CAN_FILTER18 },
-#endif
-    }
-};
-*/
+
 uint32_t canfd_DlcToDataBytes(CAN_DLC dlc)
 {
     uint32_t dataBytesInObject = 0;
@@ -789,10 +753,10 @@ static void msg_canfd_interpret_id4(uint32_t mid, uint8_t *data, uint16_t num)
 }
 
 /* Function to interpret the CANFD data for ID4 project */
-#if 0	/* This is to interpre the messages from the vehicle */
-static bool msg_canfd_interpret_id4(uint32_t mid, uint8_t *data, uint16_t num)
+#if 0	/* This is to interpret the messages from the vehicle */
+static BOOL_INT32 msg_canfd_interpret_id4(uint32_t mid, uint8_t *data, uint16_t num)
 {
-    bool status = true;
+	BOOL_INT32 status = BOOL_TRUE;
     uint16_t i, temp;
     float value;
     union CANMSG_BMS20 canmsgBMS20;
@@ -858,7 +822,7 @@ static bool msg_canfd_interpret_id4(uint32_t mid, uint8_t *data, uint16_t num)
                 temp = (temp>>4) & 0x01;
                 dPrintf_canfd(" | Qbit: %d", temp);
                 canfdio.tempOutside = value;
-                canfdio.tempOutsideQbit = (0 == temp) ? false : true;
+                canfdio.tempOutsideQbit = (0 == temp) ? BOOL_FALSE : BOOL_TRUE;
                 if(MAIN_LOOP_DISPLAY_CAN == dData.display)
                 {
                     iPrintf("TEMP_01:\t");
@@ -919,7 +883,7 @@ static bool msg_canfd_interpret_id4(uint32_t mid, uint8_t *data, uint16_t num)
                 temp = canmsgESP21.bitF.esp21_speed.Qbit;
                 dPrintf_canfd(" | Qbit: %d", temp);
                 canfdio.speed = value;
-                canfdio.speedQbit = (0 == temp) ? false : true;
+                canfdio.speedQbit = (0 == temp) ? BOOL_FALSE : BOOL_TRUE;
                 if(MAIN_LOOP_DISPLAY_CAN == dData.display)
                 {
                     iPrintf("ESP_21:\n");
@@ -1014,11 +978,11 @@ int16_t msg_canfd_receive_isr(void)
         status = (msgData >> 4) & 0x3;
         if(status)
         {   /* FSH_status is 1 */
-            canfdio.id4Dataveh.fsh = true;
+            canfdio.id4Dataveh.fsh = BOOL_TRUE;
         }
         else
         {   /* FSH_Status is 0 */
-            canfdio.id4Dataveh.fsh = false;
+            canfdio.id4Dataveh.fsh = BOOL_FALSE;
         }
     }
 
@@ -1279,9 +1243,9 @@ void msg_canfd_receive(void)
     return;
 }
 
-bool msg_canfd_init(void)
+BOOL_INT32 msg_canfd_init(void)
 {
-	 bool retVal = false;
+	 int32_t retVal = BOOL_FALSE;
      TPCANStatus Status;
 
 #if (CAN_BUS_TYPE_CAN == CAN_BUS_TYPE)
@@ -1298,7 +1262,7 @@ bool msg_canfd_init(void)
 #ifdef DEVELOP_VERSION
 		 infoPrintf("CAN bus is initialized successfully!\r\n");
 #endif
-		 retVal = true;
+		 retVal = BOOL_TRUE;
 	 }
 	 else
 	 {
