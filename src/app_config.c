@@ -12,8 +12,6 @@
 #include "app_log.h"
 #include "app_canfd.h"
 
-#define INVALID_INPUT               (-10000)
-
 /* operation definitions */
 #define MODE_OP_DEFAULT                         0
 #define POWER_OFF_TEMP                          20              /* temperature in °C to turn off AC switch */
@@ -151,92 +149,6 @@ static struct pwmConfig pwmUartConfig = {
 };
 #endif	/* #ifdef PROJECT_NAVY */
 
-void clearStdin()
-{
-    // keep reading 1 more char as long as the end of the stream, indicated by the newline char,
-    // has NOT been reached
-    while (1)
-    {
-        int c = getc(stdin);
-        if (c == EOF || c == '\n')
-        {
-            break;
-        }
-    }
-}
-
-//int UART_Read_Number(const char *msg)
-//{
-//	int number = 0;
-//
-//    iPrintf("%s: ", msg);
-//    scanf("%d", &number);
-//
-//    return number;
-//}
-/* Function to input an integer allowing negative value
- * return INVALID_INPUT if failed to acquire a number
- * */
-int UART_Read_Number(const char *msg)
-{
-    unsigned char hitkey = 0;
-    unsigned int digit = 0;
-    int number = 0;
-    unsigned int count = 0;
-    int sign = 1;
-
-    printf("\r\n Please input %s: ", msg);
-    hitkey = getc(stdin);
-    if('\n' == hitkey)
-    {
-        return INVALID_INPUT;
-    }
-    else if ('-' == hitkey)
-    {
-        sign = -1;
-    }
-    else if(('0'<=hitkey) && ('9'>=hitkey))
-    {
-        digit = hitkey - '0';
-        number = digit;
-    }
-
-    do{
-          hitkey = getc(stdin);
-          count++;
-          if(('0'<=hitkey) && ('9'>=hitkey))
-          {
-              digit = hitkey - '0';
-              number = number*10 + digit;
-          }
-    } while(('\n' != hitkey) && (1000000 > number));
-
-    return (number * sign);
-}
-
-unsigned char UART_Read_Char(void)
-{
-	unsigned char ch;
-
-	scanf("%c", &ch);
-
-	/* clean the last ENTER after inputting a number. Any API to clear std io? -> write own */
-	if('\r' == ch) scanf("%c", &ch);
-
-	return ch;
-}
-
-/* Function to get config from Stdio inputs */
-int configInput(const char *msg)
-{
-    int number;
-
-    number = UART_Read_Number(msg);
-    iPrintf("You input %d\r\n", number);
-
-    return number;
-}
-
 #ifdef PROJECT_NAVY
 void powerConfig_updateCan(void)
 {
@@ -263,17 +175,17 @@ BOOL_INT32 powerConfig_input(void)
     iPrintf("\r\nPress ENTER to pass!\r\n");
 
     clearStdin();
-    temp_cfg.mode = UART_Read_Number("\r\nOperation mode (0 ~ 3)");
-    temp_cfg.tempOff = UART_Read_Number("\r\nAC switch off windshield temp (-20 - 20°C)");
-    temp_cfg.tempOn = UART_Read_Number("\r\nAC switch on windshield temp (-20 - 20°C)");               /* Windshield temperature to turn off AC switch */
-    temp_cfg.thRes = UART_Read_Number("\r\nWindshield resistance threshold (0 - 52Ohms)");
-    temp_cfg.thVoltagePeak = UART_Read_Number("\r\nVoltage peak check threshold (0 - 660V)");
-    temp_cfg.thVoltageRms = UART_Read_Number("\r\nVoltage rms check threshold (0 - 440V)");
-    temp_cfg.thCurrentPeak = UART_Read_Number("\r\nCurrent peak check threshold (0 - 15A)\0");
-    temp_cfg.thCurrentRms = UART_Read_Number("\r\nCurrent rms check threshold (0 - 10A)\0");
+    temp_cfg.mode = get_a_number("\r\nOperation mode (0 ~ 3)");
+    temp_cfg.tempOff = get_a_number("\r\nAC switch off windshield temp (-20 - 20°C)");
+    temp_cfg.tempOn = get_a_number("\r\nAC switch on windshield temp (-20 - 20°C)");               /* Windshield temperature to turn off AC switch */
+    temp_cfg.thRes = get_a_number("\r\nWindshield resistance threshold (0 - 52Ohms)");
+    temp_cfg.thVoltagePeak = get_a_number("\r\nVoltage peak check threshold (0 - 660V)");
+    temp_cfg.thVoltageRms = get_a_number("\r\nVoltage rms check threshold (0 - 440V)");
+    temp_cfg.thCurrentPeak = get_a_number("\r\nCurrent peak check threshold (0 - 15A)\0");
+    temp_cfg.thCurrentRms = get_a_number("\r\nCurrent rms check threshold (0 - 10A)\0");
 
     // confirm the selections
-    uint16_t hitkey;
+    int hitkey;
     iPrintf("\r\n\r\nPlease confirm y or n:");
     hitkey = getc(stdin);
     while(('y' != hitkey) && ('n' != hitkey) && ('Y' != hitkey) && ('N' != hitkey))
@@ -323,7 +235,7 @@ BOOL_INT32 petdConfig_input(void)
 
     struct petdConfig temp_cfg;
 
-    temp_cfg.modeControl = UART_Read_Number("\r\nControl mode (1 for CL, 0 for OL)");
+    temp_cfg.modeControl = get_a_number("\r\nControl mode (1 for CL, 0 for OL)");
     if(INVALID_INPUT != temp_cfg.modeControl)
     {
         if(0 == temp_cfg.modeControl)
@@ -346,36 +258,36 @@ BOOL_INT32 petdConfig_input(void)
 
     if(MODE_CTRL_OPEN_LOOP == temp_cfg.modeControl)
     {
-        temp_cfg.psTarget = UART_Read_Number("\r\nDesired Final Phase Shift (10 - 160) °");
+        temp_cfg.psTarget = get_a_number("\r\nDesired Final Phase Shift (10 - 160) °");
     }
     else
     {
-        temp_cfg.VoutTarget = UART_Read_Number("\r\nDesired Output Voltage (20 - 95)V");
+        temp_cfg.VoutTarget = get_a_number("\r\nDesired Output Voltage (20 - 95)V");
     }
 
-    temp_cfg.runtime = UART_Read_Number("\r\nDesired Run Time (0 - 600s)");
+    temp_cfg.runtime = get_a_number("\r\nDesired Run Time (0 - 600s)");
     if(INVALID_INPUT != temp_cfg.runtime) {
         /* invalid input, get the last value */
         temp_cfg.runtime = petdUartConfig.runtime;
     }
     if(0 == temp_cfg.runtime) {
-        temp_cfg.addRuntime = UART_Read_Number("\r\nAdditional run time (0 - 30s)\0");
+        temp_cfg.addRuntime = get_a_number("\r\nAdditional run time (0 - 30s)\0");
     }
 
-    temp_cfg.thTempTransfo = UART_Read_Number("\r\nTransfo Temp. threshold (-10°C - 30°C)");
-    temp_cfg.checkHV = UART_Read_Number("\r\nHigh voltage enable/disable (1 to enable, 0 to disable)");
-    temp_cfg.thReslow = UART_Read_Number("\r\nResistance threshold low (0 - 2500 mOhms)");
-    temp_cfg.thReshigh = UART_Read_Number("\r\nResistance threshold high (1500 - 5000) mOhms");
-    temp_cfg.thCout = UART_Read_Number("\r\nCurrent Output threshold (0 - 80A)");
+    temp_cfg.thTempTransfo = get_a_number("\r\nTransfo Temp. threshold (-10°C - 30°C)");
+    temp_cfg.checkHV = get_a_number("\r\nHigh voltage enable/disable (1 to enable, 0 to disable)");
+    temp_cfg.thReslow = get_a_number("\r\nResistance threshold low (0 - 2500 mOhms)");
+    temp_cfg.thReshigh = get_a_number("\r\nResistance threshold high (1500 - 5000) mOhms");
+    temp_cfg.thCout = get_a_number("\r\nCurrent Output threshold (0 - 80A)");
 
     // confirm the selections
-    uint16_t hitkey;
+    int hitkey;
     iPrintf("\r\n\r\nPlease confirm y or n:");
-    hitkey = UART_Read_Char();
+    hitkey = get_a_char();
     while(('y' != hitkey) && ('n' != hitkey) && ('Y' != hitkey) && ('N' != hitkey))
     {   // invalid input. Need input again
         iPrintf("\r\nInvalid input! Please input again!");
-        hitkey = UART_Read_Char();
+        hitkey = get_a_char();
     }
 
     /* assign the updated configuration */
@@ -419,44 +331,44 @@ BOOL_INT32 pwmConfig_input(void)
     struct pwmConfig temp_cfg;
 
     /* set frequency of PWM1 and PWM2 */
-    temp = UART_Read_Number("\r\nPWM1/2/3/4 Frequency (*KHz, 50~150)");
+    temp = get_a_number("\r\nPWM1/2/3/4 Frequency (*KHz, 50~150)");
     temp *= 1000;
     temp_cfg.freq = temp;
 
     /* set dead band for PWM1 and PWM2 RED and FED, ns */
-    temp = UART_Read_Number("\r\nDead Band PWM1 RED (0~100 of 10ns)");
+    temp = get_a_number("\r\nDead Band PWM1 RED (0~100 of 10ns)");
     temp_cfg.deadband_red1 = temp/10;
-    temp = UART_Read_Number("\r\nDead Band PWM1 FED (0~100 of 10ns)");
+    temp = get_a_number("\r\nDead Band PWM1 FED (0~100 of 10ns)");
     temp_cfg.deadband_fed1 = temp/10;
-    temp = UART_Read_Number("\r\nDead Band PWM2 RED (0~100 of 10ns)");
+    temp = get_a_number("\r\nDead Band PWM2 RED (0~100 of 10ns)");
     temp_cfg.deadband_red2 = temp/10;
-    temp = UART_Read_Number("\r\nDead Band PWM2 FED (0~100 of 10ns)");
+    temp = get_a_number("\r\nDead Band PWM2 FED (0~100 of 10ns)");
     temp_cfg.deadband_fed2 = temp/10;
 
     /* set dead band for PWM1 and PWM2 RED and FED, ns */
-//    temp = UART_Read_Number("\r\nCompensation PWM3A DOWN (0~100 of 10ns)");
+//    temp = get_a_number("\r\nCompensation PWM3A DOWN (0~100 of 10ns)");
 //    temp_cfg.compensation_down3 = temp/10;
-//    temp = UART_Read_Number("\r\nCompensation PWM4A DOWN (0~100 of 10ns)");
+//    temp = get_a_number("\r\nCompensation PWM4A DOWN (0~100 of 10ns)");
 //    temp_cfg.compensation_down4 = temp/10;
-    temp = UART_Read_Number("\r\nCompensation PWM3A UP (0~100 of 10ns)");
+    temp = get_a_number("\r\nCompensation PWM3A UP (0~100 of 10ns)");
     temp_cfg.compensation_up3 = temp/10;
-    temp = UART_Read_Number("\r\nCompensation PWM4A UP (0~100 of 10ns)");
+    temp = get_a_number("\r\nCompensation PWM4A UP (0~100 of 10ns)");
     temp_cfg.compensation_up4 = temp/10;
-    temp = UART_Read_Number("\r\nCompensation Lik (1000~8000 pH )\0");
+    temp = get_a_number("\r\nCompensation Lik (1000~8000 pH )\0");
     temp_cfg.compensation_lik = temp;
-    temp = UART_Read_Number("\r\nCompensation N (20~30) *0.1\0");
+    temp = get_a_number("\r\nCompensation N (20~30) *0.1\0");
     temp_cfg.compensation_n = temp;
-    temp = UART_Read_Number("\r\nCompensation Rload (100~10000)mOhms\0");
+    temp = get_a_number("\r\nCompensation Rload (100~10000)mOhms\0");
     temp_cfg.compensation_rload = temp;
 
     // confirm the selections
     int hitkey;
     iPrintf("\r\n\r\nPlease confirm y or n:");
-    hitkey = UART_Read_Char();
+    hitkey = get_a_char();
     while(('y' != hitkey) && ('n' != hitkey) && ('Y' != hitkey) && ('N' != hitkey))
     {   // invalid input. Need input again
     	iPrintf("\r\nInvalid input! Please input again!");
-        hitkey = UART_Read_Char();
+        hitkey = get_a_char();
     }
     if(('y' == hitkey) || ('Y' == hitkey))
     {
@@ -492,7 +404,7 @@ int app_config()
         iPrintf("\r\n ->: ");
 
         char hitkey;
-        hitkey = UART_Read_Char();
+        hitkey = get_a_char();
         while((COMMAND_P != hitkey) && ((COMMAND_P - 32) != hitkey)
                 && (COMMAND_C != hitkey) && ((COMMAND_C - 32) != hitkey)
                 && (COMMAND_F != hitkey) && ((COMMAND_F - 32) != hitkey)
@@ -501,7 +413,7 @@ int app_config()
 				&& (COMMAND_S != hitkey) && ((COMMAND_S - 32) != hitkey))
         {   // invalid input. Need input again
         	iPrintf("\r\nInvalid input! Please input again!");
-            hitkey = UART_Read_Char();
+            hitkey = get_a_char();
         }
 
         switch(hitkey) {
@@ -512,7 +424,7 @@ int app_config()
         		msg_canfd_getData()->id4DataOut_command.data.debugValue = 999;
 				msg_canfd_getData()->updated = BOOL_TRUE;
         		//while(1)
-        			{ msg_canfd_send_tester(COMMAND_P); }
+        			{ msg_canfd_send_tester((uint32_t)COMMAND_P); }
 				ret = COMMAND_P;
     		break;
         	case COMMAND_C:
@@ -541,13 +453,13 @@ int app_config()
         	case (COMMAND_D - 32):
 				/* process debug option */
 				getc(stdin);		/* get rid of ENTER key */
-				dData.display = configInput("number for debugging");
+				dData.display = get_a_number_print("number for debugging");
 				if(444 == dData.display)
 				{	/* request log data */
 				    uint32_t position = 0;
 				    uint16_t number = 0x10;
-				    position = UART_Read_Number("\r\nRead FRAM from (0 ~ 16376/0x4000)");
-				    number = UART_Read_Number("\r\nRead words of (1 ~ 17376)");
+				    position = get_a_number("\r\nRead FRAM from (0 ~ 16376/0x4000)");
+				    number = get_a_number("\r\nRead words of (1 ~ 17376)");
 		            msg_canfd_getData()->id4DataOut_command.data.addrStart = position;
 		            msg_canfd_getData()->id4DataOut_command.data.dataNum = number;
 	            	msg_canfd_getData()->id4DataOut_command.data.debugValue = dData.display;
@@ -572,9 +484,9 @@ int app_config()
 		        iPrintf("\r\n 1: FSH OFF");
 		        iPrintf("\r\n 2: FSH ON");
 		        iPrintf("\r\n 3: Ambient temperature");
-		        dData.display = configInput("->");
+		        dData.display = get_a_number_print("->");
 		        if(3 == dData.display) {
-				    dData.number = UART_Read_Number("\r\nAmbient Temp. (-30°C - 30°C)");
+				    dData.number = get_a_number("\r\nAmbient Temp. (-30°C - 30°C)");
 		        }
 		        msg_canfd_getData()->updated = BOOL_TRUE;
 				ret = COMMAND_S;
@@ -597,7 +509,7 @@ int app_config()
 			     break;
         	case COMMAND_D:
         	case (COMMAND_D - 32):
-				dData.number = configInput("operation mode(0 ~ 3)");
+				dData.number = get_a_number("operation mode(0 ~ 3)");
 				if((0 > dData.number) || (3 < dData.number)) {
 					iPrintf("Input out of range, ignored!");
 				}
@@ -653,7 +565,7 @@ int app_config()
             }
 #endif
 #ifdef PROJECT_NAVY
-        	dData.number = configInput("operation mode(0 ~ 3)");
+        	dData.number = get_a_number("operation mode(0 ~ 3)");
         	if((0 > dData.number) || (3 < dData.number)) {
         		iPrintf("Input out of range, ignored!");
         	}
@@ -670,8 +582,8 @@ int app_config()
         }
         else if((COMMAND_D == hitkey) || ((COMMAND_D - 32) == hitkey))
         {   /* input a number for debugging */
-            dData.display = configInput("number for debugging");
-//            dData.number = configInput("number for debugging");
+            dData.display = get_a_number("number for debugging");
+//            dData.number = get_a_number("number for debugging");
 
 #ifdef PROJECT_ID4
             if(444 == dData.display)
@@ -695,12 +607,13 @@ void writeLogging(void)
 {
 	BOOL_INT32 status;
     uint32_t address = 0;
-    uint16_t number = 0x10, value = 0;
+    uint32_t number = 0x10;
+    uint16_t value = 0;
     char hitkey;
 
-    address = UART_Read_Number("\r\nWrite FRAM from (0 ~ 131072/0x20000)");
-    number = UART_Read_Number("\r\nWrite words of (1 ~ 65535)");
-    value = UART_Read_Number("\r\nWrite value of (0 ~ 65535)");
+    address = (uint32_t)get_a_number("\r\nWrite FRAM from (0 ~ 131072/0x20000)");
+    number = (uint32_t)get_a_number("\r\nWrite words of (1 ~ 65535)");
+    value = (uint16_t)get_a_number("\r\nWrite value of (0 ~ 65535)");
 
     do{
         iPrintf("\r\nWrite %2d W @0x%5X:\t", number, address);
@@ -718,7 +631,7 @@ void writeLogging(void)
         }
 
         iPrintf("\r\nWriting FRAM %d words at %d successfully!", number, address);
-        hitkey = UART_Read_Char();
+        hitkey = get_a_char();
     } while('\r' != hitkey);
 }
 
@@ -726,11 +639,11 @@ void printLogging(void)
 {
 	BOOL_INT32 status;
     uint32_t address = 0;
-    uint16_t number = 0x10;
+    uint32_t number = 0x10;
     char hitkey;
 
-    address = UART_Read_Number("\r\nRead FRAM from (0 ~ 131072/0x20000)");
-    number = UART_Read_Number("\r\nRead words of (1 ~ 65535)");
+    address = (uint32_t)get_a_number("\r\nRead FRAM from (0 ~ 131072/0x20000)");
+    number = (uint32_t)get_a_number("\r\nRead words of (1 ~ 65535)");
 
     if(555 == address)
     {   /* print values in log buff */
@@ -738,15 +651,15 @@ void printLogging(void)
 
         do{
 #ifdef DATA_LOG_BYTE
-            iPrintf("\r\nRead %2d bytes @%d:\n\r", number, (uint16_t)address);
+            iPrintf("\r\nRead %2d bytes @%d:\n\r", number, address);
             dataLogbuff_print_byte(address, number);
 #else
-            iPrintf("\r\nRead %2d words @%d:\n\r", number, (uint16_t)address);
+            iPrintf("\r\nRead %2d words @%d:\n\r", number, address);
             dataLogbuff_print_word(address, number);
 #endif
             address += number;
 
-            hitkey = UART_Read_Char();
+            hitkey = get_a_char();
         } while('\r' != hitkey);
 
         return;
@@ -781,7 +694,7 @@ void printLogging(void)
             address = 0;
         }
 
-        hitkey = UART_Read_Char();
+        hitkey = get_a_char();
     } while('\r' != hitkey);
 }
 

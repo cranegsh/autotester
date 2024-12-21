@@ -8,8 +8,8 @@
 /* select only one from PROJECT_NAVY, PROJECT_C3 and PROJECT_ID4
  * if PROJECT_ID4 is selected, select only one from PROJECT_CAN_ID4, PROJECT_CAN_BZ4X and PROJECT_CAN_G3 */
 //#define PROJECT_NAVY
-//#define PROJECT_C3
-#define PROJECT_ID4
+#define PROJECT_C3
+//#define PROJECT_ID4
 #ifdef PROJECT_ID4				   /* ID4, BZ4X and G3 all are based on PROJECT_ID4, the differences are CAN messages */
 //#define PROJECT_CAN_ID4
 //#define PROJECT_CAN_BZ4X
@@ -64,7 +64,11 @@
 #define LOG_BUFF_SIZE                   2700
 
 /* for architecture */
-#define MEM_ALIGNMENT                   4               /* aligned on 4 bytes */
+#if __SIZEOF_POINTER__ == 8  			// 64-bit system
+#define MEM_ALIGNMENT 8
+#else  									// 32-bit system
+#define MEM_ALIGNMENT 4
+#endif
 #define MEM_ALIGN_SIZE(size)            (((size) + MEM_ALIGNMENT - 1U) & ~(MEM_ALIGNMENT-1U))
 #define NULL							((void *)0)
 #define BOOL_INT32						int32_t
@@ -72,4 +76,5 @@
 #define BOOL_INT8						int8_t
 #define BOOL_TRUE						1
 #define BOOL_FALSE						0
+#define INVALID_INPUT               	(-10000)
 

@@ -88,12 +88,12 @@ typedef enum {
 #endif
 
 typedef struct {
-	int16_t val;
-	uint16_t num;			/* loop number */
-	uint16_t interval;		/* interval in ms between each message submission */
-	uint16_t option;
 	msg_mode_t mode;
 	timer_t timer_id;
+	int32_t val;
+	uint32_t num;			/* loop number */
+	uint32_t interval;		/* interval in ms between each message submission */
+	uint32_t option;
 	int timer_count;
 	BOOL_INT32 timer_mark;
 } msg_opt_t;
@@ -119,9 +119,9 @@ struct canfdnode {
 typedef struct {
 	uint32_t mid;						/* message ID */
 	char *name;							/* message name */
-	uint16_t interval;					/* interval time in ms of continuous submission of this message, 0 is infinite */
-	uint16_t num;						/* number of continuous submission of this message */
-	uint16_t value;						/* value of this message */
+	uint32_t interval;					/* interval time in ms of continuous submission of this message, 0 is infinite */
+	uint32_t num;						/* number of continuous submission of this message */
+	uint32_t value;						/* value of this message */
 	uint8_t data[CAN_VEH_MSG_LEN];		/* data in frame of this message */
 } canDataInfo_type;
 
@@ -134,14 +134,14 @@ struct id4DataVeh_type {
     float tempInside;
     float tempOutside;
     float humidity;
-    uint16_t fsh;
-    uint16_t countMsg;
+    uint32_t fsh;
+    uint32_t countMsg;
     BOOL_INT32 speedQbit;
     BOOL_INT32 tempOutsideQbit;
 };
 
 /* These are the data sent from tester */
-#define CAN_DATA_OUT_LEN     MEM_ALIGN_SIZE(sizeof(struct id4DataOut_type))
+#define CAN_DATA_OUT_LEN     			(uint32_t)(MEM_ALIGN_SIZE(sizeof(struct id4DataOut_type)))
 union dataOut_type {
     struct id4DataOut_type {
         long int freq;
@@ -169,7 +169,7 @@ union dataOut_type {
     uint8_t byte[CAN_DATA_OUT_LEN];
 };
 
-#define CAN_DATA_OUT_COMMAND_LEN     MEM_ALIGN_SIZE(sizeof(struct id4DataOut_command_type))
+#define CAN_DATA_OUT_COMMAND_LEN     (uint32_t)(MEM_ALIGN_SIZE(sizeof(struct id4DataOut_command_type)))
 union dataOut_command_type {
     struct id4DataOut_command_type {
         uint16_t debugValue;
@@ -181,14 +181,14 @@ union dataOut_command_type {
     uint8_t byte[CAN_DATA_OUT_COMMAND_LEN];
 };
 
-#define CAN_DATA_OUT_CFG_PETD_LEN     MEM_ALIGN_SIZE(sizeof(struct petdConfig))
+#define CAN_DATA_OUT_CFG_PETD_LEN     (uint32_t)(MEM_ALIGN_SIZE(sizeof(struct petdConfig)))
 union dataOut_cfgPetd_type {
 	struct petdConfig data;
     uint16_t word[CAN_DATA_OUT_CFG_PETD_LEN/2U];
     uint8_t byte[CAN_DATA_OUT_CFG_PETD_LEN];
 };
 
-#define CAN_DATA_OUT_CFG_PWM_LEN     MEM_ALIGN_SIZE(sizeof(struct pwmConfig))
+#define CAN_DATA_OUT_CFG_PWM_LEN     (uint32_t)(MEM_ALIGN_SIZE(sizeof(struct pwmConfig)))
 union dataOut_cfgPwm_type {
 	struct pwmConfig data;
     uint16_t word[CAN_DATA_OUT_CFG_PWM_LEN/2U];
@@ -196,7 +196,7 @@ union dataOut_cfgPwm_type {
 };
 
 /* These are the data sent out to tester */
-#define CAN_DATA_IN_LEN    MEM_ALIGN_SIZE(sizeof(struct id4DataIn_type))
+#define CAN_DATA_IN_LEN    			(uint32_t)(MEM_ALIGN_SIZE(sizeof(struct id4DataIn_type)))
 union dataIn_type {
     struct id4DataIn_type {
         BOOL_INT16 updated;
@@ -225,7 +225,7 @@ union dataIn_type {
     uint8_t byte[CAN_DATA_IN_LEN];
 };
 
-#define CAN_DATA_IN_CFG_LEN    MEM_ALIGN_SIZE(sizeof(struct id4DataIn_Cfg_type))
+#define CAN_DATA_IN_CFG_LEN    			(uint32_t)(MEM_ALIGN_SIZE(sizeof(struct id4DataIn_Cfg_type)))
 union dataIn_Cfg_type {
     struct id4DataIn_Cfg_type {
         BOOL_INT16 updated;
@@ -236,7 +236,7 @@ union dataIn_Cfg_type {
     uint8_t byte[CAN_DATA_IN_CFG_LEN];
 };
 
-#define CAN_DATA_IN_CTL_LEN    MEM_ALIGN_SIZE(sizeof(struct id4DataIn_Ctl_type))
+#define CAN_DATA_IN_CTL_LEN    			(uint32_t)(MEM_ALIGN_SIZE(sizeof(struct id4DataIn_Ctl_type)))
 union dataIn_Ctl_type {
     struct id4DataIn_Ctl_type {
         BOOL_INT16 updated;
@@ -248,7 +248,7 @@ union dataIn_Ctl_type {
     uint8_t byte[CAN_DATA_IN_CTL_LEN];
 };
 
-#define CAN_DATA_IN_ENV_LEN    MEM_ALIGN_SIZE(sizeof(struct id4DataIn_Env_type))
+#define CAN_DATA_IN_ENV_LEN    			(uint32_t)(MEM_ALIGN_SIZE(sizeof(struct id4DataIn_Env_type)))
 union dataIn_Env_type {
     struct id4DataIn_Env_type {
         BOOL_INT16 updated;
@@ -264,7 +264,7 @@ union dataIn_Env_type {
     uint8_t byte[CAN_DATA_IN_ENV_LEN];
 };
 
-#define CAN_DATA_IN_RES_LEN    MEM_ALIGN_SIZE(sizeof(struct id4DataIn_Res_type))
+#define CAN_DATA_IN_RES_LEN    			(uint32_t)(MEM_ALIGN_SIZE(sizeof(struct id4DataIn_Res_type)))
 union dataIn_Res_type {
     struct id4DataIn_Res_type {
         BOOL_INT16 updated;
@@ -278,7 +278,7 @@ union dataIn_Res_type {
 };
 
 /* These are the logged data sent out to tester */
-#define CAN_DATA_LOG_LEN    MEM_ALIGN_SIZE(sizeof(struct id4DataLog_type))
+#define CAN_DATA_LOG_LEN    			(uint32_t)(MEM_ALIGN_SIZE(sizeof(struct id4DataLog_type)))
 union dataLog_type {
     struct id4DataLog_type {
         uint16_t value1;
@@ -294,7 +294,7 @@ union dataLog_type {
 #endif	/* PROJECT_ID4 */
 
 #ifdef PROJECT_C3
-#define CAN_DATA_IN_LEN    sizeof(struct C3DataVeh_type)
+#define CAN_DATA_IN_LEN    				(uint32_t)(MEM_ALIGN_SIZE(sizeof(struct C3DataVeh_type)))
 typedef union dataIn_type {
     struct C3DataVeh_type {
         uint16_t voltage;
@@ -315,7 +315,7 @@ typedef union dataIn_type {
 #endif	/* PROJECT_C3 */
 
 #ifdef PROJECT_NAVY
-#define CAN_DATA_OUT_LEN     sizeof(struct navyDataOut) //8//
+#define CAN_DATA_OUT_LEN     			(uint32_t)(MEM_ALIGN_SIZE(sizeof(struct navyDataOut))) //8//
 union dataOut {
     struct navyDataOut {
         uint16_t mode;
@@ -331,7 +331,7 @@ union dataOut {
     uint8_t byte[CAN_DATA_OUT_LEN];
 };
 
-#define CAN_DATA_IN_LEN    sizeof(struct navyDataIn) //16
+#define CAN_DATA_IN_LEN    				(uint32_t)(MEM_ALIGN_SIZE(sizeof(struct navyDataIn))) //16
 union dataIn {
     struct navyDataIn {
         uint16_t mode;
@@ -351,7 +351,7 @@ union dataIn {
     uint8_t byte[CAN_DATA_IN_LEN];
 };
 
-#define CAN_DATA_LOG_LEN    sizeof(struct navyDataLog)
+#define CAN_DATA_LOG_LEN    			(uint32_t)(MEM_ALIGN_SIZE(sizeof(struct navyDataLog)))
 union dataLog {
     struct navyDataLog {
         BOOL_INT16 updated;
@@ -404,11 +404,10 @@ struct canfdData *msg_canfd_getData(void);
 void msg_canfd_print(void);
 
 /* Functions to implement CANFD tasks */
-void msg_canfd_send_veh(uint8_t msgno, uint16_t value);
-void msg_canfd_send_tester(int cmd);
-int16_t msg_canfd_receive_isr(void);
-int16_t msg_canfd_rcvCanLog(void);
-int16_t msg_canfd_rcvCanConfigs(void);
+void msg_canfd_send_veh(msg_mode_t msgno, int32_t value);
+void msg_canfd_send_tester(uint32_t cmd);
+int32_t msg_canfd_rcvCanLog(void);
+int32_t msg_canfd_rcvCanConfigs(void);
 void msg_canfd_receive(void);
 
 /* Function to initialize CAN FD device */

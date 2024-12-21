@@ -29,9 +29,95 @@ union time_bcd_t {
     uint16_t hword;
 };
 
-void print_array_byte(uint8_t *dat, uint16_t num)
+void clear_stdin(void)
 {
-    uint16_t i;
+    // keep reading 1 more char as long as the end of the stream, indicated by the newline char,
+    // has NOT been reached
+    while (1)
+    {
+        int c = getc(stdin);
+        if (c == EOF || c == '\n')
+        {
+            break;
+        }
+    }
+}
+
+char get_a_char(void)
+{
+	char ch;
+
+	scanf("%c", &ch);
+
+	/* clean the last ENTER after inputting a number. Any API to clear std io? -> write own */
+	if('\r' == ch) scanf("%c", &ch);
+
+	return ch;
+}
+
+/* Function to get an integer allowing negative value
+ * return INVALID_INPUT if failed to acquire a number
+ * */
+int32_t get_a_number(const char *msg)
+{
+    int hitkey = 0;
+    unsigned int digit = 0;
+    int number = 0;
+    unsigned int count = 0;
+    int sign = 1;
+
+#if 0
+    printf("%s: ", msg);
+    sign = scanf("%d", &number);
+    if(1 != sign) {
+    	number = INVALID_INPUT;
+    }
+    return number;
+#else
+    printf("\r\n Please input %s: ", msg);
+    hitkey = getc(stdin);
+    if('\n' == hitkey)
+    {
+        return INVALID_INPUT;
+    }
+    else if ('-' == hitkey)
+    {
+        sign = -1;
+    }
+    else if(('0'<=hitkey) && ('9'>=hitkey))
+    {
+        digit = hitkey - '0';
+        number = digit;
+    }
+
+    do{
+          hitkey = getc(stdin);
+          count++;
+          if(('0'<=hitkey) && ('9'>=hitkey))
+          {
+              digit = hitkey - '0';
+              number = number*10 + digit;
+          }
+    } while(('\n' != hitkey) && (1000000 > number));
+
+    return (number * sign);
+#endif
+}
+
+/* Function to get number from Stdio inputs and display the result*/
+int32_t get_a_number_print(const char *msg)
+{
+    int number;
+
+    number = get_a_number(msg);
+    iPrintf("You input %d\r\n", number);
+
+    return number;
+}
+
+void print_array_byte(uint8_t *dat, uint32_t num)
+{
+    uint32_t i;
 
     for(i=0; i<num; i++)
     {
@@ -41,9 +127,9 @@ void print_array_byte(uint8_t *dat, uint16_t num)
     return;
 }
 
-void print_array(uint16_t *dat, uint16_t num)
+void print_array(uint16_t *dat, uint32_t num)
 {
-    uint16_t i;
+    uint32_t i;
 
     for(i=0; i<num; i++)
     {
@@ -73,7 +159,7 @@ BOOL_INT32 dec2hex(uint32_t n, char *ans)
     // ch variable to store character temporarily
     char ch;
     // i variable to count
-    uint16_t i = 0;
+    uint32_t i = 0;
 
     if(0 == n)
     {
@@ -83,7 +169,7 @@ BOOL_INT32 dec2hex(uint32_t n, char *ans)
 
     while (n != 0) {
         // remainder variable to store remainder
-        uint16_t rem = 0;
+        uint32_t rem = 0;
 
         // storing remainder in rem variable.
         rem = n % 16;
@@ -103,7 +189,7 @@ BOOL_INT32 dec2hex(uint32_t n, char *ans)
 
     // reversing the ans string to get the final result
     i = 0;
-    uint16_t j;
+    uint32_t j;
     j = strlen(ans) - 1;
     while(i < j)
     {

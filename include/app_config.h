@@ -28,13 +28,13 @@ struct powerConfig {
     BOOL_INT16 checkVoltage;
     BOOL_INT16 checkCurrent;
     BOOL_INT16 configUpdated;
-};
+}  __attribute__ ((aligned (MEM_ALIGNMENT)));
 
 /* PWM configuration
  * must be in the same sequence as the firmware in the control board
  * as the data passing is handled as a whole
  */
-#define PWM_CONFIG_LEN				MEM_ALIGN_SIZE(sizeof(struct pwmConfig))
+#define PWM_CONFIG_LEN				(uint32_t)(MEM_ALIGN_SIZE(sizeof(struct pwmConfig)))
 struct pwmConfig {
 	BOOL_INT16 configUpdated;		/* C2000 bool size is 2 bytes. So using 16-bit is a must to match */
 	uint32_t freq;
@@ -49,13 +49,13 @@ struct pwmConfig {
     uint16_t compensation_lik;      // parameter for calculating compensation falling edge in pH (1000uH)
     uint16_t compensation_n;        // parameter for calculating compensation falling edge
     uint16_t compensation_rload;    // parameter for calculating compensation falling edge in mOhms
-};
+} __attribute__ ((aligned (MEM_ALIGNMENT)));
 
 /* PETD configuration
  * must be in the same sequence as the firmware in the control board
  * as the data passing is handled as a whole
  */
-#define PETD_CONFIG_LEN				MEM_ALIGN_SIZE(sizeof(struct petdConfig))
+#define PETD_CONFIG_LEN				(uint32_t)(MEM_ALIGN_SIZE(sizeof(struct petdConfig)))
 struct petdConfig {
 	BOOL_INT16 configUpdated;		/* add 16-bit to be aligned with the sender's structure */
     int16_t VoutTarget;             /* Desired target voltage in volts */
@@ -72,7 +72,7 @@ struct petdConfig {
     int16_t modeControl;            /* true: close loop control; false: open loop control */
     int16_t psTarget;               /* final phase shift for open loop control in degree */
     uint16_t addRuntime;            /* Forced extra run time in seconds based on calculated run time */
-} __attribute__ ((aligned (8)));
+} __attribute__ ((aligned (MEM_ALIGNMENT)));
 
 int app_config();
 

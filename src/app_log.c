@@ -34,7 +34,7 @@
  * Block 2: errors
  * Block 3: data
  */
-#define LOG_CONFIGS_SIZE                (sizeof(struct petdConfig) + sizeof(struct pwmConfig)) /* number of 16bit words for configuration */
+#define LOG_CONFIGS_SIZE                (PETD_CONFIG_LEN + PWM_CONFIG_LEN) /* number of 16bit words for configuration */
 
 /* Address on FRAM page 2 in bytes */
 #define LOG_ADDR_CONFIGS                FRAM_ADDR_P2
@@ -57,7 +57,7 @@ union sysConfigsUnion {
 
 struct sysConfigsLog {
     union sysConfigsUnion configsLog;
-    uint16_t logCount;
+    uint32_t logCount;
     BOOL_INT32 writeEnabled;
 };
 
@@ -65,7 +65,7 @@ struct sysConfigsLog {
 struct debugLog {
 	BOOL_INT32 writeEnabled;
 	BOOL_INT32 buffUpdated;
-    uint16_t logCount;
+    uint32_t logCount;
     uint16_t buff_value[LOG_BUFF_SIZE];
 #ifdef DATA_LOG_TIME
     uint16_t buff_value1[LOG_BUFF_SIZE];
@@ -149,7 +149,7 @@ void dataLogfram_write(void)
     /* Log the buff data then */
     if(framdataLogger.writeEnabled)
     {
-        static uint16_t number = 0;
+        static uint32_t number = 0;
 
         if(0 == number)
         {
@@ -234,9 +234,9 @@ inline void dataLogbuff_disable()               { logBuff.writeEnabled = BOOL_FA
 inline void dataLogbuff_clearfilled()           { logBuff.buffUpdated = BOOL_FALSE; }
 
 /* Function to read RAM in word */
-BOOL_INT32 dataLogbuff_print_word(uint16_t addr, uint16_t num)
+BOOL_INT32 dataLogbuff_print_word(uint32_t addr, uint32_t num)
 {
-    uint16_t i;
+    uint32_t i;
 
     for(i=0; i<num; i++)
     {
@@ -252,9 +252,9 @@ BOOL_INT32 dataLogbuff_print_word(uint16_t addr, uint16_t num)
 }
 
 /* Function to read RAM in byte */
-BOOL_INT32 dataLogbuff_print_byte(uint16_t addr, uint16_t num)
+BOOL_INT32 dataLogbuff_print_byte(uint32_t addr, uint32_t num)
 {
-    uint16_t i;
+    uint32_t i;
     uint16_t value = 0;
 
     for(i=0; i<num; i++)
@@ -280,7 +280,7 @@ BOOL_INT32 dataLogbuff_print_byte(uint16_t addr, uint16_t num)
  * */
 uint16_t dataLogbuff_read(void)
 {
-    static uint16_t count = 0;
+    static uint32_t count = 0;
     static uint16_t value;
 
     if(LOG_BUFF_SIZE * 2 >= count)
@@ -368,7 +368,7 @@ BOOL_INT32 dataLogfram_configsWrite(void)
         }
         else
         {   /* write the configs */
-            static uint16_t number = 0;
+            static uint32_t number = 0;
             value = logBuf_configs.configsLog.word_16bit[number];
             dataLogger_writeWord(addr_start + number * 2, 1, &value);
 
@@ -415,7 +415,7 @@ BOOL_INT32 dataLogfram_configDisplay(void)
     }
 
     /* read the config value */
-    uint16_t i;
+    uint32_t i;
     addr_start += 2;
     for(i=0; i<LOG_CONFIGS_SIZE; i++)
     {
@@ -499,7 +499,7 @@ BOOL_INT32 dataLogfram_errorWrite(void)
         }
         else
         {   /* write error info */
-            static uint16_t number = 0;
+            static uint32_t number = 0;
 
             value = logBuf_error.errorLog.word_16bits[number];
             dataLogger_writeWord(addr_start + logBuf_error.logPosi*LOG_ERROR_SIZE*2 + number*2, 1, &value);
@@ -594,8 +594,8 @@ BOOL_INT32 dataLogfram_errorDisplay(void)
      * if total error number is smaller than or equal to LOG_ERROR_NUMBER, read from 0 to errorCount
      * if total error number is larger than LOG_ERROR_NUMBER, read from logPosi+1 to logPosi
      * */
-    uint16_t i, j;
-    uint16_t pStart, num;
+    uint32_t i, j;
+    uint32_t pStart, num;
     if(logBuf_error.errorCount <= LOG_ERROR_NUMBER)
     {   /* it is still in the ring, so maximum is errorCount and start from 0 */
         pStart = 0;
@@ -611,7 +611,7 @@ BOOL_INT32 dataLogfram_errorDisplay(void)
     addr_start += 2;
     for(j=0; j<num; j++)
     {
-        uint16_t posi;
+        uint32_t posi;
         posi = (pStart+j) % LOG_ERROR_NUMBER;
         for(i=0; i<LOG_ERROR_SIZE; i++)
         {
@@ -632,13 +632,13 @@ inline void dataLogfram_writeEnable_buff(void)     { framdataLogger.writeEnabled
 /* Function to write words from FRAM to logBuff */
 BOOL_INT32 dataLogfram_write2buff_word(void)
 {
-    uint16_t i;
+    uint32_t i;
     BOOL_INT32 status = BOOL_TRUE;
     uint16_t value = 0;
     uint32_t addr_temp = 0;
 
     uint32_t addr = 0;
-    uint16_t num = LOG_BUFF_SIZE;
+    uint32_t num = LOG_BUFF_SIZE;
 
     for(i=0; i<num; i++)
     {
@@ -646,10 +646,10 @@ BOOL_INT32 dataLogfram_write2buff_word(void)
 #ifdef LOG_IN_FRAM
         framdataLogger.dataRom->frami2cDesc.slave_address = dataLog_getSlaveaddr(addr_temp);
         addr_temp = addr_temp & (FRAM_SIZE/2-1);
-        status = framRead_Word(framdataLogger.dataRom, (uint16_t)addr_temp, &value);
+        status = framRead_Word(framdataLogger.dataRom, addr_temp, &value);
 #endif
 #ifdef LOG_IN_FILE
-        status = fileRead_Word(framdataLogger.fp, (uint16_t)addr_temp, &value);
+        status = fileRead_Word(framdataLogger.fp, addr_temp, &value);
 #endif
         if(status)
         {
@@ -665,9 +665,9 @@ BOOL_INT32 dataLogfram_write2buff_word(void)
 }
 
 /* Function to write word from logBuff to FRAM */
-BOOL_INT32 dataLogfram_readfmbuff_word(uint32_t addr, uint16_t num_No)
+BOOL_INT32 dataLogfram_readfmbuff_word(uint32_t addr, uint32_t num_No)
 {
-    uint16_t i;
+    uint32_t i;
     uint16_t Value = 0;
 
     i = num_No;
@@ -680,9 +680,9 @@ BOOL_INT32 dataLogfram_readfmbuff_word(uint32_t addr, uint16_t num_No)
 }
 
 /* Function to write N words (up to 4) from logBuff to FRAM */
-BOOL_INT32 dataLogfram_readfmbuff_wordn(uint32_t addr, uint16_t num_No)
+BOOL_INT32 dataLogfram_readfmbuff_wordn(uint32_t addr, uint32_t num_No)
 {
-    uint16_t i;
+    uint32_t i;
     uint16_t value = 0, value1 = 0, value2 = 0, value3 = 0;
 
     i = num_No;
@@ -705,9 +705,9 @@ BOOL_INT32 dataLogfram_readfmbuff_wordn(uint32_t addr, uint16_t num_No)
     return BOOL_TRUE;
 }
 
-BOOL_INT32 dataLogger_writeByte(uint32_t addr, uint16_t num, uint16_t *data)
+BOOL_INT32 dataLogger_writeByte(uint32_t addr, uint32_t num, uint16_t *data)
 {
-    uint16_t i;
+    uint32_t i;
     BOOL_INT32 status = BOOL_TRUE;
     uint32_t addr_temp = 0;
 
@@ -722,10 +722,10 @@ BOOL_INT32 dataLogger_writeByte(uint32_t addr, uint16_t num, uint16_t *data)
 #ifdef LOG_IN_FRAM
         framdataLogger.dataRom->frami2cDesc.slave_address = dataLog_getSlaveaddr(addr_temp);
         addr_temp = addr_temp & (FRAM_SIZE/2-1);
-        status = framWrite_Byte(framdataLogger.dataRom, (uint16_t)addr_temp, *(data + i));
+        status = framWrite_Byte(framdataLogger.dataRom, addr_temp, *(data + i));
 #endif
 #ifdef LOG_IN_FILE
-        status = fileWrite_Byte(framdataLogger.fp, (uint16_t)addr_temp, *(data + i));
+        status = fileWrite_Byte(framdataLogger.fp, addr_temp, *(data + i));
 #endif
 
         if(!status)
@@ -741,9 +741,9 @@ BOOL_INT32 dataLogger_writeByte(uint32_t addr, uint16_t num, uint16_t *data)
     return status;
 }
 
-BOOL_INT32 dataLogger_writeWord(uint32_t addr, uint16_t num, uint16_t *data)
+BOOL_INT32 dataLogger_writeWord(uint32_t addr, uint32_t num, uint16_t *data)
 {
-    uint16_t i;
+    uint32_t i;
     BOOL_INT32 status = BOOL_TRUE;
     uint32_t addr_temp = 0;
 
@@ -758,10 +758,10 @@ BOOL_INT32 dataLogger_writeWord(uint32_t addr, uint16_t num, uint16_t *data)
 #ifdef LOG_IN_FRAM
         framdataLogger.dataRom->frami2cDesc.slave_address = dataLog_getSlaveaddr(addr_temp);
         addr_temp = addr_temp & (FRAM_SIZE/2-1);
-        status = framWrite_Word(framdataLogger.dataRom, (uint16_t)addr_temp, *data + i);
+        status = framWrite_Word(framdataLogger.dataRom, addr_temp, *data + i);
 #endif
 #ifdef LOG_IN_FILE
-        status = fileWrite_Word(framdataLogger.fp, (uint16_t)addr_temp, *data + i);
+        status = fileWrite_Word(framdataLogger.fp, addr_temp, *data + i);
 #endif
 
         if(!status)
@@ -778,9 +778,9 @@ BOOL_INT32 dataLogger_writeWord(uint32_t addr, uint16_t num, uint16_t *data)
 }
 
 /* Function to read word from FRAM */
-BOOL_INT32 dataLogger_readWord(uint32_t addr, uint16_t num, uint16_t *data)
+BOOL_INT32 dataLogger_readWord(uint32_t addr, uint32_t num, uint16_t *data)
 {
-    uint16_t i;
+    uint32_t i;
     BOOL_INT32 status = BOOL_TRUE;
     uint16_t value = 0;
     uint32_t addr_temp = 0;
@@ -791,10 +791,10 @@ BOOL_INT32 dataLogger_readWord(uint32_t addr, uint16_t num, uint16_t *data)
 #ifdef LOG_IN_FRAM
         framdataLogger.dataRom->frami2cDesc.slave_address = dataLog_getSlaveaddr(addr_temp);
         addr_temp = addr_temp & (FRAM_SIZE/2-1);
-        status = framRead_Word(framdataLogger.dataRom, (uint16_t)addr_temp, &value);
+        status = framRead_Word(framdataLogger.dataRom, addr_temp, &value);
 #endif
 #ifdef LOG_IN_FILE
-        status = fileRead_Word(framdataLogger.fp, (uint16_t)addr_temp, &value);
+        status = fileRead_Word(framdataLogger.fp, addr_temp, &value);
 #endif
 
         if(status)
@@ -811,9 +811,9 @@ BOOL_INT32 dataLogger_readWord(uint32_t addr, uint16_t num, uint16_t *data)
 }
 
 /* Function to print N words (up to 4) from FRAM */
-BOOL_INT32 dataLogger_print_wordn(uint32_t addr, uint16_t num)
+BOOL_INT32 dataLogger_print_wordn(uint32_t addr, uint32_t num)
 {
-    uint16_t i;
+    uint32_t i;
     BOOL_INT32 status1 = BOOL_TRUE, status2 = BOOL_TRUE, status3 = BOOL_TRUE, status4 = BOOL_TRUE;
     uint16_t value1 = 0, value2 = 0, value3 = 0, value4 = 0;
     uint32_t addr_temp = 0;
@@ -824,40 +824,40 @@ BOOL_INT32 dataLogger_print_wordn(uint32_t addr, uint16_t num)
 #ifdef LOG_IN_FRAM
         framdataLogger.dataRom->frami2cDesc.slave_address = dataLog_getSlaveaddr(addr_temp);
         addr_temp = addr_temp & (FRAM_SIZE/2-1);
-        status1 = framRead_Word(framdataLogger.dataRom, (uint16_t)addr_temp, &value1);
+        status1 = framRead_Word(framdataLogger.dataRom, addr_temp, &value1);
 #endif
 #ifdef LOG_IN_FILE
-        status1 = fileRead_Word(framdataLogger.fp, (uint16_t)addr_temp, &value1);
+        status1 = fileRead_Word(framdataLogger.fp, addr_temp, &value1);
 #endif
 
         addr_temp = addr + i * 8 + 2;
 #ifdef LOG_IN_FRAM
         framdataLogger.dataRom->frami2cDesc.slave_address = dataLog_getSlaveaddr(addr_temp);
         addr_temp = addr_temp & (FRAM_SIZE/2-1);
-        status2 = framRead_Word(framdataLogger.dataRom, (uint16_t)addr_temp, &value2);
+        status2 = framRead_Word(framdataLogger.dataRom, addr_temp, &value2);
 #endif
 #ifdef LOG_IN_FILE
-        status2 = fileRead_Word(framdataLogger.fp, (uint16_t)addr_temp, &value2);
+        status2 = fileRead_Word(framdataLogger.fp, addr_temp, &value2);
 #endif
 
         addr_temp = addr + i * 8 + 4;
 #ifdef LOG_IN_FRAM
         framdataLogger.dataRom->frami2cDesc.slave_address = dataLog_getSlaveaddr(addr_temp);
         addr_temp = addr_temp & (FRAM_SIZE/2-1);
-        status3 = framRead_Word(framdataLogger.dataRom, (uint16_t)addr_temp, &value3);
+        status3 = framRead_Word(framdataLogger.dataRom, addr_temp, &value3);
 #endif
 #ifdef LOG_IN_FILE
-        status3 = fileRead_Word(framdataLogger.fp, (uint16_t)addr_temp, &value3);
+        status3 = fileRead_Word(framdataLogger.fp, addr_temp, &value3);
 #endif
 
         addr_temp = addr + i * 8 + 6;
 #ifdef LOG_IN_FRAM
         framdataLogger.dataRom->frami2cDesc.slave_address = dataLog_getSlaveaddr(addr_temp);
         addr_temp = addr_temp & (FRAM_SIZE/2-1);
-        status4 = framRead_Word(framdataLogger.dataRom, (uint16_t)addr_temp, &value4);
+        status4 = framRead_Word(framdataLogger.dataRom, addr_temp, &value4);
 #endif
 #ifdef LOG_IN_FILE
-        status4 = fileRead_Word(framdataLogger.fp, (uint16_t)addr_temp, &value4);
+        status4 = fileRead_Word(framdataLogger.fp, addr_temp, &value4);
 #endif
 
         if(status1 & status2 & status3 & status4)
@@ -883,9 +883,9 @@ BOOL_INT32 dataLogger_print_wordn(uint32_t addr, uint16_t num)
 }
 
 /* Function to print word from FRAM */
-BOOL_INT32 dataLogger_print_word(uint32_t addr, uint16_t num)
+BOOL_INT32 dataLogger_print_word(uint32_t addr, uint32_t num)
 {
-    uint16_t i;
+    uint32_t i;
     BOOL_INT32 status = BOOL_TRUE;
     uint16_t value = 0;
     uint32_t addr_temp = 0;
@@ -896,10 +896,10 @@ BOOL_INT32 dataLogger_print_word(uint32_t addr, uint16_t num)
 #ifdef LOG_IN_FRAM
         framdataLogger.dataRom->frami2cDesc.slave_address = dataLog_getSlaveaddr(addr_temp);
         addr_temp = addr_temp & (FRAM_SIZE/2-1);
-        status = framRead_Word(framdataLogger.dataRom, (uint16_t)addr_temp, &value);
+        status = framRead_Word(framdataLogger.dataRom, addr_temp, &value);
 #endif
 #ifdef LOG_IN_FILE
-        status = fileRead_Word(framdataLogger.fp, (uint16_t)addr_temp, &value);
+        status = fileRead_Word(framdataLogger.fp, addr_temp, &value);
 #endif
 
         if(status)
@@ -916,9 +916,9 @@ BOOL_INT32 dataLogger_print_word(uint32_t addr, uint16_t num)
 }
 
 /* Function to print byte from FRAM */
-BOOL_INT32 dataLogger_print_byte(uint32_t addr, uint16_t num)
+BOOL_INT32 dataLogger_print_byte(uint32_t addr, uint32_t num)
 {
-    uint16_t i;
+    uint32_t i;
     BOOL_INT32 status = BOOL_TRUE;
     uint16_t value = 0;
     uint32_t addr_temp = 0;
@@ -929,10 +929,10 @@ BOOL_INT32 dataLogger_print_byte(uint32_t addr, uint16_t num)
 #ifdef LOG_IN_FRAM
         framdataLogger.dataRom->frami2cDesc.slave_address = dataLog_getSlaveaddr(addr_temp);
         addr_temp = addr_temp & (FRAM_SIZE/2-1);
-        status = framRead_Byte(framdataLogger.dataRom, (uint16_t)addr_temp, &value);
+        status = framRead_Byte(framdataLogger.dataRom, addr_temp, &value);
 #endif
 #ifdef LOG_IN_FILE
-        status = fileRead_Word(framdataLogger.fp, (uint16_t)addr_temp, &value);
+        status = fileRead_Word(framdataLogger.fp, addr_temp, &value);
 #endif
 
         if(status)

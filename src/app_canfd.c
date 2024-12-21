@@ -30,7 +30,7 @@
 #endif
 /* ID4 messages */
 #define BMS_20                      0x0CF			/* Voltage */
-//#define BMS_22                      0x12DD54D1		/* State of Charge */
+#define BMS_22                      0x12DD54D1		/* State of Charge */
 #define LiSi_01                     0x16A954BB		/* SW on dashboard */
 #define ESP_21                      0x0FD			/* Speed */
 #define KLIMA_03                    0x66E			/* Inside Temp. */
@@ -278,7 +278,7 @@ uint32_t canfd_DlcToDataBytes(CAN_DLC dlc)
     return dataBytesInObject;
 }
 
-CAN_DLC canfd_DataBytesToDlc(uint8_t n)
+CAN_DLC canfd_DataBytesToDlc(uint32_t n)
 {
 	CAN_DLC dlc = CAN_DLC_0;
 
@@ -305,9 +305,9 @@ CAN_DLC canfd_DataBytesToDlc(uint8_t n)
     return dlc;
 }
 
-static int16_t canfd_messageReceive(uint32_t *mid, uint8_t *data, uint16_t *num)
+static int32_t canfd_messageReceive(uint32_t *mid, uint8_t *data, uint32_t *num)
 {
-    int16_t status = -100;
+    int32_t status = -100;
 #if (CAN_BUS_TYPE_CAN == CAN_BUS_TYPE)
     TPCANMsg Message;
     TPCANTimestamp ts;
@@ -334,10 +334,9 @@ static int16_t canfd_messageReceive(uint32_t *mid, uint8_t *data, uint16_t *num)
 #if (CAN_BUS_TYPE_CAN == CAN_BUS_TYPE)
 		*num = (uint16_t)(Message.LEN);
 #else
-		*num = (uint16_t)(canfd_DlcToDataBytes((CAN_DLC)Message.DLC));
+		*num = canfd_DlcToDataBytes((CAN_DLC)Message.DLC);
 #endif
-		int16_t i;
-		for(i=0; i<*num; i++)
+		for(uint32_t i=0; i<*num; i++)
 			data[i] = Message.DATA[i];
     }
 
@@ -345,7 +344,7 @@ static int16_t canfd_messageReceive(uint32_t *mid, uint8_t *data, uint16_t *num)
 }
 
 /* Function to send a message by calling another function to request send after loading message */
-static int16_t canfd_messageSend(uint32_t mid, uint8_t *data, uint16_t num)
+static int32_t canfd_messageSend(uint32_t mid, uint8_t *data, uint32_t num)
 {
 #if (CAN_BUS_TYPE_CAN == CAN_BUS_TYPE)
     TPCANMsg Message;
@@ -367,20 +366,20 @@ static int16_t canfd_messageSend(uint32_t mid, uint8_t *data, uint16_t num)
     Message.LEN = (BYTE)(canfd_DataBytesToDlc((uint8_t)num));
     ndPrintf("\r\nmid %8X, DLC %02d", Message.ID, Message.LEN);
 #else
-    Message.DLC = (BYTE)(canfd_DataBytesToDlc((uint8_t)num));
+    Message.DLC = (BYTE)(canfd_DataBytesToDlc(num));
     Message.MSGTYPE |= PCAN_MESSAGE_FD;
     Message.MSGTYPE |= PCAN_MESSAGE_BRS;
     ndPrintf("\r\nmid %8X, DLC %02d", Message.ID, Message.DLC);
 #endif
 
     // Initialize transmit data
-    uint8_t i;
+    uint32_t i;
     for(i=0; i<num; i++) {
         Message.DATA[i] = data[i];
     }
 
 	// transmit message
-	uint16_t count = 0;
+	i = 0;
 	do {
 #if (CAN_BUS_TYPE_CAN == CAN_BUS_TYPE)
 		Status = CAN_Write(PCAN_DEVICE, &Message);
@@ -389,30 +388,32 @@ static int16_t canfd_messageSend(uint32_t mid, uint8_t *data, uint16_t num)
 #endif
 		if(PCAN_ERROR_OK != Status) {
 			usleep(100);                  					// Check every 100us
-			count++;
+			i++;
 		}
 	}
-	while((PCAN_ERROR_OK != Status) && (200 > count));       			// Checking if message is sent for 20ms
+	while((PCAN_ERROR_OK != Status) && (200 > i));       			// Checking if message is sent for 20ms
 
 	/* check if the data are submitted successfully */
 	if (PCAN_ERROR_OK == Status) {
 		ndPrintf("\t[Sent] %X | 0x%02X", Message.ID, Message.DATA[0]);
+		return 0;
 	}
 	else {
 		ndPrintf("\t[Failed to send] %X | 0x%02X", Message.ID, Status);
+		return -1;
 	}
 
-    return (int16_t)Status;
+    //return (int32_t)Status;		// The value is not used other than judging 0 and non-0 in caller
 }
 
 struct canfdData *msg_canfd_getData(void)   { return &canfdio; }
 
 #ifdef PROJECT_NAVY
 /* Function to prepare data for CAN submission - Navy project */
-static int msg_canfd_prepare_navy(int option, uint32_t *mid, uint8_t *data, uint16_t *num)
+static int32_t msg_canfd_prepare_navy(int32_t option, uint32_t *mid, uint8_t *data, uint32_t *num)
 {
 	uint32_t temp = 0;
-	int ret = 0, i;
+	int32_t ret = 0;
 
 	switch(option)
 	{
@@ -448,9 +449,9 @@ static int msg_canfd_prepare_navy(int option, uint32_t *mid, uint8_t *data, uint
 
 
 /* Function to interpret the CANFD data for Farview project */
-static void msg_canfd_interpret_navy(uint32_t mid, uint8_t *data, uint16_t num)
+static void msg_canfd_interpret_navy(uint32_t mid, uint8_t *data, uint32_t num)
 {
-    uint8_t i, temp;
+    uint32_t i;
     float value;
 
     dbgPrintf_canfd("\n");
@@ -502,14 +503,14 @@ static void msg_canfd_interpret_navy(uint32_t mid, uint8_t *data, uint16_t num)
 void msg_canfd_print(void)
 {
     iPrintf("\n");
-    for(int i=0; i<CAN_DATA_IN_LEN; i++) {
+    for(uint32_t i=0; i<CAN_DATA_IN_LEN; i++) {
     	iPrintf("%d ", canfdio.id4DataIn.byte[i]);
     }
 }
 
 #ifdef PROJECT_CAN_ID4
 /* Function to prepare CANFD data for ID4 vehicle messages */
-static int msg_canfd_prepare_id4Veh(uint8_t msgno, int16_t value, uint8_t *data)
+static int32_t msg_canfd_prepare_id4Veh(msg_mode_t msgno, int32_t value, uint8_t *data)
 {
 	switch(msgno) {
 		case APP_OPT_DEV_SEND_FSH:
@@ -518,7 +519,7 @@ static int msg_canfd_prepare_id4Veh(uint8_t msgno, int16_t value, uint8_t *data)
 			}
 			break;
 		case APP_OPT_DEV_SEND_ATEMP:
-			data[2] = (value + 50 ) * 2;
+			data[2] = ((value + 50 ) * 2 ) & 0xFF;
 			break;
 		case APP_OPT_DEV_SEND_VOLTAGE:
 			value = value * 4;
@@ -542,7 +543,7 @@ static int msg_canfd_prepare_id4Veh(uint8_t msgno, int16_t value, uint8_t *data)
 			data[4] = value & 8;					/* take the lower 8 bits */
 			break;
 		case APP_OPT_DEV_SEND_CTEMP:
-			data[4] = (value + 50 ) * 2;
+			data[4] = ((value + 50 ) * 2) & 0xFF;
 			// When setting Cabin temperature as 1, FSH_Auto is set at the same time!
 			if(1 == value) {
 				data[6] = 0x08;
@@ -563,13 +564,13 @@ static int msg_canfd_prepare_id4Veh(uint8_t msgno, int16_t value, uint8_t *data)
 #if defined PROJECT_CAN_G3 || defined PROJECT_CAN_BZ4X
 /* Function to prepare CANFD data for G3 and BZ4X vehicle messages */
 #ifdef PROJECT_CAN_G3
-static int msg_canfd_prepare_g3Veh(uint8_t msgno, int16_t value, uint8_t *data)
+static int32_t msg_canfd_prepare_g3Veh(msg_mode_t msgno, int32_t value, uint8_t *data)
 #else
-static int msg_canfd_prepare_bz4xVeh(uint8_t msgno, int16_t value, uint8_t *data)
+static int32_t msg_canfd_prepare_bz4xVeh(msg_mode_t msgno, int32_t value, uint8_t *data)
 #endif
 {
 	float temp;
-	switch(msgno) {
+	switch((int)msgno) {
 		case APP_OPT_DEV_SEND_FSH:
 			if(0 != value) {
 				data[1] |= 0x20;
@@ -580,12 +581,12 @@ static int msg_canfd_prepare_bz4xVeh(uint8_t msgno, int16_t value, uint8_t *data
 			break;
 		case APP_OPT_DEV_SEND_ATEMP:
 			temp = (float)value / 160 * 256;
-			value = (int16_t)temp;
+			value = (int32_t)temp;
 			if(0 <= value) {
-				data[6] = value;
+				data[6] = value & 0xFF;
 			}
 			else {
-				data[6] = 0x100 + value;				/* two's complement */
+				data[6] = (0x100 + value) & 0xFF;				/* two's complement */
 			}
 			break;
 		case APP_OPT_DEV_SEND_VOLTAGE:
@@ -600,10 +601,10 @@ static int msg_canfd_prepare_bz4xVeh(uint8_t msgno, int16_t value, uint8_t *data
 			//not confirmed yet
 			break;
 		case APP_OPT_DEV_SEND_SPEED:
-			data[2] = value;
+			data[2] = value & 0xFF;
 			break;
 		case APP_OPT_DEV_SEND_CTEMP:
-			data[2] = value * 4 + 26;				/* (value + 6.5 ) / 0.25 */
+			data[2] = (value * 4 + 26) & 0xFF;				/* (value + 6.5 ) / 0.25 */
 			break;
 		case APP_OPT_DEV_SEND_HUMIDITY:
 			// not confirmed yet
@@ -616,10 +617,10 @@ static int msg_canfd_prepare_bz4xVeh(uint8_t msgno, int16_t value, uint8_t *data
 #endif
 
 /* Function to prepare CANFD data for ID4 project */
-static int msg_canfd_prepare_id4(int option, uint32_t *mid, uint8_t *data, uint16_t *num)
+static int32_t msg_canfd_prepare_id4(uint32_t option, uint32_t *mid, uint8_t *data, uint32_t *num)
 {
-	int ret = 0;
-	int i;
+	int32_t ret = 0;
+	uint32_t i;
 
 	switch(option) {
 		case COMMAND_C:
@@ -680,9 +681,9 @@ static int msg_canfd_prepare_id4(int option, uint32_t *mid, uint8_t *data, uint1
 	return ret;
 }
 
-static void msg_canfd_copyData(int8_t number, uint8_t length, uint8_t *source, uint8_t *dest)
+static void msg_canfd_copyData(uint32_t number, uint32_t length, uint8_t *source, uint8_t *dest)
 {
-	uint8_t i;
+	uint32_t i;
 	for(i=0; i<number; i++)
 	{
 		dbgPrintf_canfd(" %02X", *(source+i));
@@ -703,9 +704,9 @@ static void msg_canfd_copyData(int8_t number, uint8_t length, uint8_t *source, u
 
 /* Function to interpret the CANFD data for ID4 project */
 /* This is to interpret the messages from the tester */
-static void msg_canfd_interpret_id4(uint32_t mid, uint8_t *data, uint16_t num)
+static void msg_canfd_interpret_id4(uint32_t mid, uint8_t *data, uint32_t num)
 {
-    uint8_t i, temp;
+    uint32_t i, temp;
     float value;
 
     dbgPrintf_canfd("\n");
@@ -754,10 +755,10 @@ static void msg_canfd_interpret_id4(uint32_t mid, uint8_t *data, uint16_t num)
 
 /* Function to interpret the CANFD data for ID4 project */
 #if 0	/* This is to interpret the messages from the vehicle */
-static BOOL_INT32 msg_canfd_interpret_id4(uint32_t mid, uint8_t *data, uint16_t num)
+static BOOL_INT32 msg_canfd_interpret_id4(uint32_t mid, uint8_t *data, uint32_t num)
 {
 	BOOL_INT32 status = BOOL_TRUE;
-    uint16_t i, temp;
+    uint32_t i, temp;
     float value;
     union CANMSG_BMS20 canmsgBMS20;
     union CANMSG_BMS22 canmsgBMS22;
@@ -958,52 +959,22 @@ static BOOL_INT32 msg_canfd_interpret_id4(uint32_t mid, uint8_t *data, uint16_t 
 
     return status;
 }
-//#endif
-
-/* Function to receive CANFD message
- * FSH_Status is at byte #3 (0 - 7) in Klima16
- * @retVal  1:  FSH status
- *          0:  FSH status
- *          -1: not Klima16 message
- */
-int16_t msg_canfd_receive_isr(void)
-{
-    uint16_t msgData;
-    int16_t status;
-
-    status = canfd_messageReceive_Klima16(&msgData);
-
-    if(0 == status)
-    {   /* message received */
-        status = (msgData >> 4) & 0x3;
-        if(status)
-        {   /* FSH_status is 1 */
-            canfdio.id4Dataveh.fsh = BOOL_TRUE;
-        }
-        else
-        {   /* FSH_Status is 0 */
-            canfdio.id4Dataveh.fsh = BOOL_FALSE;
-        }
-    }
-
-    return status;
-}
 #endif	/* PROJECT_CAN_ID4 */
 
 #endif	/* PROJECT_ID4 */
 
 #ifdef PROJECT_C3
 /* Function to prepare CANFD data for C3 vehicle messages */
-static int msg_canfd_prepare_c3Veh(uint8_t msgno, int16_t value, uint8_t *data)
+static int32_t msg_canfd_prepare_c3Veh(msg_mode_t msgno, int32_t value, uint8_t *data)
 {
-	switch(msgno) {
+	switch((int)msgno) {
 		case APP_OPT_DEV_SEND_FSH:
 			if(0 != value) {
 				data[3] = 0x10;
 			}
 			break;
 		case APP_OPT_DEV_SEND_ATEMP:
-			data[2] = (value + 50 ) * 2;
+			data[2] = ((value + 50 ) * 2) & 0xFF;
 			break;
 		case APP_OPT_DEV_SEND_VOLTAGE:
 			value = value * 4;
@@ -1021,10 +992,10 @@ static int msg_canfd_prepare_c3Veh(uint8_t msgno, int16_t value, uint8_t *data)
 			data[4] = value & 8;					/* take the lower 8 bits */
 			break;
 		case APP_OPT_DEV_SEND_CTEMP:
-			data[4] = (value + 50 ) * 2;
+			data[4] = ((value + 50 ) * 2 ) & 0xFF;
 			break;
 		case APP_OPT_DEV_SEND_HUMIDITY:
-			data[5] = value * 2 + 1;
+			data[5] = (value * 2 + 1) & 0xFF;
 			break;
 		case APP_OPT_DEV_SEND_SYSID:
 			data[4] = (uint8_t)value;
@@ -1043,12 +1014,13 @@ static int msg_canfd_prepare_c3Veh(uint8_t msgno, int16_t value, uint8_t *data)
 #endif	/* PROJECT_C3 */
 
 /* Function to send data as from vehicle for test */
-void msg_canfd_send_veh(uint8_t msgno, uint16_t value)
+void msg_canfd_send_veh(msg_mode_t msgno, int32_t value)
 {
     uint32_t messageID = 0;
     uint8_t messageData[CAN_VEH_MSG_NUM];
-    uint16_t dataNumber = CAN_VEH_MSG_NUM;
-    int16_t i, status = 0;
+    uint32_t dataNumber = CAN_VEH_MSG_NUM;
+    uint32_t i;
+    int32_t status = 0;
 
     /* clear the data buffer */
     for(i=0; i<dataNumber; i++) { messageData[i] = 0;	}
@@ -1090,7 +1062,7 @@ void msg_canfd_send_veh(uint8_t msgno, uint16_t value)
     else
     {	/* submission done. Display the message! */
     	ndPrintf(" / Sent message: 0x%X, %d | ", messageID >> EID_BITS, dataNumber);
-		for(int i=0; i<dataNumber; i++)
+		for(i=0; i<dataNumber; i++)
 		{
 			ndPrintf(" %02X", messageData[i]);
 			if((0 == i%16) && (0 < i)) ndPrintf("\n\t");
@@ -1100,12 +1072,13 @@ void msg_canfd_send_veh(uint8_t msgno, uint16_t value)
 }
 
 /* Function to send data - Farview project */
-void msg_canfd_send_tester(int cmd)
+void msg_canfd_send_tester(uint32_t cmd)
 {
     uint32_t messageID = 0;
     uint8_t messageData[MAX_DATA_BYTES];
-    uint16_t dataNumber = 0;
-    int16_t i, status = 0;
+    uint32_t dataNumber = 0;
+    uint32_t i;
+    int32_t status = 0;
 
     /* clear the data buffer */
     for(i=0; i<MAX_DATA_BYTES; i++) { messageData[i] = 0;	}
@@ -1143,7 +1116,7 @@ void msg_canfd_send_tester(int cmd)
     else
     {	/* submission done. Display the message! */
     	ndPrintf(" / Sent message: 0x%X, %d | ", messageID >> EID_BITS, dataNumber);
-		for(int i=0; i<dataNumber; i++)
+		for(i=0; i<dataNumber; i++)
 		{
 			ndPrintf(" %02X", messageData[i]);
 			if((0 == i%16) && (0 < i)) ndPrintf("\n\t");
@@ -1153,12 +1126,12 @@ void msg_canfd_send_tester(int cmd)
 }
 
 #ifdef PROJECT_ID4
-int16_t msg_canfd_rcvCanConfigs(void)
+int32_t msg_canfd_rcvCanConfigs(void)
 {
     uint32_t messageID = 0;
     uint8_t messageData[MAX_DATA_BYTES];
-    uint16_t dataNumber;
-	int16_t status;
+    uint32_t dataNumber;
+	int32_t status;
 
 	do {
 		status = canfd_messageReceive(&messageID, messageData, &dataNumber);
@@ -1170,12 +1143,12 @@ int16_t msg_canfd_rcvCanConfigs(void)
 	return status;
 }
 
-int16_t msg_canfd_rcvCanLog(void)
+int32_t msg_canfd_rcvCanLog(void)
 {
     uint32_t messageID = 0;
     uint8_t messageData[MAX_DATA_BYTES];
-    uint16_t dataNumber;
-	int16_t status;
+    uint32_t dataNumber;
+	int32_t status;
 
 	do {
 		status = canfd_messageReceive(&messageID, messageData, &dataNumber);
@@ -1192,12 +1165,12 @@ void msg_canfd_receive(void)
 {
     uint32_t messageID = 0;
     uint8_t messageData[MAX_DATA_BYTES];
-    uint16_t dataNumber;
-    int16_t status;
+    uint32_t dataNumber;
+    int32_t status;
     static uint32_t timer_sec = 0;
     time_t now;
     struct tm *systime;
-    int i;
+    uint32_t i;
 
     time( &now );
     systime = localtime( &now );

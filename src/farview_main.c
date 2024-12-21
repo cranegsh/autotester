@@ -105,7 +105,7 @@ void delete_timer(timer_t *timerid);
  **************************************************************************************/
 int main(int argc, char *argv[]) {
 	int i, ret = 0;
-    unsigned char input_value = 0;
+    int input_value = 0;
 
     time_t time_ori;
 	app_opt_t opt;
@@ -308,7 +308,7 @@ int main(int argc, char *argv[]) {
 		/* send CAN messages */
 		if((0 == canfd_status) && (farview_data.dataCan->updated)) {
 			ndPrintf("\n Sending data '%c' to CAN ...", input_value);
-			msg_canfd_send_tester(input_value);
+			msg_canfd_send_tester((uint32_t)input_value);
 			ndPrintf("\n data '%c' to CAN sent!", input_value);
 			farview_data.dataCan->updated = BOOL_FALSE;
 		}
@@ -454,7 +454,7 @@ int main(int argc, char *argv[]) {
 int app_commandP(void)
 {
 	ndPrintf("\r\n print command sent out");
-	int status = msg_canfd_rcvCanConfigs();
+	int32_t status = msg_canfd_rcvCanConfigs();
 		if(0 == status) {
 			ndPrintf("\r\n Config received");
 		struct canfdData *temp;
@@ -483,7 +483,7 @@ int app_commandD_log(void)
 	for(;;) {
 		memset((void*)&farview_data.dataCan->id4DataLog.data, 0, CAN_DATA_LOG_LEN);
 		//iPrintf("\n Start receiving log from %d of %d - %d", index, number, farview_data.dataCan->id4DataLog.data.index);
-		int status = msg_canfd_rcvCanLog();
+		int32_t status = msg_canfd_rcvCanLog();
 		if(0 == status) {
 			/* check if it is a new data: temporary use,
 			 * not good enough for the second round

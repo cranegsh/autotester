@@ -60,16 +60,22 @@ extern struct debugData dData;
 #define iPrintf(...)
 #endif
 
+/* Function to interact with console */
+void clear_stdin(void);
+char get_a_char(void);
+int32_t get_a_number(const char *msg);
+int32_t get_a_number_print(const char *msg);
+
 /* Function to print an array of integers */
-void print_array_byte(uint8_t *dat, uint16_t num);
-void print_array(uint16_t *dat, uint16_t num);
+void print_array_byte(uint8_t *dat, uint32_t num);
+void print_array(uint16_t *dat, uint32_t num);
 
 /* Functions to convert integer and float to a string */
 void itostr(char* str, int32_t number, BOOL_INT32 flag);
 void ftostr(char* str, double number, float bit_num);
 
 /* Functions to calculate */
-uint32_t powerof10(uint8_t num);
+uint32_t powerof10(uint32_t num);
 float round_float(float x);
 
 /* Functions to convert decimal to hex string */
