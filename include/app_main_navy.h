@@ -10,6 +10,7 @@
 #define APPLICATION_CANFDCOMM_NAVY_H_
 
 #include "app_canfd.h"
+#include "app_main.h"
 
 #define CAN_DATA_OUT_LEN_NAVY     			(uint32_t)(MEM_ALIGN_SIZE(sizeof(struct navyDataOut))) //8//
 

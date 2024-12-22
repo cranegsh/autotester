@@ -636,7 +636,7 @@ void app_main_id4_print(void)
     iPrintf(" | R%5.3fOhms", (float)canfdio.id4DataIn_Res.data.res / 1000);
     iPrintf(" | tT%3.1f", (float)canfdio.id4DataIn_Res.data.tempTro / 100);
     iPrintf(" | Tru%ds", canfdio.id4DataIn_Cfg.data.petdCanConfig.runtime);
-    iPrintf(" | %dns\n", canfdio.id4DataIn_Cfg.data.pwmCanConfig.compensation_up3);
+    iPrintf(" | %dns", canfdio.id4DataIn_Cfg.data.pwmCanConfig.compensation_up3);
 }
 
 void app_main_id4_print_canVeh(int msgNum, int msgCount)
@@ -648,7 +648,7 @@ int app_main_id4_commandP(void)
 {
 	ndPrintf("\r\n print command sent out");
 	int32_t status = msg_canfd_rcvCanConfigs();
-		if(0 == status) {
+	if(0 == status) {
 			ndPrintf("\r\n Config received");
 		struct canfdData_id4 *temp;
 		temp = msg_canfd_getData_id4();

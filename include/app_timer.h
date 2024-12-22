@@ -9,6 +9,7 @@
 #define APP_TIMER_H_
 
 #include "app_canfd.h"
+#include "app_main.h"
 
 void start_timer(msg_opt_t (*appid)[CAN_VEH_MSG_NUM], int index, int total);
 void start_singletimer(timer_t *timerid, int interval, void (*handler)());

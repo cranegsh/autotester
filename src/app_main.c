@@ -4,12 +4,35 @@
  *  Created on: Dec 21, 2024
  *      Author: crane
  */
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "app_main.h"
 #include "sysconfig.h"
 #include "utility.h"
+#include "app_config.h"
+#include "app_log.h"
+#include "app_timer.h"
+#include "app_main_id4.h"
+#include "app_main_c3.h"
+#include "app_main_navy.h"
 
+msg_opt_t msg[CAN_VEH_MSG_NUM] = {
+	{ .timer_count = 0, .timer_mark = BOOL_TRUE },
+	{ .timer_count = 0, .timer_mark = BOOL_TRUE },
+	{ .timer_count = 0, .timer_mark = BOOL_TRUE },
+	{ .timer_count = 0, .timer_mark = BOOL_TRUE },
+	{ .timer_count = 0, .timer_mark = BOOL_TRUE },
+	{ .timer_count = 0, .timer_mark = BOOL_TRUE },
+	{ .timer_count = 0, .timer_mark = BOOL_TRUE },
+#ifdef PROJECT_C3
+	{ .timer_count = 0, .timer_mark = BOOL_TRUE },
+	{ .timer_count = 0, .timer_mark = BOOL_TRUE },
+	{ .timer_count = 0, .timer_mark = BOOL_TRUE },
+#endif
+};
+
+int timer_display = 0;
 
 void app_main_displayHelp(const char *app)
 {
@@ -36,11 +59,12 @@ void app_main_displayHelp(const char *app)
 		"\t id4: id4 project\n"
 		"\t g3:  g3 project\n"
 		"\t g4r: g4r project\n"
-		"\t c3:  c3 project\n",
+		"\t c3:  c3 project\n"
+		"\t navy:navy project\n",
 		app);
 }
 
-void app_main_initData(struct sysData *sdata)
+void app_main_initData(sysData_type *sdata)
 {
 #ifdef PROJECT_ID4
 	sdata->dataCan = msg_canfd_getData_id4();
@@ -53,9 +77,9 @@ void app_main_initData(struct sysData *sdata)
 #endif
 }
 
-int app_main_processOption(int numOpt, app_opt_t *appOpt, char *strArg, int num)
+int app_main_processOption(int numOpt, app_opt_t *appOpt, char *strArg, int *num)
 {
-	int retVal = num;
+	int retVal = *num;
 	switch(numOpt) {
 		case 'l':
 			appOpt->num = atoi(strArg);
@@ -152,7 +176,120 @@ int app_main_processOption(int numOpt, app_opt_t *appOpt, char *strArg, int num)
 			break;
 	}
 
+	if((*num + 1) == retVal) {
+		/* get an option with parameter */
+		appOpt->val = atoi(strArg);
+		msg[*num].mode = appOpt->mode;
+		msg[*num].val = appOpt->val;
+		ndPrintf("\t Value %d", appOpt->val);
+		*num = retVal;
+	}
+
 	return retVal;
+}
+
+void app_main_sendCommand(sysData_type *sdata, int cmd)
+{
+	if((0 == sdata->canfd_status) && (sdata->dataCan->updated)) {
+		ndPrintf("\n Sending data '%c' to CAN ...", cmd);
+		msg_canfd_send_tester((uint32_t)cmd);
+		ndPrintf("\n data '%c' to CAN sent!", cmd);
+		sdata->dataCan->updated = BOOL_FALSE;
+	}
+}
+
+void app_main_initMsg(int num, app_opt_t *appOpt)
+{
+	dPrintf("\nTotal msg #: %d", num);
+	ndPrintf("\nMsg name\tNo.\tValue\t | interval\tnum\n");		/* when controlling loop number of every single message */
+	iPrintf("\nMsg name\tNo.\tValue\t | interval(ms)\n");
+
+	for(int i=0; i<num; i++) {
+		/* get the default interval and total number and display msg information */
+#ifdef PROJECT_ID4
+		app_main_id4_getMsginfo(&msg[i]);
+#endif
+#ifdef PROJECT_C3
+		app_main_c3_getMsginfo(&msg[i]);
+#endif
+		/* use the command interval and total number */
+		//msg[i].interval = appOpt->interval;
+		msg[i].num = appOpt->num;
+	}
+
+	for(int i=0; i<num; i++) {
+		start_timer(&msg, i, num);
+	}
+}
+
+int app_main_checkMsg(int num, int mark)
+{
+	for(int i=0; i<num; i++) {
+		/* search all the timer to check if any one completed the submission */
+		if( (msg[i].timer_count >= msg[i].num) && (0 != msg[i].num) ) {
+			if(BOOL_TRUE == msg[i].timer_mark) {
+				/* if this timer is not stopped, stop it */
+				stop_timer(&msg[i].timer_id);
+
+				/* mark it after it is stopped */
+				msg[i].timer_mark = BOOL_FALSE;
+
+    			/* update the total number of the timer left */
+				mark++;
+        		ndPrintf(" | stopped %d\n", mark);
+			}
+		}
+	}
+
+	return mark;
+}
+
+int app_main_remoteControl(app_opt_t *appOpt, int cmd, sysData_type *sdata)
+{
+	int ret = 0;
+
+	switch(cmd) {
+		case COMMAND_C:
+		case COMMAND_F:
+			break;
+		case COMMAND_P:
+#ifdef PROJECT_ID4
+			app_main_id4_commandP();
+#endif
+			break;
+		case COMMAND_D444:
+#ifdef PROJECT_ID4
+			app_main_id4_commandD_log();
+#endif
+			break;
+		case COMMAND_D333:
+#ifdef PROJECT_ID4
+			app_main_id4_commandD_error();
+#endif
+			break;
+		case COMMAND_D222:
+			/* receive CAN messages */
+			if(0 == sdata->canfd_status) {
+				msg_canfd_receive();
+			}
+
+			if(1 < (time(NULL) - timer_display)) {
+#ifdef PROJECT_ID4
+				app_main_id4_print();
+#endif
+#ifdef PROJECT_NAVY
+				msg_canfd_navy_print();
+#endif
+				timer_display = time(NULL);
+			}
+			ret = 1;
+			break;
+		default:
+			/* not valid command */
+			ret = -1;
+	}
+
+	return ret;
 }
 
 void app_main_test(void)

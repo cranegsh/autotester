@@ -8,12 +8,12 @@
 /* select only one from PROJECT_NAVY, PROJECT_C3 and PROJECT_ID4
  * if PROJECT_ID4 is selected, select only one from PROJECT_CAN_ID4, PROJECT_CAN_BZ4X and PROJECT_CAN_G3 */
 //#define PROJECT_NAVY
-#define PROJECT_C3
-//#define PROJECT_ID4
+//#define PROJECT_C3
+#define PROJECT_ID4
 #ifdef PROJECT_ID4				   /* ID4, BZ4X and G3 all are based on PROJECT_ID4, the differences are CAN messages */
-//#define PROJECT_CAN_ID4
+#define PROJECT_CAN_ID4
 //#define PROJECT_CAN_BZ4X
-#define PROJECT_CAN_G3
+//#define PROJECT_CAN_G3
 #endif
 #define PROJECT_ID_DEFAULT		2
 
@@ -41,6 +41,9 @@
 #define COMMAND_F						'f'
 #define COMMAND_W						'w'
 #define COMMAND_D						'd'
+#define COMMAND_D444					444
+#define COMMAND_D333					333
+#define COMMAND_D222					222
 #define COMMAND_S						's'
 
 /* For SPI-CAN devices */

@@ -9,8 +9,6 @@
 #ifndef APPLICATION_CANFDCOMM_H_
 #define APPLICATION_CANFDCOMM_H_
 
-#include <time.h>
-
 #include "sysconfig.h"
 #include "app_config.h"
 
@@ -91,16 +89,6 @@ typedef enum {
 	APP_OPT_UNKNOWN
 } msg_mode_t;
 
-typedef struct {
-	msg_mode_t mode;
-	timer_t timer_id;
-	int32_t val;
-	uint32_t num;			/* loop number */
-	uint32_t interval;		/* interval in ms between each message submission */
-	uint32_t option;
-	int timer_count;
-	BOOL_INT32 timer_mark;
-} msg_opt_t;
 /*
  * struct canfdFilter {
     int16_t sid;

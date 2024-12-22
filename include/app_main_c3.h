@@ -10,6 +10,7 @@
 #define APPLICATION_CANFDCOMM_C3_H_
 
 #include "app_canfd.h"
+#include "app_main.h"
 
 #define CAN_DATA_IN_LEN_C3    				(uint32_t)(MEM_ALIGN_SIZE(sizeof(struct C3DataVeh_type)))
 typedef union dataIn_type {

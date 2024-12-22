@@ -1045,16 +1045,16 @@ int app_config()
 		            msg_canfd_getData_id4()->id4DataOut_command.data.dataNum = number;
 	            	msg_canfd_getData_id4()->id4DataOut_command.data.debugValue = dData.display;
 	            	msg_canfd_getData_id4()->updated = BOOL_TRUE;
-	            	ret = COMMAND_D;
+	            	ret = COMMAND_D444;
 				}
 				else if (333 == dData.display)
 				{	/* request error data */
 	            	msg_canfd_getData_id4()->id4DataOut_command.data.debugValue = dData.display;
 	            	msg_canfd_getData_id4()->updated = BOOL_TRUE;
-	            	ret = COMMAND_D;
+	            	ret = COMMAND_D333;
 				}
 				else {
-					ret = dData.display;
+					ret = COMMAND_D222;
 				}
 				break;
         	case COMMAND_S:

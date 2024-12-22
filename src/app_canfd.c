@@ -393,7 +393,7 @@ void msg_canfd_copyData(uint32_t number, uint32_t length, uint8_t *source, uint8
 	}
 }
 
-
+/* TODO: avoid blocking */
 int32_t msg_canfd_rcvCanConfigs(void)
 {
     uint32_t messageID = 0;
@@ -413,6 +413,7 @@ int32_t msg_canfd_rcvCanConfigs(void)
 	return status;
 }
 
+/* TODO: avoid blocking */
 int32_t msg_canfd_rcvCanLog(void)
 {
     uint32_t messageID = 0;

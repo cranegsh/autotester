@@ -10,6 +10,7 @@
 #define APPLICATION_CANFDCOMM_ID4_H_
 
 #include "app_canfd.h"
+#include "app_main.h"
 
 /* These are the data from the vehicle through CAN message */
 struct id4DataVeh_type {
