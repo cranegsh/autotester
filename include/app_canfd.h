@@ -21,10 +21,41 @@
 #define CAN_BUS_TYPE                1//CAN_BUS_TYPE_CAN//FD
 #define CANFD_BIT_RATE              "f_clock_mhz=80, nom_brp=2, nom_tseg1=63, nom_tseg2=16, nom_sjw=16, data_brp=2, data_tseg1=15, data_tseg2=4, data_sjw=4" //500K-2M, copied from PCAN Explorer config
 
-#define CANFD_IDMASK_SID			0x1FFC0000
-#define CANFD_IDMASK_EID			0x3FFFF
-#define CANFD_EID_BITS				18
+#define CAN_IDMASK_SID				0x1FFC0000
+#define CAN_IDMASK_EID				0x3FFFF
+#define CAN_EID_BITS				18
 #define MAX_DATA_BYTES 				64
+
+#if defined(PROJECT_ID4) || defined(PROJECT_C3) || defined(PROJECT_NAVY)
+#define CAN_VEH_MSG_LEN				8					// depending on project
+#endif
+
+#ifdef PROJECT_ID4
+#define CAN_VEH_MSG_NUM				7
+#endif
+#ifdef PROJECT_C3
+#define CAN_VEH_MSG_NUM				10
+#endif
+#ifdef PROJECT_NAVY
+#define CAN_VEH_MSG_NUM				3
+#endif
+
+/* receive message ID for debugger control */
+#define ID_RCV_DATA		       		0x201
+#define ID_RCV_DATA_CFG	       		0x211
+#define ID_RCV_DATA_CTL	       		0x221
+#define ID_RCV_DATA_ENV	       		0x231
+#define ID_RCV_DATA_RES	       		0x241
+#define ID_RCV_ERROR				0x202
+#define ID_RCV_LOG      			0x203
+
+/* transmit message ID for debugger control*/
+#define ID_SEND_DATA      			0x301	/* This message combines ID_SEND_CONFIG and IC_SEND_COMMAND
+												and use a structure to prepare the data */
+#define ID_SEND_COMMAND	    		0x311
+#define ID_SEND_CONFIG				0x320
+#define ID_SEND_CFG_PETD			0x321
+#define ID_SEND_CFG_PWM				0x331
 
 typedef enum {
     CAN_DLC_0,
@@ -45,33 +76,7 @@ typedef enum {
     CAN_DLC_64
 } CAN_DLC;
 
-#ifdef PROJECT_ID4
-#define CAN_VEH_MSG_LEN				8
-#define CAN_VEH_MSG_NUM				7								/* basic CAN messages for ID4 */
-#define FILTER_TOTAL                (CAN_VEH_MSG_NUM + 1 + 2 + 7)	/* 1: system ID; 2:two general filters; 7: debugger control */
-#endif
-#ifdef PROJECT_C3
-#define CAN_VEH_MSG_LEN				8
-#define CAN_VEH_MSG_NUM				10								/* basic CAN messages for C3, ID4 + 2: current and op mode for now. */
-#define FILTER_TOTAL                (CAN_VEH_MSG_NUM + 2 + 7)		/* 1: system ID; 2:two general filters; 7: debugger control */
-#endif
-
-#ifdef PROJECT_ID4
-/* The sequence of below enumeration should be the same as the sequence of data in id4_vehData!!! */
-typedef enum {
-	APP_OPT_DEV_SEND_FSH,
-	APP_OPT_DEV_SEND_ATEMP,
-	APP_OPT_DEV_SEND_VOLTAGE,
-	APP_OPT_DEV_SEND_SOC,
-	APP_OPT_DEV_SEND_SPEED,
-	APP_OPT_DEV_SEND_CTEMP,
-	APP_OPT_DEV_SEND_HUMIDITY,
-	APP_OPT_UNKNOWN
-} msg_mode_t;
-#endif
-
-#ifdef PROJECT_C3
-/* The sequence of below enumeration should be the same as the sequence of data in ic3canDataInfo!!! */
+/* The sequence of below enumeration should be the same as the sequence of data in id4_vehData and ic3canDataInfo!!! */
 typedef enum {
 	APP_OPT_DEV_SEND_SOC,
 	APP_OPT_DEV_SEND_FSH,
@@ -85,7 +90,6 @@ typedef enum {
 	APP_OPT_DEV_SEND_OPMODE,
 	APP_OPT_UNKNOWN
 } msg_mode_t;
-#endif
 
 typedef struct {
 	msg_mode_t mode;
@@ -125,292 +129,28 @@ typedef struct {
 	uint8_t data[CAN_VEH_MSG_LEN];		/* data in frame of this message */
 } canDataInfo_type;
 
-#ifdef PROJECT_ID4
-/* These are the data from the vehicle through CAN message */
-struct id4DataVeh_type {
-    float voltage;
-    float stateCharge;
-    float speed;
-    float tempInside;
-    float tempOutside;
-    float humidity;
-    uint32_t fsh;
-    uint32_t countMsg;
-    BOOL_INT32 speedQbit;
-    BOOL_INT32 tempOutsideQbit;
-};
-
-/* These are the data sent from tester */
-#define CAN_DATA_OUT_LEN     			(uint32_t)(MEM_ALIGN_SIZE(sizeof(struct id4DataOut_type)))
-union dataOut_type {
-    struct id4DataOut_type {
-        long int freq;
-        uint16_t deadband_red1;         // dead band rising edge delay for PWM1, in 10ns
-        uint16_t deadband_fed1;         // dead band falling edge delay for PWM1, in 10ns
-        uint16_t deadband_red2;         // dead band rising edge delay for PWM2, in 10ns
-        uint16_t deadband_fed2;         // dead band falling edge delay for PWM2, in 10ns
-        int16_t compensation_up3;       // compensation of rising edge for PWM3, in 10ns
-        int16_t compensation_up4;       // compensation of rising edge for PWM4, in 10ns
-        uint16_t compensation_lik;      // parameter for calculating compensation falling edge in pH (1000uH)
-        uint16_t compensation_n;        // parameter for calculating compensation falling edge
-        uint16_t compensation_rload;    // parameter for calculating compensation falling edge in mOhms
-        int16_t modeControl;            /* true: close loop control; false: open loop control */
-        uint16_t VoutTarget;            /* Desired target voltage in volts */
-        uint16_t runtime;               /* Forced run time in seconds */
-        int16_t thTempTransfo;          /* Transformer temperature check threshold in degree */
-        uint16_t thReslow;              /* Windshield resistance check threshold low in mOhms */
-        uint16_t thReshigh;             /* Windshield resistance check threshold high in mOhms */
-        uint16_t thCout;                /* Output current protection check threshold in A */
-        uint16_t checkHV;               /* true: check high voltage input; false: force high voltage input */
-        uint16_t psTarget;              /* final phase shift for open loop control in degree */
-        uint16_t addRuntime;            /* Forced extra run time in seconds based on calculated run time */
-    } data;
-    uint16_t word[CAN_DATA_OUT_LEN/2U];
-    uint8_t byte[CAN_DATA_OUT_LEN];
-};
-
-#define CAN_DATA_OUT_COMMAND_LEN     (uint32_t)(MEM_ALIGN_SIZE(sizeof(struct id4DataOut_command_type)))
-union dataOut_command_type {
-    struct id4DataOut_command_type {
-        uint16_t debugValue;
-        uint16_t addrStart;
-        uint16_t addrEnd;
-        uint16_t dataNum;
-    } data;
-    uint16_t word[CAN_DATA_OUT_COMMAND_LEN/2U];
-    uint8_t byte[CAN_DATA_OUT_COMMAND_LEN];
-};
-
-#define CAN_DATA_OUT_CFG_PETD_LEN     (uint32_t)(MEM_ALIGN_SIZE(sizeof(struct petdConfig)))
-union dataOut_cfgPetd_type {
-	struct petdConfig data;
-    uint16_t word[CAN_DATA_OUT_CFG_PETD_LEN/2U];
-    uint8_t byte[CAN_DATA_OUT_CFG_PETD_LEN];
-};
-
-#define CAN_DATA_OUT_CFG_PWM_LEN     (uint32_t)(MEM_ALIGN_SIZE(sizeof(struct pwmConfig)))
-union dataOut_cfgPwm_type {
-	struct pwmConfig data;
-    uint16_t word[CAN_DATA_OUT_CFG_PWM_LEN/2U];
-    uint8_t byte[CAN_DATA_OUT_CFG_PWM_LEN];
-};
-
-/* These are the data sent out to tester */
-#define CAN_DATA_IN_LEN    			(uint32_t)(MEM_ALIGN_SIZE(sizeof(struct id4DataIn_type)))
-union dataIn_type {
-    struct id4DataIn_type {
-        BOOL_INT16 updated;
-        uint16_t mode;
-        uint16_t hitCount;
-        uint16_t vin;
-        uint16_t vout;
-        uint16_t cout;
-        uint16_t res;
-        int16_t tempTro;
-        int16_t temp1;
-        int16_t temp2;
-        int16_t temp3;
-        int16_t temp4;
-        uint16_t petdRuntime;
-        uint16_t pwmCompen;
-        uint16_t veh_fsh;
-        uint16_t veh_voltage;
-        uint16_t veh_stateCharge;
-        uint16_t veh_speed;
-        uint16_t veh_tempInside;
-        uint16_t veh_tempOutside;
-        uint16_t veh_humidity;
-    } data;
-    uint16_t word[CAN_DATA_IN_LEN/2U];
-    uint8_t byte[CAN_DATA_IN_LEN];
-};
-
-#define CAN_DATA_IN_CFG_LEN    			(uint32_t)(MEM_ALIGN_SIZE(sizeof(struct id4DataIn_Cfg_type)))
-union dataIn_Cfg_type {
-    struct id4DataIn_Cfg_type {
-        BOOL_INT16 updated;
-        struct petdConfig petdCanConfig;
-        struct pwmConfig pwmCanConfig;
-    } data;
-    uint16_t word[CAN_DATA_IN_CFG_LEN/2U];
-    uint8_t byte[CAN_DATA_IN_CFG_LEN];
-};
-
-#define CAN_DATA_IN_CTL_LEN    			(uint32_t)(MEM_ALIGN_SIZE(sizeof(struct id4DataIn_Ctl_type)))
-union dataIn_Ctl_type {
-    struct id4DataIn_Ctl_type {
-        BOOL_INT16 updated;
-        uint16_t mode;
-        uint16_t hitCount;
-        uint16_t veh_fsh;
-    } data;
-    uint16_t word[CAN_DATA_IN_CTL_LEN/2U];
-    uint8_t byte[CAN_DATA_IN_CTL_LEN];
-};
-
-#define CAN_DATA_IN_ENV_LEN    			(uint32_t)(MEM_ALIGN_SIZE(sizeof(struct id4DataIn_Env_type)))
-union dataIn_Env_type {
-    struct id4DataIn_Env_type {
-        BOOL_INT16 updated;
-        uint16_t vin;
-        uint16_t veh_voltage;
-        uint16_t veh_stateCharge;
-        uint16_t veh_speed;
-        uint16_t veh_tempInside;
-        uint16_t veh_tempOutside;
-        uint16_t veh_humidity;
-    } data;
-    uint16_t word[CAN_DATA_IN_ENV_LEN/2U];
-    uint8_t byte[CAN_DATA_IN_ENV_LEN];
-};
-
-#define CAN_DATA_IN_RES_LEN    			(uint32_t)(MEM_ALIGN_SIZE(sizeof(struct id4DataIn_Res_type)))
-union dataIn_Res_type {
-    struct id4DataIn_Res_type {
-        BOOL_INT16 updated;
-        int16_t tempTro;
-        uint16_t vout;
-        uint16_t cout;
-        uint16_t res;
-    } data;
-    uint16_t word[CAN_DATA_IN_RES_LEN/2U];
-    uint8_t byte[CAN_DATA_IN_RES_LEN];
-};
-
-/* These are the logged data sent out to tester */
-#define CAN_DATA_LOG_LEN    			(uint32_t)(MEM_ALIGN_SIZE(sizeof(struct id4DataLog_type)))
-union dataLog_type {
-    struct id4DataLog_type {
-        uint16_t value1;
-        uint16_t value2;
-        uint16_t value3;
-        uint16_t value4;
-        uint16_t address;
-        uint16_t index;
-    } data;
-    uint16_t word[CAN_DATA_LOG_LEN/2U];
-    uint8_t byte[CAN_DATA_LOG_LEN];
-};
-#endif	/* PROJECT_ID4 */
-
-#ifdef PROJECT_C3
-#define CAN_DATA_IN_LEN    				(uint32_t)(MEM_ALIGN_SIZE(sizeof(struct C3DataVeh_type)))
-typedef union dataIn_type {
-    struct C3DataVeh_type {
-        uint16_t voltage;
-        uint16_t stateCharge;
-        uint16_t speed;
-        int16_t tempInside;
-        int16_t tempOutside;
-        uint16_t humidity;
-        uint16_t current;
-        uint16_t fsh;
-        uint16_t countMsg;
-        uint16_t systemId;
-        uint16_t opMode;
-    } data;
-    uint16_t word[CAN_DATA_IN_LEN/2U];
-    uint8_t byte[CAN_DATA_IN_LEN];
-} dataIn_type;
-#endif	/* PROJECT_C3 */
-
-#ifdef PROJECT_NAVY
-#define CAN_DATA_OUT_LEN     			(uint32_t)(MEM_ALIGN_SIZE(sizeof(struct navyDataOut))) //8//
-union dataOut {
-    struct navyDataOut {
-        uint16_t mode;
-        int16_t tempOff;
-        int16_t tempOn;
-        uint16_t thRes;
-        uint16_t thVoltagePeak;
-        uint16_t thVoltageRms;
-        uint16_t thCurrentPeak;
-        uint16_t thCurrentRms;
-    } data;
-    uint16_t word[CAN_DATA_OUT_LEN/2];
-    uint8_t byte[CAN_DATA_OUT_LEN];
-};
-
-#define CAN_DATA_IN_LEN    				(uint32_t)(MEM_ALIGN_SIZE(sizeof(struct navyDataIn))) //16
-union dataIn {
-    struct navyDataIn {
-        uint16_t mode;
-        int16_t state;
-        int16_t tempOff;
-        uint16_t thRes;
-        uint16_t thVoltage;
-        uint16_t thCurrent;
-        int16_t temp01;
-        int16_t voltagePeak;
-        uint16_t voltageRms;
-        int16_t currentPeak;
-        uint16_t currentRms;
-        uint16_t resWindshield; 
-    } data;
-    uint16_t word[CAN_DATA_IN_LEN/2];
-    uint8_t byte[CAN_DATA_IN_LEN];
-};
-
-#define CAN_DATA_LOG_LEN    			(uint32_t)(MEM_ALIGN_SIZE(sizeof(struct navyDataLog)))
-union dataLog {
-    struct navyDataLog {
-        BOOL_INT16 updated;
-        uint16_t count;
-        int16_t voltagePeak;
-        uint16_t voltageRms;
-        int16_t currentPeak;
-        uint16_t currentRms;
-        uint16_t resWindshield;
-        int16_t temp01;
-        int16_t temp02;
-        int16_t temp03;
-    } data;
-    uint16_t word[(CAN_DATA_LOG_LEN+1)/2];
-    uint8_t byte[CAN_DATA_LOG_LEN];
-};
-#endif	/* PROJECT_NAVY */
-
-struct canfdData {
-#ifdef PROJECT_ID4
-	struct id4DataVeh_type id4Dataveh;
-	canDataInfo_type id4_vehData[CAN_VEH_MSG_NUM];
-	union dataIn_type id4DataIn;
-	union dataIn_Cfg_type id4DataIn_Cfg;
-	union dataIn_Ctl_type id4DataIn_Ctl;
-	union dataIn_Env_type id4DataIn_Env;
-	union dataIn_Res_type id4DataIn_Res;
-	union dataLog_type id4DataLog;
-	union dataOut_type id4DataOut;
-	union dataOut_command_type id4DataOut_command;
-	union dataOut_cfgPetd_type id4DataOut_cfgPetd;
-	union dataOut_cfgPwm_type id4DataOut_cfgPwm;
+//#define DEBUG_DISPLAY_CAN_MSG                       // defined to display CAN frames
+#ifdef DEBUG_DISPLAY_CAN_MSG
+#define debugPrintf_canfd(...)  debugPrintf(__VA_ARGS__);
+#define dbgPrintf_canfd(...)  dPrintf(__VA_ARGS__);
+#define dPrintf_canfd(...)  dPrintf(__VA_ARGS__);
+#else
+#define debugPrintf_canfd(...)  ndebugPrintf(__VA_ARGS__);
+#define dbgPrintf_canfd(...)  ndPrintf(__VA_ARGS__);
+#define dPrintf_canfd(...)  ndPrintf(__VA_ARGS__);
 #endif
-#ifdef PROJECT_C3
-	canDataInfo_type c3canDataInfo[CAN_VEH_MSG_NUM];
-	dataIn_type c3dataIn;
-#endif
-#ifdef PROJECT_NAVY
-    union dataIn navyIn;
-    union dataLog navyLog;
-    union dataOut navyOut;
-#endif
-    BOOL_INT32 updated;
-};
-
-struct canfdnode *msg_canfd_getNode(void);
-
-/* Function to pass data pointer */
-struct canfdData *msg_canfd_getData(void);
-void msg_canfd_print(void);
 
 /* Functions to implement CANFD tasks */
 void msg_canfd_send_veh(msg_mode_t msgno, int32_t value);
 void msg_canfd_send_tester(uint32_t cmd);
-int32_t msg_canfd_rcvCanLog(void);
-int32_t msg_canfd_rcvCanConfigs(void);
+
 void msg_canfd_receive(void);
+void msg_canfd_copyData(uint32_t number, uint32_t length, uint8_t *source, uint8_t *dest);
+
+int32_t msg_canfd_rcvCanConfigs(void);
+int32_t msg_canfd_rcvCanLog(void);
 
 /* Function to initialize CAN FD device */
-BOOL_INT32 msg_canfd_init(void);
+int32_t msg_canfd_init(void);
 
 #endif /* APPLICATION_CANFDCOMM_H_ */

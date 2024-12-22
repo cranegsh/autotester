@@ -10,8 +10,12 @@
 #include <signal.h>
 #include <time.h>
 
+#include "app_timer.h"
 #include "utility.h"
 #include "app_canfd.h"
+#include "app_main_c3.h"
+#include "app_main_id4.h"
+#include "app_main_navy.h"
 
 //#define TEST_USE_SIG_STOP
 
@@ -48,15 +52,14 @@ void timer_handler(int signo, siginfo_t *info, void *context) {
 	}							/* This way it works to get the correct value */
 	ndPrintf("\n");
 
-	struct canfdData *candata = msg_canfd_getData();
 	msg_canfd_send_veh((uint8_t)(*temp->msgid)[msgindex].mode, (*temp->msgid)[msgindex].val);
 	for(int i=0; i<temp->timer_total; i++) {
 		ndPrintf("%d \t%5d \t%5d \t%d | ", i, (*temp->msgid)[i].mode, (*temp->msgid)[i].interval, (*temp->msgid)[i].num);
 #ifdef PROJECT_ID4
-		iPrintf("%s: %3d | ", candata->id4_vehData[(*temp->msgid)[i].mode].name, (*temp->msgid)[i].timer_count);
+		app_main_id4_print_canVeh((*temp->msgid)[i].mode, (*temp->msgid)[i].timer_count);
 #endif
 #ifdef PROJECT_C3
-		iPrintf("%s: %X |", candata->c3canDataInfo[(*temp->msgid)[i].mode].name, (*temp->msgid)[i].timer_count);
+		app_main_c3_print_canVeh((*temp->msgid)[i].mode, (*temp->msgid)[i].timer_count);
 #endif
 	}
 	(*temp->msgid)[msgindex].timer_count++;

@@ -31,7 +31,8 @@ OBJS += $(DIR_SRC)/utility.o
 OBJS += $(DIR_SRC)/app_canfd.o
 OBJS += $(DIR_SRC)/app_config.o $(DIR_SRC)/app_log.o $(DIR_SRC)/app_timer.o
 OBJS += $(DIR_SRC)/app_file.o
-OBJS += $(DIR_SRC)/farview_main.o
+OBJS += $(DIR_SRC)/app_main_id4.o $(DIR_SRC)/app_main_c3.o $(DIR_SRC)/app_main_navy.o
+OBJS += $(DIR_SRC)/app_main.o $(DIR_SRC)/farview_main.o
 
 TARGET = farviewpcan
 all := $(TARGET)

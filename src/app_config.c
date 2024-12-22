@@ -11,6 +11,9 @@
 #include "utility.h"
 #include "app_log.h"
 #include "app_canfd.h"
+#include "app_main_c3.h"
+#include "app_main_id4.h"
+#include "app_main_navy.h"
 
 /* operation definitions */
 #define MODE_OP_DEFAULT                         0
@@ -99,7 +102,6 @@
 #define FREQ_INIT_MIN                   50000//100000
 #define FREQ_INIT_MAX                   150000
 
-#ifdef PROJECT_NAVY
 struct powerConfig powerUartConfig = {
   .mode = MODE_OP_DEFAULT,
   .tempOff = POWER_OFF_TEMP,
@@ -113,9 +115,7 @@ struct powerConfig powerUartConfig = {
   .checkRes = BOOL_TRUE,
   .configUpdated = BOOL_FALSE,
 };
-#endif
 
-#ifdef PROJECT_ID4
 struct petdConfig petdUartConfig = {
   .configUpdated = BOOL_FALSE,
   .VoutTarget = DEFAULT_VOUTPUT_TARGET,
@@ -147,13 +147,11 @@ static struct pwmConfig pwmUartConfig = {
   .compensation_n = COMPENSATION_N_DEFAULT,
   .compensation_rload = COMPENSATION_RLOAD_DEFAULT,
 };
-#endif	/* #ifdef PROJECT_NAVY */
 
-#ifdef PROJECT_NAVY
 void powerConfig_updateCan(void)
 {
-	struct canfdData *temp;
-	temp = msg_canfd_getData();
+	struct canfdData_navy *temp;
+	temp = msg_canfd_getData_navy();
 
 	temp->navyOut.data.thRes = powerUartConfig.thRes;
 	temp->navyOut.data.thVoltagePeak = powerUartConfig.thVoltagePeak;
@@ -174,7 +172,7 @@ BOOL_INT32 powerConfig_input(void)
 	iPrintf("\r\n\nNavy Configuration");
     iPrintf("\r\nPress ENTER to pass!\r\n");
 
-    clearStdin();
+    clear_stdin();
     temp_cfg.mode = get_a_number("\r\nOperation mode (0 ~ 3)");
     temp_cfg.tempOff = get_a_number("\r\nAC switch off windshield temp (-20 - 20°C)");
     temp_cfg.tempOn = get_a_number("\r\nAC switch on windshield temp (-20 - 20°C)");               /* Windshield temperature to turn off AC switch */
@@ -199,506 +197,14 @@ BOOL_INT32 powerConfig_input(void)
     {   /* copy the input */
         powerConfig_check(&temp_cfg, &powerUartConfig, BOOL_TRUE);
         iPrintf("\r\nConfiguration confirmed!\r\n");
-        petdUartConfig.configUpdated = BOOL_TRUE;
-        return BOOL_TRUE;
-    }
-
-    return BOOL_FALSE;
-}
-#endif	/* #ifdef PROJECT_NAVY */
-
-#ifdef PROJECT_ID4
-void petdConfig_updateCan(void)
-{
-	struct canfdData *temp;
-	temp = msg_canfd_getData();
-
-//	temp->id4DataOut_cfgPetd.data.modeControl = petdUartConfig.modeControl;
-//	temp->id4DataOut_cfgPetd.data.VoutTarget = petdUartConfig.VoutTarget;
-//	temp->id4DataOut_cfgPetd.data.runtime = petdUartConfig.runtime;
-//	temp->id4DataOut_cfgPetd.data.thTempTransfo = petdUartConfig.thTempTransfo;
-//	temp->id4DataOut_cfgPetd.data.thReslow = petdUartConfig.thReslow;
-//	temp->id4DataOut_cfgPetd.data.thReshigh = petdUartConfig.thReshigh;
-//	temp->id4DataOut_cfgPetd.data.thCout = petdUartConfig.thCout;
-//	temp->id4DataOut_cfgPetd.data.checkHV = petdUartConfig.checkHV;
-//	temp->id4DataOut_cfgPetd.data.psTarget = petdUartConfig.psTarget;
-//	temp->id4DataOut_cfgPetd.data.addRuntime = petdUartConfig.addRuntime;
-	temp->id4DataOut_cfgPetd.data = petdUartConfig;
-
-	temp->updated = BOOL_TRUE;
-}
-
-BOOL_INT32 petdConfig_input(void)
-{
-    iPrintf("\r\n\nPETD Configuration:");
-    //iPrintf("\r\nPress ENTER to pass!\r\n");
-
-    struct petdConfig temp_cfg;
-
-    temp_cfg.modeControl = get_a_number("\r\nControl mode (1 for CL, 0 for OL)");
-    if(INVALID_INPUT != temp_cfg.modeControl)
-    {
-        if(0 == temp_cfg.modeControl)
-        {
-            temp_cfg.modeControl = 0;
-        }
-        else if(1 == temp_cfg.modeControl)
-        {
-            temp_cfg.modeControl = 1;
-        }
-        else
-        {   /* assign the default value */
-            temp_cfg.modeControl = petdUartConfig.modeControl;
-        }
-    }
-    else
-    {
-        temp_cfg.modeControl = petdUartConfig.modeControl;
-    }
-
-    if(MODE_CTRL_OPEN_LOOP == temp_cfg.modeControl)
-    {
-        temp_cfg.psTarget = get_a_number("\r\nDesired Final Phase Shift (10 - 160) °");
-    }
-    else
-    {
-        temp_cfg.VoutTarget = get_a_number("\r\nDesired Output Voltage (20 - 95)V");
-    }
-
-    temp_cfg.runtime = get_a_number("\r\nDesired Run Time (0 - 600s)");
-    if(INVALID_INPUT != temp_cfg.runtime) {
-        /* invalid input, get the last value */
-        temp_cfg.runtime = petdUartConfig.runtime;
-    }
-    if(0 == temp_cfg.runtime) {
-        temp_cfg.addRuntime = get_a_number("\r\nAdditional run time (0 - 30s)\0");
-    }
-
-    temp_cfg.thTempTransfo = get_a_number("\r\nTransfo Temp. threshold (-10°C - 30°C)");
-    temp_cfg.checkHV = get_a_number("\r\nHigh voltage enable/disable (1 to enable, 0 to disable)");
-    temp_cfg.thReslow = get_a_number("\r\nResistance threshold low (0 - 2500 mOhms)");
-    temp_cfg.thReshigh = get_a_number("\r\nResistance threshold high (1500 - 5000) mOhms");
-    temp_cfg.thCout = get_a_number("\r\nCurrent Output threshold (0 - 80A)");
-
-    // confirm the selections
-    int hitkey;
-    iPrintf("\r\n\r\nPlease confirm y or n:");
-    hitkey = get_a_char();
-    while(('y' != hitkey) && ('n' != hitkey) && ('Y' != hitkey) && ('N' != hitkey))
-    {   // invalid input. Need input again
-        iPrintf("\r\nInvalid input! Please input again!");
-        hitkey = get_a_char();
-    }
-
-    /* assign the updated configuration */
-    if(('y' == hitkey) || ('Y' == hitkey))
-    {   /* copy the input */
-        petdConfig_check(&temp_cfg, &petdUartConfig, BOOL_TRUE);
-        iPrintf("\r\nConfiguration confirmed!\r\n");
-        petdUartConfig.configUpdated = BOOL_TRUE;
+        powerUartConfig.configUpdated = BOOL_TRUE;
         return BOOL_TRUE;
     }
 
     return BOOL_FALSE;
 }
 
-void pwmConfig_updateCan(void)
-{
-	struct canfdData *temp;
-	temp = msg_canfd_getData();
 
-	temp->id4DataOut_cfgPwm.data.freq = pwmUartConfig.freq;
-	temp->id4DataOut_cfgPwm.data.deadband_red1 = pwmUartConfig.deadband_red1;
-	temp->id4DataOut_cfgPwm.data.deadband_red2 = pwmUartConfig.deadband_red2;
-	temp->id4DataOut_cfgPwm.data.deadband_fed1 = pwmUartConfig.deadband_fed1;
-	temp->id4DataOut_cfgPwm.data.deadband_fed2 = pwmUartConfig.deadband_fed2;
-	temp->id4DataOut_cfgPwm.data.compensation_up3 = pwmUartConfig.compensation_up3;
-	temp->id4DataOut_cfgPwm.data.compensation_up4 = pwmUartConfig.compensation_up4;
-	temp->id4DataOut_cfgPwm.data.compensation_lik = pwmUartConfig.compensation_lik;
-	temp->id4DataOut_cfgPwm.data.compensation_n = pwmUartConfig.compensation_n;
-	temp->id4DataOut_cfgPwm.data.compensation_rload = pwmUartConfig.compensation_rload;
-
-	temp->updated = BOOL_TRUE;
-}
-
-BOOL_INT32 pwmConfig_input(void)
-{
-    iPrintf("\r\n\nPWM Configuration");
-    iPrintf("\r\nPress ENTER to pass!\r\n");
-
-    int32_t temp = 0;
-
-    struct pwmConfig temp_cfg;
-
-    /* set frequency of PWM1 and PWM2 */
-    temp = get_a_number("\r\nPWM1/2/3/4 Frequency (*KHz, 50~150)");
-    temp *= 1000;
-    temp_cfg.freq = temp;
-
-    /* set dead band for PWM1 and PWM2 RED and FED, ns */
-    temp = get_a_number("\r\nDead Band PWM1 RED (0~100 of 10ns)");
-    temp_cfg.deadband_red1 = temp/10;
-    temp = get_a_number("\r\nDead Band PWM1 FED (0~100 of 10ns)");
-    temp_cfg.deadband_fed1 = temp/10;
-    temp = get_a_number("\r\nDead Band PWM2 RED (0~100 of 10ns)");
-    temp_cfg.deadband_red2 = temp/10;
-    temp = get_a_number("\r\nDead Band PWM2 FED (0~100 of 10ns)");
-    temp_cfg.deadband_fed2 = temp/10;
-
-    /* set dead band for PWM1 and PWM2 RED and FED, ns */
-//    temp = get_a_number("\r\nCompensation PWM3A DOWN (0~100 of 10ns)");
-//    temp_cfg.compensation_down3 = temp/10;
-//    temp = get_a_number("\r\nCompensation PWM4A DOWN (0~100 of 10ns)");
-//    temp_cfg.compensation_down4 = temp/10;
-    temp = get_a_number("\r\nCompensation PWM3A UP (0~100 of 10ns)");
-    temp_cfg.compensation_up3 = temp/10;
-    temp = get_a_number("\r\nCompensation PWM4A UP (0~100 of 10ns)");
-    temp_cfg.compensation_up4 = temp/10;
-    temp = get_a_number("\r\nCompensation Lik (1000~8000 pH )\0");
-    temp_cfg.compensation_lik = temp;
-    temp = get_a_number("\r\nCompensation N (20~30) *0.1\0");
-    temp_cfg.compensation_n = temp;
-    temp = get_a_number("\r\nCompensation Rload (100~10000)mOhms\0");
-    temp_cfg.compensation_rload = temp;
-
-    // confirm the selections
-    int hitkey;
-    iPrintf("\r\n\r\nPlease confirm y or n:");
-    hitkey = get_a_char();
-    while(('y' != hitkey) && ('n' != hitkey) && ('Y' != hitkey) && ('N' != hitkey))
-    {   // invalid input. Need input again
-    	iPrintf("\r\nInvalid input! Please input again!");
-        hitkey = get_a_char();
-    }
-    if(('y' == hitkey) || ('Y' == hitkey))
-    {
-        iPrintf("\r\nConfiguration confirmed!");
-        pwmConfig_check(&temp_cfg, &pwmUartConfig, BOOL_TRUE);
-    }
-    else
-    {
-        iPrintf("\r\nConfiguration ignored!");
-        return BOOL_FALSE;
-    }
-
-    return BOOL_TRUE;
-}
-#endif	/* #ifdef PROJECT_ID4 */
-
-int app_config()
-{
-	int ret = 0;
-
-	dData.display = 0;
-	dData.number = 0;
-
-    //if(UART_Read_Passwd())                                     // using a protocol instead of just a keyboard hit
-    {
-        //iPrintf("\r\nPlease input command (p, c, f, d, s)");
-        iPrintf("\r\nPlease input command (p, c, f, d)");
-        iPrintf("\r\n p: get the config and print out them");
-        iPrintf("\r\n c: config PETD");
-        iPrintf("\r\n f: config PWM");
-        iPrintf("\r\n d: get the log");
-        //iPrintf("\r\n s: send CAN message");
-        iPrintf("\r\n ->: ");
-
-        char hitkey;
-        hitkey = get_a_char();
-        while((COMMAND_P != hitkey) && ((COMMAND_P - 32) != hitkey)
-                && (COMMAND_C != hitkey) && ((COMMAND_C - 32) != hitkey)
-                && (COMMAND_F != hitkey) && ((COMMAND_F - 32) != hitkey)
-                && (COMMAND_W != hitkey) && ((COMMAND_W - 32) != hitkey)
-                && (COMMAND_D != hitkey) && ((COMMAND_P - 32) != hitkey)
-				&& (COMMAND_S != hitkey) && ((COMMAND_S - 32) != hitkey))
-        {   // invalid input. Need input again
-        	iPrintf("\r\nInvalid input! Please input again!");
-            hitkey = get_a_char();
-        }
-
-        switch(hitkey) {
-#ifdef PROJECT_ID4
-			case COMMAND_P:
-			case (COMMAND_P - 32):
-				/* display some information */
-        		msg_canfd_getData()->id4DataOut_command.data.debugValue = 999;
-				msg_canfd_getData()->updated = BOOL_TRUE;
-        		//while(1)
-        			{ msg_canfd_send_tester((uint32_t)COMMAND_P); }
-				ret = COMMAND_P;
-    		break;
-        	case COMMAND_C:
-        	case (COMMAND_C - 32):
-				/* config PETD control parameters */
-				getc(stdin);
-				if(petdConfig_input())
-				{
-					petdConfig_print();
-					petdConfig_updateCan();
-				}
-            	ret = COMMAND_C;
-            	break;
-          	case COMMAND_F:
-        	case (COMMAND_F - 32):
-				/* config PETD control parameters */
-				getc(stdin);
-				if(pwmConfig_input())
-				{
-					pwmConfig_print();          /* display the configurations */
-					pwmConfig_updateCan();
-				}
-        		ret = COMMAND_F;
-				break;
-        	case COMMAND_D:
-        	case (COMMAND_D - 32):
-				/* process debug option */
-				getc(stdin);		/* get rid of ENTER key */
-				dData.display = get_a_number_print("number for debugging");
-				if(444 == dData.display)
-				{	/* request log data */
-				    uint32_t position = 0;
-				    uint16_t number = 0x10;
-				    position = get_a_number("\r\nRead FRAM from (0 ~ 16376/0x4000)");
-				    number = get_a_number("\r\nRead words of (1 ~ 17376)");
-		            msg_canfd_getData()->id4DataOut_command.data.addrStart = position;
-		            msg_canfd_getData()->id4DataOut_command.data.dataNum = number;
-	            	msg_canfd_getData()->id4DataOut_command.data.debugValue = dData.display;
-	            	msg_canfd_getData()->updated = BOOL_TRUE;
-	            	ret = COMMAND_D;
-				}
-				else if (333 == dData.display)
-				{	/* request error data */
-	            	msg_canfd_getData()->id4DataOut_command.data.debugValue = dData.display;
-	            	msg_canfd_getData()->updated = BOOL_TRUE;
-	            	ret = COMMAND_D;
-				}
-				else {
-					ret = dData.display;
-				}
-				break;
-        	case COMMAND_S:
-        	case (COMMAND_S - 32):
-				/* process sending the CAN message */
-				getc(stdin);		/* get rid of ENTER key */
-        		iPrintf("\r\nPlease input number for debugging");
-		        iPrintf("\r\n 1: FSH OFF");
-		        iPrintf("\r\n 2: FSH ON");
-		        iPrintf("\r\n 3: Ambient temperature");
-		        dData.display = get_a_number_print("->");
-		        if(3 == dData.display) {
-				    dData.number = get_a_number("\r\nAmbient Temp. (-30°C - 30°C)");
-		        }
-		        msg_canfd_getData()->updated = BOOL_TRUE;
-				ret = COMMAND_S;
-				break;
-#endif
-#ifdef PROJECT_NAVY
-        	case COMMAND_P:
-        	case (COMMAND_P - 32):
-				powerConfig_print();
-				ret = COMMAND_P;
-        		break;
-        	case COMMAND_C:
-        	case (COMMAND_C - 32):
-				if(powerConfig_input())
-				{
-					powerConfig_print();
-					powerConfig_updateCan();
-				}
-				ret = COMMAND_C;
-			     break;
-        	case COMMAND_D:
-        	case (COMMAND_D - 32):
-				dData.number = get_a_number("operation mode(0 ~ 3)");
-				if((0 > dData.number) || (3 < dData.number)) {
-					iPrintf("Input out of range, ignored!");
-				}
-				else {
-					msg_canfd_getData()->navyOut.data.mode = dData.number;
-				}
-				break;
-#endif
-        	case COMMAND_W:
-        	case (COMMAND_W - 32):
-				ret = 0;
-				break;
-        	default:
-        		ret = 0;
-        		break;
-        }
-
-#if 0
-        if((COMMAND_P == hitkey) || ((COMMAND_P - 32) == hitkey))
-        {   /* display some information */
-#ifdef PROJECT_ID4
-            pwmConfig_print();
-            petdConfig_print();
-#endif
-#ifdef PROJECT_NAVY
-            powerConfig_print();
-#endif
-            ret = COMMAND_P;
-        }
-        else if((COMMAND_C == hitkey) || ((COMMAND_C - 32) == hitkey))
-        {   /* config PWM parameters */
-#ifdef PROJECT_ID4
-            if(petdConfig_input())
-            {
-                petdConfig_print();
-            }
-#endif
-#ifdef PROJECT_NAVY
-            if(powerConfig_input())
-            {
-                powerConfig_print();
-                powerConfig_updateCan();
-            }
-#endif
-            ret = COMMAND_C;
-        }
-        else if((COMMAND_F == hitkey) || ((COMMAND_F - 32) == hitkey))
-        {   /* config PWM parameters */
- #ifdef PROJECT_ID4
-        	if(pwmConfig_input())
-            {
-                pwmConfig_print();          /* display the configurations */
-            }
-#endif
-#ifdef PROJECT_NAVY
-        	dData.number = get_a_number("operation mode(0 ~ 3)");
-        	if((0 > dData.number) || (3 < dData.number)) {
-        		iPrintf("Input out of range, ignored!");
-        	}
-        	else {
-        		msg_canfd_getData()->navyOut.data.mode = dData.number;
-        	}
-#endif
-        	ret = COMMAND_F;
-        }
-        else if((COMMAND_W == hitkey) || ((COMMAND_W - 32) == hitkey))
-        {   /* write to FRAM */
-            writeLogging();
-            ret = COMMAND_W;
-        }
-        else if((COMMAND_D == hitkey) || ((COMMAND_D - 32) == hitkey))
-        {   /* input a number for debugging */
-            dData.display = get_a_number("number for debugging");
-//            dData.number = get_a_number("number for debugging");
-
-#ifdef PROJECT_ID4
-            if(444 == dData.display)
-            {
-                printLogging();
-            }
-            else if (333 == dData.display)
-            {
-                dataLogfram_errorDisplay();
-            }
-#endif
-            ret = COMMAND_D;
-        }
-#endif
-    }
-
-    return ret;
-}
-
-void writeLogging(void)
-{
-	BOOL_INT32 status;
-    uint32_t address = 0;
-    uint32_t number = 0x10;
-    uint16_t value = 0;
-    char hitkey;
-
-    address = (uint32_t)get_a_number("\r\nWrite FRAM from (0 ~ 131072/0x20000)");
-    number = (uint32_t)get_a_number("\r\nWrite words of (1 ~ 65535)");
-    value = (uint16_t)get_a_number("\r\nWrite value of (0 ~ 65535)");
-
-    do{
-        iPrintf("\r\nWrite %2d W @0x%5X:\t", number, address);
-        status = dataLogger_writeWord(address, number, &value);
-        if(!status)
-        {
-            iPrintf("\r\nError writing FRAM %d words at %d!", number, address);
-        }
-
-        address += number * 2;
-        value += number;
-        if(FRAM_SIZE <= address)
-        {
-            address = 0;
-        }
-
-        iPrintf("\r\nWriting FRAM %d words at %d successfully!", number, address);
-        hitkey = get_a_char();
-    } while('\r' != hitkey);
-}
-
-void printLogging(void)
-{
-	BOOL_INT32 status;
-    uint32_t address = 0;
-    uint32_t number = 0x10;
-    char hitkey;
-
-    address = (uint32_t)get_a_number("\r\nRead FRAM from (0 ~ 131072/0x20000)");
-    number = (uint32_t)get_a_number("\r\nRead words of (1 ~ 65535)");
-
-    if(555 == address)
-    {   /* print values in log buff */
-        address = 0;
-
-        do{
-#ifdef DATA_LOG_BYTE
-            iPrintf("\r\nRead %2d bytes @%d:\n\r", number, address);
-            dataLogbuff_print_byte(address, number);
-#else
-            iPrintf("\r\nRead %2d words @%d:\n\r", number, address);
-            dataLogbuff_print_word(address, number);
-#endif
-            address += number;
-
-            hitkey = get_a_char();
-        } while('\r' != hitkey);
-
-        return;
-    }
-
-    /* printf values from Storage */
-    do{
-#ifdef DATA_LOG_BYTE
-        iPrintf("\r\nRead %2d Bytes @%d:\t", number, address);
-
-        status = dataLogger_print_byte(address, number);
-        if(!status)
-        {
-            iPrintf("\r\nError reading FRAM %d bytes at %d!", number, address);
-        }
-        address += number;
-#else
-        iPrintf("\r\nRead %2d Words @%d:\t", number, address);
-
-        /* read and display only one word */
-//        status = dataLogger_print_word(address, number);     address += number * 2;
-        /* read and display N (4 for now) words */
-        status = dataLogger_print_wordn(address, number);    address += number * 8;
-        if(!status)
-        {
-            iPrintf("\r\nError reading FRAM %d words at %d!", number, address);
-        }
-#endif
-
-        if(FRAM_SIZE <= address)
-        {
-            address = 0;
-        }
-
-        hitkey = get_a_char();
-    } while('\r' != hitkey);
-}
-
-#ifdef PROJECT_NAVY
 struct powerConfig *powerConfig_get(void)
 {
     return &powerUartConfig;
@@ -896,9 +402,102 @@ BOOL_INT32 powerConfig_check(struct powerConfig *configIn, struct powerConfig *c
 
     return status;
 }
-#endif	/* #ifdef PROJECT_NAVY */
 
-#ifdef PROJECT_ID4
+void petdConfig_updateCan(void)
+{
+	struct canfdData_id4 *temp;
+	temp = msg_canfd_getData_id4();
+
+//	temp->id4DataOut_cfgPetd.data.modeControl = petdUartConfig.modeControl;
+//	temp->id4DataOut_cfgPetd.data.VoutTarget = petdUartConfig.VoutTarget;
+//	temp->id4DataOut_cfgPetd.data.runtime = petdUartConfig.runtime;
+//	temp->id4DataOut_cfgPetd.data.thTempTransfo = petdUartConfig.thTempTransfo;
+//	temp->id4DataOut_cfgPetd.data.thReslow = petdUartConfig.thReslow;
+//	temp->id4DataOut_cfgPetd.data.thReshigh = petdUartConfig.thReshigh;
+//	temp->id4DataOut_cfgPetd.data.thCout = petdUartConfig.thCout;
+//	temp->id4DataOut_cfgPetd.data.checkHV = petdUartConfig.checkHV;
+//	temp->id4DataOut_cfgPetd.data.psTarget = petdUartConfig.psTarget;
+//	temp->id4DataOut_cfgPetd.data.addRuntime = petdUartConfig.addRuntime;
+	temp->id4DataOut_cfgPetd.data = petdUartConfig;
+
+	temp->updated = BOOL_TRUE;
+}
+
+BOOL_INT32 petdConfig_input(void)
+{
+    iPrintf("\r\n\nPETD Configuration:");
+    //iPrintf("\r\nPress ENTER to pass!\r\n");
+
+    struct petdConfig temp_cfg;
+
+    temp_cfg.modeControl = get_a_number("\r\nControl mode (1 for CL, 0 for OL)");
+    if(INVALID_INPUT != temp_cfg.modeControl)
+    {
+        if(0 == temp_cfg.modeControl)
+        {
+            temp_cfg.modeControl = 0;
+        }
+        else if(1 == temp_cfg.modeControl)
+        {
+            temp_cfg.modeControl = 1;
+        }
+        else
+        {   /* assign the default value */
+            temp_cfg.modeControl = petdUartConfig.modeControl;
+        }
+    }
+    else
+    {
+        temp_cfg.modeControl = petdUartConfig.modeControl;
+    }
+
+    if(MODE_CTRL_OPEN_LOOP == temp_cfg.modeControl)
+    {
+        temp_cfg.psTarget = get_a_number("\r\nDesired Final Phase Shift (10 - 160) °");
+    }
+    else
+    {
+        temp_cfg.VoutTarget = get_a_number("\r\nDesired Output Voltage (20 - 95)V");
+    }
+
+    temp_cfg.runtime = get_a_number("\r\nDesired Run Time (0 - 600s)");
+    if(INVALID_INPUT != temp_cfg.runtime) {
+        /* invalid input, get the last value */
+        temp_cfg.runtime = petdUartConfig.runtime;
+    }
+    if(0 == temp_cfg.runtime) {
+        temp_cfg.addRuntime = get_a_number("\r\nAdditional run time (0 - 30s)\0");
+    }
+
+    temp_cfg.thTempTransfo = get_a_number("\r\nTransfo Temp. threshold (-10°C - 30°C)");
+    temp_cfg.checkHV = get_a_number("\r\nHigh voltage enable/disable (1 to enable, 0 to disable)");
+    temp_cfg.thReslow = get_a_number("\r\nResistance threshold low (0 - 2500 mOhms)");
+    temp_cfg.thReshigh = get_a_number("\r\nResistance threshold high (1500 - 5000) mOhms");
+    temp_cfg.thCout = get_a_number("\r\nCurrent Output threshold (0 - 80A)");
+
+    // confirm the selections
+    int hitkey;
+    iPrintf("\r\n\r\nPlease confirm y or n:");
+    hitkey = get_a_char();
+    while(('y' != hitkey) && ('n' != hitkey) && ('Y' != hitkey) && ('N' != hitkey))
+    {   // invalid input. Need input again
+        iPrintf("\r\nInvalid input! Please input again!");
+        hitkey = get_a_char();
+    }
+
+    /* assign the updated configuration */
+    if(('y' == hitkey) || ('Y' == hitkey))
+    {   /* copy the input */
+        petdConfig_check(&temp_cfg, &petdUartConfig, BOOL_TRUE);
+        iPrintf("\r\nConfiguration confirmed!\r\n");
+        petdUartConfig.configUpdated = BOOL_TRUE;
+        return BOOL_TRUE;
+    }
+
+    return BOOL_FALSE;
+}
+
+
 struct petdConfig *petdConfig_get(void)
 {
     return &petdUartConfig;
@@ -1138,6 +737,88 @@ BOOL_INT32 petdConfig_check(struct petdConfig *configIn, struct petdConfig *conf
     return status;
 }
 
+void pwmConfig_updateCan(void)
+{
+	struct canfdData_id4 *temp;
+	temp = msg_canfd_getData_id4();
+
+	temp->id4DataOut_cfgPwm.data.freq = pwmUartConfig.freq;
+	temp->id4DataOut_cfgPwm.data.deadband_red1 = pwmUartConfig.deadband_red1;
+	temp->id4DataOut_cfgPwm.data.deadband_red2 = pwmUartConfig.deadband_red2;
+	temp->id4DataOut_cfgPwm.data.deadband_fed1 = pwmUartConfig.deadband_fed1;
+	temp->id4DataOut_cfgPwm.data.deadband_fed2 = pwmUartConfig.deadband_fed2;
+	temp->id4DataOut_cfgPwm.data.compensation_up3 = pwmUartConfig.compensation_up3;
+	temp->id4DataOut_cfgPwm.data.compensation_up4 = pwmUartConfig.compensation_up4;
+	temp->id4DataOut_cfgPwm.data.compensation_lik = pwmUartConfig.compensation_lik;
+	temp->id4DataOut_cfgPwm.data.compensation_n = pwmUartConfig.compensation_n;
+	temp->id4DataOut_cfgPwm.data.compensation_rload = pwmUartConfig.compensation_rload;
+
+	temp->updated = BOOL_TRUE;
+}
+
+BOOL_INT32 pwmConfig_input(void)
+{
+    iPrintf("\r\n\nPWM Configuration");
+    iPrintf("\r\nPress ENTER to pass!\r\n");
+
+    int32_t temp = 0;
+
+    struct pwmConfig temp_cfg;
+
+    /* set frequency of PWM1 and PWM2 */
+    temp = get_a_number("\r\nPWM1/2/3/4 Frequency (*KHz, 50~150)");
+    temp *= 1000;
+    temp_cfg.freq = temp;
+
+    /* set dead band for PWM1 and PWM2 RED and FED, ns */
+    temp = get_a_number("\r\nDead Band PWM1 RED (0~100 of 10ns)");
+    temp_cfg.deadband_red1 = temp/10;
+    temp = get_a_number("\r\nDead Band PWM1 FED (0~100 of 10ns)");
+    temp_cfg.deadband_fed1 = temp/10;
+    temp = get_a_number("\r\nDead Band PWM2 RED (0~100 of 10ns)");
+    temp_cfg.deadband_red2 = temp/10;
+    temp = get_a_number("\r\nDead Band PWM2 FED (0~100 of 10ns)");
+    temp_cfg.deadband_fed2 = temp/10;
+
+    /* set dead band for PWM1 and PWM2 RED and FED, ns */
+//    temp = get_a_number("\r\nCompensation PWM3A DOWN (0~100 of 10ns)");
+//    temp_cfg.compensation_down3 = temp/10;
+//    temp = get_a_number("\r\nCompensation PWM4A DOWN (0~100 of 10ns)");
+//    temp_cfg.compensation_down4 = temp/10;
+    temp = get_a_number("\r\nCompensation PWM3A UP (0~100 of 10ns)");
+    temp_cfg.compensation_up3 = temp/10;
+    temp = get_a_number("\r\nCompensation PWM4A UP (0~100 of 10ns)");
+    temp_cfg.compensation_up4 = temp/10;
+    temp = get_a_number("\r\nCompensation Lik (1000~8000 pH )\0");
+    temp_cfg.compensation_lik = temp;
+    temp = get_a_number("\r\nCompensation N (20~30) *0.1\0");
+    temp_cfg.compensation_n = temp;
+    temp = get_a_number("\r\nCompensation Rload (100~10000)mOhms\0");
+    temp_cfg.compensation_rload = temp;
+
+    // confirm the selections
+    int hitkey;
+    iPrintf("\r\n\r\nPlease confirm y or n:");
+    hitkey = get_a_char();
+    while(('y' != hitkey) && ('n' != hitkey) && ('Y' != hitkey) && ('N' != hitkey))
+    {   // invalid input. Need input again
+    	iPrintf("\r\nInvalid input! Please input again!");
+        hitkey = get_a_char();
+    }
+    if(('y' == hitkey) || ('Y' == hitkey))
+    {
+        iPrintf("\r\nConfiguration confirmed!");
+        pwmConfig_check(&temp_cfg, &pwmUartConfig, BOOL_TRUE);
+    }
+    else
+    {
+        iPrintf("\r\nConfiguration ignored!");
+        return BOOL_FALSE;
+    }
+
+    return BOOL_TRUE;
+}
+
 void pwmConfig_print(void)
 {
     iPrintf("\r\nPWM configuration:");
@@ -1285,5 +966,315 @@ BOOL_INT32 pwmConfig_check(struct pwmConfig *configIn, struct pwmConfig *configO
     return BOOL_TRUE;
 }
 
-#endif	/* #ifdef PROJECT_ID4 */
+int app_config()
+{
+	int ret = 0;
 
+	dData.display = 0;
+	dData.number = 0;
+
+    //if(UART_Read_Passwd())                                     // using a protocol instead of just a keyboard hit
+    {
+        //iPrintf("\r\nPlease input command (p, c, f, d, s)");
+        iPrintf("\r\nPlease input command (p, c, f, d)");
+        iPrintf("\r\n p: get the config and print out them");
+        iPrintf("\r\n c: config PETD");
+        iPrintf("\r\n f: config PWM");
+        iPrintf("\r\n d: get the log");
+        //iPrintf("\r\n s: send CAN message");
+        iPrintf("\r\n ->: ");
+
+        char hitkey;
+        hitkey = get_a_char();
+        while((COMMAND_P != hitkey) && ((COMMAND_P - 32) != hitkey)
+                && (COMMAND_C != hitkey) && ((COMMAND_C - 32) != hitkey)
+                && (COMMAND_F != hitkey) && ((COMMAND_F - 32) != hitkey)
+                && (COMMAND_W != hitkey) && ((COMMAND_W - 32) != hitkey)
+                && (COMMAND_D != hitkey) && ((COMMAND_P - 32) != hitkey)
+				&& (COMMAND_S != hitkey) && ((COMMAND_S - 32) != hitkey))
+        {   // invalid input. Need input again
+        	iPrintf("\r\nInvalid input! Please input again!");
+            hitkey = get_a_char();
+        }
+
+        switch(hitkey) {
+#ifdef PROJECT_ID4
+			case COMMAND_P:
+			case (COMMAND_P - 32):
+				/* display some information */
+        		msg_canfd_getData_id4()->id4DataOut_command.data.debugValue = 999;
+				msg_canfd_getData_id4()->updated = BOOL_TRUE;
+        		//while(1)
+        			{ msg_canfd_send_tester((uint32_t)COMMAND_P); }
+				ret = COMMAND_P;
+    		break;
+        	case COMMAND_C:
+        	case (COMMAND_C - 32):
+				/* config PETD control parameters */
+				getc(stdin);
+				if(petdConfig_input())
+				{
+					petdConfig_print();
+					petdConfig_updateCan();
+				}
+            	ret = COMMAND_C;
+            	break;
+          	case COMMAND_F:
+        	case (COMMAND_F - 32):
+				/* config PETD control parameters */
+				getc(stdin);
+				if(pwmConfig_input())
+				{
+					pwmConfig_print();          /* display the configurations */
+					pwmConfig_updateCan();
+				}
+        		ret = COMMAND_F;
+				break;
+        	case COMMAND_D:
+        	case (COMMAND_D - 32):
+				/* process debug option */
+				getc(stdin);		/* get rid of ENTER key */
+				dData.display = get_a_number_print("number for debugging");
+				if(444 == dData.display)
+				{	/* request log data */
+				    uint32_t position = 0;
+				    uint16_t number = 0x10;
+				    position = get_a_number("\r\nRead FRAM from (0 ~ 16376/0x4000)");
+				    number = get_a_number("\r\nRead words of (1 ~ 17376)");
+		            msg_canfd_getData_id4()->id4DataOut_command.data.addrStart = position;
+		            msg_canfd_getData_id4()->id4DataOut_command.data.dataNum = number;
+	            	msg_canfd_getData_id4()->id4DataOut_command.data.debugValue = dData.display;
+	            	msg_canfd_getData_id4()->updated = BOOL_TRUE;
+	            	ret = COMMAND_D;
+				}
+				else if (333 == dData.display)
+				{	/* request error data */
+	            	msg_canfd_getData_id4()->id4DataOut_command.data.debugValue = dData.display;
+	            	msg_canfd_getData_id4()->updated = BOOL_TRUE;
+	            	ret = COMMAND_D;
+				}
+				else {
+					ret = dData.display;
+				}
+				break;
+        	case COMMAND_S:
+        	case (COMMAND_S - 32):
+				/* process sending the CAN message */
+				getc(stdin);		/* get rid of ENTER key */
+        		iPrintf("\r\nPlease input number for debugging");
+		        iPrintf("\r\n 1: FSH OFF");
+		        iPrintf("\r\n 2: FSH ON");
+		        iPrintf("\r\n 3: Ambient temperature");
+		        dData.display = get_a_number_print("->");
+		        if(3 == dData.display) {
+				    dData.number = get_a_number("\r\nAmbient Temp. (-30°C - 30°C)");
+		        }
+		        msg_canfd_getData_id4()->updated = BOOL_TRUE;
+				ret = COMMAND_S;
+				break;
+#endif
+#ifdef PROJECT_NAVY
+        	case COMMAND_P:
+        	case (COMMAND_P - 32):
+				powerConfig_print();
+				ret = COMMAND_P;
+        		break;
+        	case COMMAND_C:
+        	case (COMMAND_C - 32):
+				if(powerConfig_input())
+				{
+					powerConfig_print();
+					powerConfig_updateCan();
+				}
+				ret = COMMAND_C;
+			     break;
+        	case COMMAND_D:
+        	case (COMMAND_D - 32):
+				dData.number = get_a_number("operation mode(0 ~ 3)");
+				if((0 > dData.number) || (3 < dData.number)) {
+					iPrintf("Input out of range, ignored!");
+				}
+				else {
+					msg_canfd_getData_navy()->navyOut.data.mode = dData.number;
+				}
+				break;
+#endif
+        	case COMMAND_W:
+        	case (COMMAND_W - 32):
+				ret = 0;
+				break;
+        	default:
+        		ret = 0;
+        		break;
+        }
+
+#if 0
+        if((COMMAND_P == hitkey) || ((COMMAND_P - 32) == hitkey))
+        {   /* display some information */
+#ifdef PROJECT_ID4
+            pwmConfig_print();
+            petdConfig_print();
+#endif
+#ifdef PROJECT_NAVY
+            powerConfig_print();
+#endif
+            ret = COMMAND_P;
+        }
+        else if((COMMAND_C == hitkey) || ((COMMAND_C - 32) == hitkey))
+        {   /* config PWM parameters */
+#ifdef PROJECT_ID4
+            if(petdConfig_input())
+            {
+                petdConfig_print();
+            }
+#endif
+#ifdef PROJECT_NAVY
+            if(powerConfig_input())
+            {
+                powerConfig_print();
+                powerConfig_updateCan();
+            }
+#endif
+            ret = COMMAND_C;
+        }
+        else if((COMMAND_F == hitkey) || ((COMMAND_F - 32) == hitkey))
+        {   /* config PWM parameters */
+ #ifdef PROJECT_ID4
+        	if(pwmConfig_input())
+            {
+                pwmConfig_print();          /* display the configurations */
+            }
+#endif
+#ifdef PROJECT_NAVY
+        	dData.number = get_a_number("operation mode(0 ~ 3)");
+        	if((0 > dData.number) || (3 < dData.number)) {
+        		iPrintf("Input out of range, ignored!");
+        	}
+        	else {
+        		msg_canfd_getData()->navyOut.data.mode = dData.number;
+        	}
+#endif
+        	ret = COMMAND_F;
+        }
+        else if((COMMAND_W == hitkey) || ((COMMAND_W - 32) == hitkey))
+        {   /* write to FRAM */
+            writeLogging();
+            ret = COMMAND_W;
+        }
+        else if((COMMAND_D == hitkey) || ((COMMAND_D - 32) == hitkey))
+        {   /* input a number for debugging */
+            dData.display = get_a_number("number for debugging");
+//            dData.number = get_a_number("number for debugging");
+
+#ifdef PROJECT_ID4
+            if(444 == dData.display)
+            {
+                printLogging();
+            }
+            else if (333 == dData.display)
+            {
+                dataLogfram_errorDisplay();
+            }
+#endif
+            ret = COMMAND_D;
+        }
+#endif
+    }
+
+    return ret;
+}
+
+void writeLogging(void)
+{
+	BOOL_INT32 status;
+    uint32_t address = 0;
+    uint32_t number = 0x10;
+    uint16_t value = 0;
+    char hitkey;
+
+    address = (uint32_t)get_a_number("\r\nWrite FRAM from (0 ~ 131072/0x20000)");
+    number = (uint32_t)get_a_number("\r\nWrite words of (1 ~ 65535)");
+    value = (uint16_t)get_a_number("\r\nWrite value of (0 ~ 65535)");
+
+    do{
+        iPrintf("\r\nWrite %2d W @0x%5X:\t", number, address);
+        status = dataLogger_writeWord(address, number, &value);
+        if(!status)
+        {
+            iPrintf("\r\nError writing FRAM %d words at %d!", number, address);
+        }
+
+        address += number * 2;
+        value += number;
+        if(FRAM_SIZE <= address)
+        {
+            address = 0;
+        }
+
+        iPrintf("\r\nWriting FRAM %d words at %d successfully!", number, address);
+        hitkey = get_a_char();
+    } while('\r' != hitkey);
+}
+
+void printLogging(void)
+{
+	BOOL_INT32 status;
+    uint32_t address = 0;
+    uint32_t number = 0x10;
+    char hitkey;
+
+    address = (uint32_t)get_a_number("\r\nRead FRAM from (0 ~ 131072/0x20000)");
+    number = (uint32_t)get_a_number("\r\nRead words of (1 ~ 65535)");
+
+    if(555 == address)
+    {   /* print values in log buff */
+        address = 0;
+
+        do{
+#ifdef DATA_LOG_BYTE
+            iPrintf("\r\nRead %2d bytes @%d:\n\r", number, address);
+            dataLogbuff_print_byte(address, number);
+#else
+            iPrintf("\r\nRead %2d words @%d:\n\r", number, address);
+            dataLogbuff_print_word(address, number);
+#endif
+            address += number;
+
+            hitkey = get_a_char();
+        } while('\r' != hitkey);
+
+        return;
+    }
+
+    /* printf values from Storage */
+    do{
+#ifdef DATA_LOG_BYTE
+        iPrintf("\r\nRead %2d Bytes @%d:\t", number, address);
+
+        status = dataLogger_print_byte(address, number);
+        if(!status)
+        {
+            iPrintf("\r\nError reading FRAM %d bytes at %d!", number, address);
+        }
+        address += number;
+#else
+        iPrintf("\r\nRead %2d Words @%d:\t", number, address);
+
+        /* read and display only one word */
+//        status = dataLogger_print_word(address, number);     address += number * 2;
+        /* read and display N (4 for now) words */
+        status = dataLogger_print_wordn(address, number);    address += number * 8;
+        if(!status)
+        {
+            iPrintf("\r\nError reading FRAM %d words at %d!", number, address);
+        }
+#endif
+
+        if(FRAM_SIZE <= address)
+        {
+            address = 0;
+        }
+
+        hitkey = get_a_char();
+    } while('\r' != hitkey);
+}
