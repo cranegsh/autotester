@@ -42,12 +42,13 @@ typedef struct {
 
 void app_main_displayHelp(const char *app);
 void app_main_initData(sysData_type *sdata);
-int app_main_processOption(int numOpt, app_opt_t *appOpt, char *strArg, int *num);
+int app_main_processOption(int numOpt, app_opt_t *appOpt, char *strArg);
 void app_main_sendCommand(uint32_t prj_num, sysData_type *sdata, int cmd);
-void app_main_initMsg(uint32_t prj_num, int num, app_opt_t *appOpt);
+void app_main_initMsg(uint32_t prj_num, app_opt_t *appOpt);
 int app_main_checkMsg(int num, int mark);
 void app_main_print_canVeh(uint32_t prj_num, int msgNum, int msgCount);
 int app_main_remoteControl(uint32_t prj_num, int cmd, sysData_type *sdata);
+int app_main_canTest(app_opt_t *appOpt);
 void app_main_test(void);
 
 #endif /* APP_MAIN_H_ */

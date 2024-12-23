@@ -32,13 +32,17 @@ msg_opt_t msg[CAN_VEH_MSG_NUM] = {
 #endif
 };
 
-int timer_display = 0;
+int timer_num = 0;							/* each message has a timer and timer number is message number */
+int timer_count = 0;						/* this is to count the message that its submission is complete */
+int timer_display = 0;						/* timer to cound display interval */
 
 void app_main_displayHelp(const char *app)
 {
 	fprintf(stderr,
 		"Usage: %s [ options <param> ] argument\n"
 		"Options:\n"
+		"\t -m: run manual test.\n"
+		"\t -z: run auto test.\n"
 		"\t -l <number>: loop numbers (must option, 0 for infinite loop).\n"
 		"\t -i <number>: interval time (millisecond, default in source code). \n"
 		"\t -p <number>: total running time (seconds, default 60, 0 for continuous run).\n"
@@ -69,10 +73,14 @@ void app_main_initData(sysData_type *sdata)
 
 }
 
-int app_main_processOption(int numOpt, app_opt_t *appOpt, char *strArg, int *num)
+int app_main_processOption(int numOpt, app_opt_t *appOpt, char *strArg)
 {
-	int retVal = *num;
+	int retVal = timer_num;
 	switch(numOpt) {
+		case 'm':
+		case 'z':
+			appOpt->function = numOpt;
+			break;
 		case 'l':
 			appOpt->num = (uint32_t)atoi(strArg);
 			break;
@@ -166,13 +174,13 @@ int app_main_processOption(int numOpt, app_opt_t *appOpt, char *strArg, int *num
 			break;
 	}
 
-	if((*num + 1) == retVal) {
+	if((timer_num + 1) == retVal) {
 		/* get an option with parameter */
 		appOpt->val = (int32_t)atoi(strArg);
-		msg[*num].mode = appOpt->mode;
-		msg[*num].val = appOpt->val;
+		msg[timer_num].mode = appOpt->mode;
+		msg[timer_num].val = appOpt->val;
 		ndPrintf("\t Value %d", appOpt->val);
-		*num = retVal;
+		timer_num = retVal;
 	}
 
 	return retVal;
@@ -202,13 +210,13 @@ static void (*app_main_initMsg_arr[PROJECT_ID_TOTAL])(msg_opt_t *) = {
 	app_main_c3_getMsginfo,
 	NULL,
 };
-void app_main_initMsg(uint32_t prj_num, int num, app_opt_t *appOpt)
+void app_main_initMsg(uint32_t prj_num, app_opt_t *appOpt)
 {
-	dPrintf("\nTotal msg #: %d", num);
+	dPrintf("\nTotal msg #: %d", timer_num);
 	ndPrintf("\nMsg name\tNo.\tValue\t | interval\tnum\n");		/* when controlling loop number of every single message */
 	iPrintf("\nMsg name\tNo.\tValue\t | interval(ms)\n");
 
-	for(int i=0; i<num; i++) {
+	for(int i=0; i<timer_num; i++) {
 		/* get the default interval and total number and display msg information */
 		if(app_main_initMsg_arr[prj_num]) {
 			app_main_initMsg_arr[prj_num](&msg[i]);
@@ -221,8 +229,8 @@ void app_main_initMsg(uint32_t prj_num, int num, app_opt_t *appOpt)
 		msg[i].num = appOpt->num;
 	}
 
-	for(int i=0; i<num; i++) {
-		start_timer(&msg, i, num);
+	for(int i=0; i<timer_num; i++) {
+		start_timer(&msg, i, timer_num);
 	}
 }
 
@@ -348,6 +356,23 @@ int app_main_remoteControl(uint32_t prj_num, int cmd, sysData_type *sdata)
 	}
 
 	return ret;
+}
+
+int app_main_canTest(app_opt_t *appOpt)
+{
+    time_t time_ori;
+
+    time_ori = time(NULL);
+	for(;;) {
+		/* in continuous CAN test mode, check if all messages' all submission is complete */
+		timer_count = app_main_checkMsg(timer_num, timer_count);
+		if((timer_num == timer_count)
+			|| ((0 != appOpt->period) && (appOpt->period < (time(NULL) - time_ori)))) {
+			/* all the submission for all messages is complete or test time is up */
+			printf("\n");
+			return 0;
+		}
+	}
 }
 
 void app_main_test(void)

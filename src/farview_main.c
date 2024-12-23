@@ -19,9 +19,6 @@
 /* For identifying the project */
 uint32_t idProject;
 
-int timer_num = 0;							/* each message has a timer and timer number is message number */
-int timer_count = 0;						/* this is to count the message that its submission is complete */
-
 sysData_type farview_data = {
 	.project_id = 0,
 	.canfd_status = -1,
@@ -35,7 +32,6 @@ int main(int argc, char *argv[]) {
 	int i, ret = 0, status = 0;
     int input_command = 0;
 
-    time_t time_ori;
 	app_opt_t opt;
 	opt.val = 0;
 	opt.num = 0;
@@ -46,9 +42,9 @@ int main(int argc, char *argv[]) {
 
 	/* get the option and parameters if needed (followed with :) */
 	//dPrintf("\r\nGetting %d arguments and the option is %d\n", argc, ret);
-	while(-1 != (ret = getopt(argc, argv, "l:i:p:f:a:v:c:s:t:h:d:r:o:H"))) {
+	while(-1 != (ret = getopt(argc, argv, "mzl:i:p:f:a:v:c:s:t:h:d:r:o:H"))) {
 		ndPrintf("\r\nGet %d arguments and the option is %c\n", argc, ret);
-		status = app_main_processOption(ret, &opt, optarg, &timer_num);
+		status = app_main_processOption(ret, &opt, optarg);
 		if (-1 == status) {
 			app_main_displayHelp(argv[0]);
 			return -1;
@@ -76,7 +72,7 @@ int main(int argc, char *argv[]) {
 			printf("\r\nError in command: wrong argument! Please check help.\r\n");
 			return -1;
 		}
-		printf("\r\nNon-option argument:%s %d\r\n", argv[optind], idProject);
+		ndPrintf("\r\nNon-option argument:%s %d\r\n", argv[optind], idProject);
 	}
 	else {
 		idProject = PROJECT_ID_DEFAULT;
@@ -91,20 +87,36 @@ int main(int argc, char *argv[]) {
 	dataLog_init();
 	app_main_initData(&farview_data);
 
-	/* branch according to the command options */
+	/* set up system: branch according to the command options */
     if(APP_OPT_UNKNOWN != opt.mode) {
-    	/* init the submission of vehicle CAN messages specified by opt.mode */
-		app_main_initMsg(idProject, timer_num, &opt);
-		time_ori = time(NULL);
+    	/* do CAN test by submitting vehicle CAN messages specified by opt.mode */
+		app_main_initMsg(idProject, &opt);
+		status = app_main_canTest(&opt);
+		if(0 == status) {
+			printf("\r\n");
+			return 0;
+		}
     }
     else
     {  	/* get the function selection */
-       	input_command = app_config_main(idProject);
-
-		/* send CAN messages according to the input from console */
-		app_main_sendCommand(idProject, &farview_data, input_command);
+    	if('m' == opt.function) {
+    		/* run manual test */
+    		input_command = 'm';
+    		dPrintf("Start running manual test ...\r\n");
+    		return 0;
+    	}
+    	else if('z' == opt.function) {
+    		/* run automatic test */
+    		input_command = 'z';
+    		dPrintf("Start running auto test ...\r\n");
+    		return 0;
+    	}
     }
 
+    /* run remote control */
+	input_command = app_config_main(idProject);
+	/* send CAN messages according to the input from console */
+	app_main_sendCommand(idProject, &farview_data, input_command);
     /* start the main loop */
 	ndPrintf("\nStart the main loop... input value is %d", input_command);
 	for(;;) {
@@ -113,17 +125,6 @@ int main(int argc, char *argv[]) {
 		if(0 == status) {
 			printf("\r\n");
 			return 0;
-		}
-
-		/* in continuous CAN test mode, check if all messages' all submission is complete */
-		if(APP_OPT_UNKNOWN != opt.mode) {
-			timer_count = app_main_checkMsg(timer_num, timer_count);
-    		if((timer_num == timer_count)
-    			|| ((0 != opt.period) && (opt.period < (time(NULL) - time_ori)))) {
-    			/* all the submission for all messages is complete or test time is up */
-    			printf("\n");
-    			return 0;
-    		}
 		}
 
 		//debugPrintf("Cycle count: %d", i); if(70 == i++) for(;;) {;}
