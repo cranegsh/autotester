@@ -966,7 +966,25 @@ BOOL_INT32 pwmConfig_check(struct pwmConfig *configIn, struct pwmConfig *configO
     return BOOL_TRUE;
 }
 
-int app_config()
+static int app_config_getInput(void)
+{
+    char hitkey;
+    hitkey = get_a_char();
+    while((COMMAND_P != hitkey) && ((COMMAND_P - 32) != hitkey)
+            && (COMMAND_C != hitkey) && ((COMMAND_C - 32) != hitkey)
+            && (COMMAND_F != hitkey) && ((COMMAND_F - 32) != hitkey)
+            && (COMMAND_W != hitkey) && ((COMMAND_W - 32) != hitkey)
+            && (COMMAND_D != hitkey) && ((COMMAND_P - 32) != hitkey)
+			&& (COMMAND_S != hitkey) && ((COMMAND_S - 32) != hitkey))
+    {   // invalid input. Need input again
+    	iPrintf("\r\nInvalid input! Please input again!");
+        hitkey = get_a_char();
+    }
+
+    return (int)hitkey;
+}
+
+static int app_config_main_id4(uint32_t prj_num)
 {
 	int ret = 0;
 
@@ -984,28 +1002,14 @@ int app_config()
         //iPrintf("\r\n s: send CAN message");
         iPrintf("\r\n ->: ");
 
-        char hitkey;
-        hitkey = get_a_char();
-        while((COMMAND_P != hitkey) && ((COMMAND_P - 32) != hitkey)
-                && (COMMAND_C != hitkey) && ((COMMAND_C - 32) != hitkey)
-                && (COMMAND_F != hitkey) && ((COMMAND_F - 32) != hitkey)
-                && (COMMAND_W != hitkey) && ((COMMAND_W - 32) != hitkey)
-                && (COMMAND_D != hitkey) && ((COMMAND_P - 32) != hitkey)
-				&& (COMMAND_S != hitkey) && ((COMMAND_S - 32) != hitkey))
-        {   // invalid input. Need input again
-        	iPrintf("\r\nInvalid input! Please input again!");
-            hitkey = get_a_char();
-        }
-
-        switch(hitkey) {
-#ifdef PROJECT_ID4
+        switch(app_config_getInput()) {
 			case COMMAND_P:
 			case (COMMAND_P - 32):
 				/* display some information */
         		msg_canfd_getData_id4()->id4DataOut_command.data.debugValue = 999;
 				msg_canfd_getData_id4()->updated = BOOL_TRUE;
         		//while(1)
-        			{ msg_canfd_send_tester((uint32_t)COMMAND_P); }
+        			{ msg_canfd_send_tester(prj_num, (uint32_t)COMMAND_P); }
 				ret = COMMAND_P;
     		break;
         	case COMMAND_C:
@@ -1072,8 +1076,35 @@ int app_config()
 		        msg_canfd_getData_id4()->updated = BOOL_TRUE;
 				ret = COMMAND_S;
 				break;
-#endif
-#ifdef PROJECT_NAVY
+        	case COMMAND_W:
+        	case (COMMAND_W - 32):
+				ret = 0;
+				break;
+        	default:
+        		ret = 0;
+        		break;
+        }
+    }
+
+    return ret;
+}
+
+static int app_config_main_navy(uint32_t prj_num)
+{
+	int ret = 0;
+
+	dData.display = 0;
+	dData.number = 0;
+
+    //if(UART_Read_Passwd())                                     // using a protocol instead of just a keyboard hit
+    {
+        iPrintf("\r\nPlease input command (p, c, d)");
+        iPrintf("\r\n p: get the config and print them out");
+        iPrintf("\r\n c: config Power");
+        iPrintf("\r\n d: get the log");
+        iPrintf("\r\n ->: ");
+
+        switch(app_config_getInput()) {
         	case COMMAND_P:
         	case (COMMAND_P - 32):
 				powerConfig_print();
@@ -1098,7 +1129,6 @@ int app_config()
 					msg_canfd_getData_navy()->navyOut.data.mode = dData.number;
 				}
 				break;
-#endif
         	case COMMAND_W:
         	case (COMMAND_W - 32):
 				ret = 0;
@@ -1107,79 +1137,28 @@ int app_config()
         		ret = 0;
         		break;
         }
-
-#if 0
-        if((COMMAND_P == hitkey) || ((COMMAND_P - 32) == hitkey))
-        {   /* display some information */
-#ifdef PROJECT_ID4
-            pwmConfig_print();
-            petdConfig_print();
-#endif
-#ifdef PROJECT_NAVY
-            powerConfig_print();
-#endif
-            ret = COMMAND_P;
-        }
-        else if((COMMAND_C == hitkey) || ((COMMAND_C - 32) == hitkey))
-        {   /* config PWM parameters */
-#ifdef PROJECT_ID4
-            if(petdConfig_input())
-            {
-                petdConfig_print();
-            }
-#endif
-#ifdef PROJECT_NAVY
-            if(powerConfig_input())
-            {
-                powerConfig_print();
-                powerConfig_updateCan();
-            }
-#endif
-            ret = COMMAND_C;
-        }
-        else if((COMMAND_F == hitkey) || ((COMMAND_F - 32) == hitkey))
-        {   /* config PWM parameters */
- #ifdef PROJECT_ID4
-        	if(pwmConfig_input())
-            {
-                pwmConfig_print();          /* display the configurations */
-            }
-#endif
-#ifdef PROJECT_NAVY
-        	dData.number = get_a_number("operation mode(0 ~ 3)");
-        	if((0 > dData.number) || (3 < dData.number)) {
-        		iPrintf("Input out of range, ignored!");
-        	}
-        	else {
-        		msg_canfd_getData()->navyOut.data.mode = dData.number;
-        	}
-#endif
-        	ret = COMMAND_F;
-        }
-        else if((COMMAND_W == hitkey) || ((COMMAND_W - 32) == hitkey))
-        {   /* write to FRAM */
-            writeLogging();
-            ret = COMMAND_W;
-        }
-        else if((COMMAND_D == hitkey) || ((COMMAND_D - 32) == hitkey))
-        {   /* input a number for debugging */
-            dData.display = get_a_number("number for debugging");
-//            dData.number = get_a_number("number for debugging");
-
-#ifdef PROJECT_ID4
-            if(444 == dData.display)
-            {
-                printLogging();
-            }
-            else if (333 == dData.display)
-            {
-                dataLogfram_errorDisplay();
-            }
-#endif
-            ret = COMMAND_D;
-        }
-#endif
     }
+
+    return ret;
+}
+
+static int (*app_config_main_arr[PROJECT_ID_TOTAL])(uint32_t) = {
+	app_config_main_id4,
+	NULL,
+	NULL,
+	NULL,
+	app_config_main_navy,
+};
+int app_config_main(uint32_t prj_num)
+{
+	int ret;
+
+    if(app_config_main_arr[prj_num]){
+    	ret = app_config_main_arr[prj_num](prj_num);
+    }
+	else {
+		iPrintf("Function app_config_main No. %d not available!\r\n", prj_num);
+	}
 
     return ret;
 }

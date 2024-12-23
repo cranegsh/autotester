@@ -70,7 +70,7 @@ uint16_t dataLogbuff_read(void);
 /* Functions to log configs and error info to FRAM
  * and read log data from FRAM*/
 BOOL_INT32 dataLogfram_configsWrite(void);
-BOOL_INT32 dataLogfram_configDisplay(void);
+BOOL_INT32 dataLogfram_configDisplay_id4(void);
 void dataLogfram_writeEnable_configs(void);
 struct errInfoLog *logBuf_error_get(void);
 BOOL_INT32 dataLogfram_errorWrite(void);

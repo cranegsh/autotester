@@ -76,10 +76,10 @@ struct canfdData_navy {
 
 /* Function to pass data pointer */
 struct canfdData_navy *msg_canfd_getData_navy(void);
-int32_t msg_canfd_prepare_navy(int32_t option, uint32_t *mid, uint8_t *data, uint32_t *num);
+int32_t msg_canfd_prepare_navy(uint32_t option, uint32_t *mid, uint8_t *data, uint32_t *num);
 void msg_canfd_interpret_navy(uint32_t mid, uint8_t *data, uint32_t num);
 void msg_canfd_clear_navy(void);
 
-void msg_canfd_navy_print(void);
+void app_main_navy_print(void);
 
 #endif /* APPLICATION_CANFDCOMM_NAVY_H_ */

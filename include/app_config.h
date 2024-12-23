@@ -74,7 +74,7 @@ struct petdConfig {
     uint16_t addRuntime;            /* Forced extra run time in seconds based on calculated run time */
 } __attribute__ ((aligned (MEM_ALIGNMENT)));
 
-int app_config();
+int app_config_main(uint32_t prj_num);
 
 void writeLogging(void);
 void printLogging(void);

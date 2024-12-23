@@ -13,16 +13,13 @@
 
 #include "sysconfig.h"
 
-/* For identifying the project */
-extern uint32_t idProject;
-
 /* For storing the debug information */
 #define DEBUG_BUFF_SIZE         100
 struct debugData {
     uint32_t mark;
     uint32_t buffer[DEBUG_BUFF_SIZE];
     uint32_t number;
-    uint16_t display; /* main loop display: 0 for nothing; 1 for INT counts; 2 for inputs; */
+    uint32_t display; /* main loop display: 0 for nothing; 1 for INT counts; 2 for inputs; */
 };
 extern struct debugData dData;
 

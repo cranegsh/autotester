@@ -114,7 +114,6 @@ static struct dataLogger framdataLogger = {
 /* Function to log data to FRAM */
 void dataLogfram_write(void)
 {
-#ifdef PROJECT_ID4
     /* Log the configs first */
     static BOOL_INT32 configLoged = BOOL_TRUE;
     if(logBuf_configs.writeEnabled)
@@ -129,7 +128,6 @@ void dataLogfram_write(void)
         }
         return;
     }
-#endif
 
     /* Log the error info secondly */
     static BOOL_INT32 errorLoged = BOOL_TRUE;
@@ -300,9 +298,8 @@ uint16_t dataLogbuff_read(void)
     return value;
 }
 
-#ifdef PROJECT_ID4
 /* Function to copy configs to buff */
-BOOL_INT32 dataLogfram_configsCopy(void)
+static BOOL_INT32 dataLogfram_configsCopy_id4(void)
 {
     struct petdConfig *temp_cfg;
     temp_cfg = petdConfig_get();
@@ -348,7 +345,9 @@ BOOL_INT32 dataLogfram_configsWrite(void)
         if(!copied)
         {
             /* copy the configs */
-            dataLogfram_configsCopy();
+#ifdef PROJECT_ID4
+            dataLogfram_configsCopy_id4();
+#endif
 
             /* write a log mark */
             value = LOG_MARK_CONFIGS;
@@ -390,7 +389,7 @@ BOOL_INT32 dataLogfram_configsWrite(void)
 
 //#define TEST_PETDCONFIG_CHECK_FALSE
 /* Function to read parameters from FRAM */
-BOOL_INT32 dataLogfram_configDisplay(void)
+BOOL_INT32 dataLogfram_configDisplay_id4(void)
 {
 	BOOL_INT32 status = BOOL_TRUE;
     uint16_t value;
@@ -459,7 +458,6 @@ BOOL_INT32 dataLogfram_configDisplay(void)
 
     return BOOL_TRUE;
 }
-#endif	/* #ifdef PROJECT_ID4 */
 
 inline void dataLogfram_writeEnable_configs(void)   {  logBuf_configs.writeEnabled = BOOL_TRUE;   }
 

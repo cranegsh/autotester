@@ -7,6 +7,7 @@
  */
 
 #include "app_main_navy.h"
+#include "app_config.h"
 #include "utility.h"
 
 #define FILTER_NUMBER				3	/* make sure to change this number accordingly */
@@ -20,7 +21,7 @@ static struct canfdData_navy canfdio = {
 inline struct canfdData_navy *msg_canfd_getData_navy(void)   { return &canfdio; }
 
 /* Function to prepare data for CAN submission - Navy project */
-int32_t msg_canfd_prepare_navy(int32_t option, uint32_t *mid, uint8_t *data, uint32_t *num)
+int32_t msg_canfd_prepare_navy(uint32_t option, uint32_t *mid, uint8_t *data, uint32_t *num)
 {
 	uint32_t temp = 0;
 	int32_t ret = 0;
@@ -72,7 +73,6 @@ int32_t msg_canfd_prepare_navy(int32_t option, uint32_t *mid, uint8_t *data, uin
 void msg_canfd_interpret_navy(uint32_t mid, uint8_t *data, uint32_t num)
 {
     uint32_t i;
-    float value;
 
     dbgPrintf_canfd("\n");
 	switch(mid >> CAN_EID_BITS)
@@ -125,7 +125,7 @@ void msg_canfd_clear_navy(void)
 	}
 }
 
-void msg_canfd_navy_print(void)
+void app_main_navy_print(void)
 {
     iPrintf("\nSetup: ");
     iPrintf("mode %u, ", canfdio.navyIn.data.mode);

@@ -26,7 +26,7 @@
 #define TEMP_01                     0x1A5555A6		/* Outside Temp. */
 #define SYSTEMINFO_01               0x585			/* Bus Identification */
 
-/* BZ4X/G3 messages */
+/* BZ4X/G3 shared messages */
 #define TEMP_AMB_SIG				0x3B0
 #define TEMP_AMB_RAW				0x380
 #define TEMP_CABIN					0x407
@@ -34,17 +34,13 @@
 #define HUMIDITY_CABIN				0x480
 #define DEFROST_SIG					0x381
 /* BZ4X messages */
-#ifdef PROJECT_CAN_BZ4X
-#define TEMP_AMB					TEMP_AMB_RAW//TEMP_AMB_SIG
-#define HV_READY					0x3B6
-#define HV_SOC						0x3B6
-#endif
+#define G4R_TEMP_AMB				TEMP_AMB_RAW//TEMP_AMB_SIG
+#define G4R_HV_READY				0x3B6
+#define G4R_HV_SOC					0x3B6
 /* G3 messages */
-#ifdef PROJECT_CAN_G3
-#define TEMP_AMB					TEMP_AMB_RAW
-#define HV_READY					0x51E
-#define HV_SOC						0x356
-#endif
+#define G3_TEMP_AMB					TEMP_AMB_RAW
+#define G3_HV_READY					0x51E
+#define G3_HV_SOC					0x356
 
 /* CANFD data should be interpreted according to the below DBC information:
  * BO_ 207 BMS_20: 8
@@ -80,7 +76,6 @@ static struct canfdData_id4 canfdio = {
    .id4DataOut_cfgPwm = { {0, 0 }, },
    .id4_vehData = {
 	/* The sequence of the members in the array must follow the sequence in msg_mode_t enum !!! */
-#ifdef PROJECT_CAN_ID4
 //		{ BMS_22, "S. of Charge", 1000, 0 },
 		{ LiSi_01, "SW on Dash", 100, 0 },
 		{ KLIMA_16, "FSH status", 500, 0 },
@@ -89,16 +84,34 @@ static struct canfdData_id4 canfdio = {
 		{ ESP_21<<CAN_EID_BITS, "Veh. Speed", 100, 0 },
 		{ KLIMA_03<<CAN_EID_BITS, "Cab. Temp.", 1000, 0 },
 		{ KLIMA_S_01<<CAN_EID_BITS, "Humidity", 1000, 0 }
-#endif	/* PROJECT_CAN_ID4 */
-#if defined PROJECT_CAN_BZ4X || defined PROJECT_CAN_G3
-		{ HV_SOC<<CAN_EID_BITS, "S. of Charge", 1000, 0 },
+   }
+};
+
+/* for ROJECT_CAN_G3 */
+static struct canfdData_id4 canfdio_g3 = {
+   .id4_vehData = {
+	/* The sequence of the members in the array must follow the sequence in msg_mode_t enum !!! */
+		{ G3_HV_SOC<<CAN_EID_BITS, "S. of Charge", 1000, 0 },
 		{ DEFROST_SIG<<CAN_EID_BITS, "Defrost S.", 500, 0 },
-		{ TEMP_AMB<<CAN_EID_BITS, "Amb. Temp. S", 1000, 0 },
-		{ HV_READY<<CAN_EID_BITS, "HV Ready", 500, 0 },
+		{ G3_TEMP_AMB<<CAN_EID_BITS, "Amb. Temp. S", 1000, 0 },
+		{ G3_HV_READY<<CAN_EID_BITS, "HV Ready", 500, 0 },
 		{ SPEED_VEH<<CAN_EID_BITS, "Veh. Speed", 100, 0 },
 		{ TEMP_CABIN<<CAN_EID_BITS, "Cab. Temp.", 1000, 0 },
 		{ HUMIDITY_CABIN<<CAN_EID_BITS, "Humidity", 1000, 0 }
-#endif	/* PROJECT_CAN_BZ4X or PROJECT_CAN_G3 */
+   }
+};
+
+/* for PROJECT_CAN_BZ4X (G4R) */
+static struct canfdData_id4 canfdio_g4r = {
+   .id4_vehData = {
+	/* The sequence of the members in the array must follow the sequence in msg_mode_t enum !!! */
+		{ G4R_HV_SOC<<CAN_EID_BITS, "S. of Charge", 1000, 0 },
+		{ DEFROST_SIG<<CAN_EID_BITS, "Defrost S.", 500, 0 },
+		{ G4R_TEMP_AMB<<CAN_EID_BITS, "Amb. Temp. S", 1000, 0 },
+		{ G4R_HV_READY<<CAN_EID_BITS, "HV Ready", 500, 0 },
+		{ SPEED_VEH<<CAN_EID_BITS, "Veh. Speed", 100, 0 },
+		{ TEMP_CABIN<<CAN_EID_BITS, "Cab. Temp.", 1000, 0 },
+		{ HUMIDITY_CABIN<<CAN_EID_BITS, "Humidity", 1000, 0 }
    }
 };
 
@@ -162,6 +175,12 @@ union CANMSG_ESP21 {
 
 inline struct canfdData_id4 *msg_canfd_getData_id4(void)   { return &canfdio; }
 
+inline uint32_t msg_canfd_getMid_id4(int number) 	{ return canfdio.id4_vehData[number].mid; }
+
+inline uint32_t msg_canfd_getMid_g3(int number) 	{ return canfdio_g3.id4_vehData[number].mid; }
+
+inline uint32_t msg_canfd_getMid_g4r(int number) 	{ return canfdio_g4r.id4_vehData[number].mid; }
+
 /* Function to prepare CANFD data for ID4 vehicle messages */
 int32_t msg_canfd_prepare_id4Veh(msg_mode_t msgno, int32_t value, uint8_t *data)
 {
@@ -214,13 +233,9 @@ int32_t msg_canfd_prepare_id4Veh(msg_mode_t msgno, int32_t value, uint8_t *data)
 	return 0;
 }
 
-#if defined PROJECT_CAN_G3 || defined PROJECT_CAN_BZ4X
 /* Function to prepare CANFD data for G3 and BZ4X vehicle messages */
-#ifdef PROJECT_CAN_G3
 int32_t msg_canfd_prepare_g3Veh(msg_mode_t msgno, int32_t value, uint8_t *data)
-#else
-int32_t msg_canfd_prepare_bz4xVeh(msg_mode_t msgno, int32_t value, uint8_t *data)
-#endif
+//int32_t msg_canfd_prepare_bz4xVeh(msg_mode_t msgno, int32_t value, uint8_t *data)
 {
 	float temp;
 	switch((int)msgno) {
@@ -267,7 +282,6 @@ int32_t msg_canfd_prepare_bz4xVeh(msg_mode_t msgno, int32_t value, uint8_t *data
 	}
 	return 0;
 }
-#endif
 
 /* Function to prepare CANFD data for ID4 project */
 int32_t msg_canfd_prepare_id4(uint32_t option, uint32_t *mid, uint8_t *data, uint32_t *num)
@@ -541,8 +555,7 @@ BOOL_INT32 msg_canfd_interpret_id4Veh(uint32_t mid, uint8_t *data, uint32_t num)
 /* This is to interpret the messages from the tester */
 void msg_canfd_interpret_id4(uint32_t mid, uint8_t *data, uint32_t num)
 {
-    uint32_t i, temp;
-    float value;
+    uint32_t i;
 
     dbgPrintf_canfd("\n");
 	switch(mid >> CAN_EID_BITS)
@@ -596,14 +609,48 @@ void msg_canfd_clear_id4(void)
 	}
 }
 
-void msg_canfd_copyConfigs_id4(uint32_t num, uint8_t *data)
+static int32_t msg_canfd_receiveConfigs_id4(void)
 {
-	msg_canfd_copyData(num, CAN_DATA_IN_CFG_LEN, data, (uint8_t *)&canfdio.id4DataIn_Cfg.byte);
+    uint32_t messageID = 0;
+    uint8_t messageData[MAX_DATA_BYTES];
+    uint32_t dataNumber;
+	int32_t status;
+
+	do {
+		status = canfd_messageReceive(&messageID, messageData, &dataNumber);
+	} while ((0 != status) || ( ID_RCV_LOG != (messageID >> CAN_EID_BITS)));
+
+	ndebugPrintf("Received 0x%X | %d\t", messageID, dataNumber);
+
+	msg_canfd_copyData(dataNumber, CAN_DATA_IN_CFG_LEN, (uint8_t*)messageData, (uint8_t *)&canfdio.id4DataIn_Cfg.byte);
+
+	return status;
 }
 
-void msg_canfd_copyLog_id4(uint32_t num, uint8_t *data)
+static int32_t msg_canfd_receiveLog_id4(void)
 {
-	msg_canfd_copyData(num, CAN_DATA_LOG_LEN_ID4, data, (uint8_t *)&canfdio.id4DataLog.byte);
+    uint32_t messageID = 0;
+    uint8_t messageData[MAX_DATA_BYTES];
+    uint32_t dataNumber;
+	int32_t status;
+
+	do {
+		status = canfd_messageReceive(&messageID, messageData, &dataNumber);
+	} while ((0 != status) || ( ID_RCV_LOG != (messageID >> CAN_EID_BITS)));
+
+	msg_canfd_copyData(dataNumber, CAN_DATA_LOG_LEN_ID4, (uint8_t*)messageData, (uint8_t *)&canfdio.id4DataLog.byte);
+
+	return status;
+}
+
+void app_main_id4_sendCommand(sysData_type *sdata, int cmd)
+{
+	if((0 == sdata->canfd_status) && (canfdio.updated)) {
+		ndPrintf("\n Sending data '%c' to CAN ...", cmd);
+		msg_canfd_send_tester(sdata->project_id, (uint32_t)cmd);
+		ndPrintf("\n data '%c' to CAN sent!", cmd);
+		canfdio.updated = BOOL_FALSE;
+	}
 }
 
 void app_main_id4_getMsginfo(msg_opt_t *msgi)
@@ -619,6 +666,31 @@ void app_main_id4_getMsginfo(msg_opt_t *msgi)
 			msgi->mode + 1, msgi->val, msgi->interval);
 }
 
+void app_main_g3_getMsginfo(msg_opt_t *msgi)
+{
+	/* use the default interval and total number */
+	msgi->interval = canfdio_g3.id4_vehData[(int)msgi->mode].interval;
+	msgi->num = canfdio_g3.id4_vehData[(int)msgi->mode].num;
+
+	ndPrintf("%s:\t%d\t%d\t | %d\t%d \n", canfdio_g3.id4_vehData[(int)msgi->mode].name, \
+			msgi->mode + 1, msgi->val, \
+			msgi->interval, msgi->num);					/* when controlling loop number of every single message */
+	iPrintf("%s:\t%d\t%d\t | %d\n", canfdio_g3.id4_vehData[(int)msgi->mode].name, \
+			msgi->mode + 1, msgi->val, msgi->interval);
+}
+
+void app_main_g4r_getMsginfo(msg_opt_t *msgi)
+{
+	/* use the default interval and total number */
+	msgi->interval = canfdio_g4r.id4_vehData[(int)msgi->mode].interval;
+	msgi->num = canfdio_g4r.id4_vehData[(int)msgi->mode].num;
+
+	ndPrintf("%s:\t%d\t%d\t | %d\t%d \n", canfdio_g4r.id4_vehData[(int)msgi->mode].name, \
+			msgi->mode + 1, msgi->val, \
+			msgi->interval, msgi->num);					/* when controlling loop number of every single message */
+	iPrintf("%s:\t%d\t%d\t | %d\n", canfdio_g4r.id4_vehData[(int)msgi->mode].name, \
+			msgi->mode + 1, msgi->val, msgi->interval);
+}
 void app_main_id4_print(void)
 {
     iPrintf("\n%s", canfdio.id4DataIn_Ctl.data.mode ? "deIce" : "deFog");
@@ -644,17 +716,25 @@ void app_main_id4_print_canVeh(int msgNum, int msgCount)
 	iPrintf("%s: %3d | ", canfdio.id4_vehData[msgNum].name, msgCount);
 }
 
+void app_main_g3_print_canVeh(int msgNum, int msgCount)
+{
+	iPrintf("%s: %3d | ", canfdio_g3.id4_vehData[msgNum].name, msgCount);
+}
+
+void app_main_g4r_print_canVeh(int msgNum, int msgCount)
+{
+	iPrintf("%s: %3d | ", canfdio_g4r.id4_vehData[msgNum].name, msgCount);
+}
+
 int app_main_id4_commandP(void)
 {
 	ndPrintf("\r\n print command sent out");
-	int32_t status = msg_canfd_rcvCanConfigs();
+	int32_t status = msg_canfd_receiveConfigs_id4();
 	if(0 == status) {
 			ndPrintf("\r\n Config received");
-		struct canfdData_id4 *temp;
-		temp = msg_canfd_getData_id4();
-		pwmConfig_check(&temp->id4DataIn_Cfg.data.pwmCanConfig, pwmConfig_get(), BOOL_FALSE);
+		pwmConfig_check(&canfdio.id4DataIn_Cfg.data.pwmCanConfig, pwmConfig_get(), BOOL_FALSE);
 		pwmConfig_get()->configUpdated = BOOL_TRUE;
-		petdConfig_check(&temp->id4DataIn_Cfg.data.petdCanConfig, petdConfig_get(), BOOL_FALSE);
+		petdConfig_check(&canfdio.id4DataIn_Cfg.data.petdCanConfig, petdConfig_get(), BOOL_FALSE);
 		petdConfig_get()->configUpdated = BOOL_TRUE;
 		pwmConfig_print();
 		petdConfig_print();
@@ -688,7 +768,7 @@ void app_main_id4_commandD_log(void)
 	for(;;) {
 		memset((void*)&canfdio.id4DataLog.data, 0, CAN_DATA_LOG_LEN_ID4);
 		//iPrintf("\n Start receiving log from %d of %d - %d", index, number, canfdio.id4DataLog.data.index);
-		int32_t status = msg_canfd_rcvCanLog();
+		int32_t status = msg_canfd_receiveLog_id4();
 		if(0 == status) {
 			/* check if it is a new data: temporary use,
 			 * not good enough for the second round

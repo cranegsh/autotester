@@ -17,6 +17,8 @@
 #include "app_main_id4.h"
 #include "app_main_navy.h"
 
+extern uint32_t idProject;				/* TODO: find a way to pass the value instead of getting it directly */
+
 //#define TEST_USE_SIG_STOP
 
 // Custom data structure to pass arguments to the handler
@@ -52,15 +54,10 @@ void timer_handler(int signo, siginfo_t *info, void *context) {
 	}							/* This way it works to get the correct value */
 	ndPrintf("\n");
 
-	msg_canfd_send_veh((uint8_t)(*temp->msgid)[msgindex].mode, (*temp->msgid)[msgindex].val);
+	msg_canfd_send_veh(idProject, (uint8_t)(*temp->msgid)[msgindex].mode, (*temp->msgid)[msgindex].val);
 	for(int i=0; i<temp->timer_total; i++) {
 		ndPrintf("%d \t%5d \t%5d \t%d | ", i, (*temp->msgid)[i].mode, (*temp->msgid)[i].interval, (*temp->msgid)[i].num);
-#ifdef PROJECT_ID4
-		app_main_id4_print_canVeh((*temp->msgid)[i].mode, (*temp->msgid)[i].timer_count);
-#endif
-#ifdef PROJECT_C3
-		app_main_c3_print_canVeh((*temp->msgid)[i].mode, (*temp->msgid)[i].timer_count);
-#endif
+		app_main_print_canVeh(idProject, (*temp->msgid)[i].mode, (*temp->msgid)[i].timer_count);
 	}
 	(*temp->msgid)[msgindex].timer_count++;
 
@@ -133,7 +130,7 @@ void start_singletimer(timer_t *timerid, int interval, void (*handler)(void)) {
     // Set up the timer handler function
     struct sigaction sa;
     sa.sa_flags = SA_SIGINFO;
-    sa.sa_sigaction = handler;
+    sa.sa_sigaction = (void (*)(int,  siginfo_t *, void *))handler;		/* TODO: check function pointer casting */
     sigaction(SIGALRM, &sa, NULL);
 
     // Create a timer

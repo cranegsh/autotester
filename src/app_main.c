@@ -66,15 +66,7 @@ void app_main_displayHelp(const char *app)
 
 void app_main_initData(sysData_type *sdata)
 {
-#ifdef PROJECT_ID4
-	sdata->dataCan = msg_canfd_getData_id4();
-#endif
-#ifdef PROJECT_C3
-	sdata->dataCan = msg_canfd_getData_c3();
-#endif
-#ifdef PROJECT_NAVY
-	sdata->dataCan = msg_canfd_getData_navy();
-#endif
+
 }
 
 int app_main_processOption(int numOpt, app_opt_t *appOpt, char *strArg, int *num)
@@ -82,17 +74,17 @@ int app_main_processOption(int numOpt, app_opt_t *appOpt, char *strArg, int *num
 	int retVal = *num;
 	switch(numOpt) {
 		case 'l':
-			appOpt->num = atoi(strArg);
+			appOpt->num = (uint32_t)atoi(strArg);
 			break;
 		case 'i':
-			appOpt->interval = atoi(strArg);
+			appOpt->interval = (uint32_t)atoi(strArg);
 			break;
 		case 'p':
-			appOpt->period = atoi(strArg);
+			appOpt->period = (uint32_t)atoi(strArg);
 			break;
 		case 'f':
 			appOpt->mode = APP_OPT_DEV_SEND_FSH;
-			appOpt->val = atoi(strArg);
+			appOpt->val = (int32_t)atoi(strArg);
 			if(1 >= appOpt->val) {
 				dData.display = appOpt->val + 1;
 				dData.number = appOpt->val;
@@ -107,7 +99,7 @@ int app_main_processOption(int numOpt, app_opt_t *appOpt, char *strArg, int *num
 			break;
 		case 'a':
 			appOpt->mode = APP_OPT_DEV_SEND_ATEMP;
-			appOpt->val = atoi(strArg);
+			appOpt->val = (int32_t)atoi(strArg);
 			dData.display = 3;
 			dData.number = appOpt->val;
 			ndPrintf("\r\nAmb.Temp.:\tNo.%d mode %d", num, appOpt->mode);
@@ -138,7 +130,6 @@ int app_main_processOption(int numOpt, app_opt_t *appOpt, char *strArg, int *num
 			ndPrintf("\r\nHumidity:\tNo.%d mode %d", num, appOpt->mode);
 			retVal++;
 			break;
-#ifdef PROJECT_C3
 		case 'd':
 			appOpt->mode = APP_OPT_DEV_SEND_SYSID;
 			ndPrintf("\r\nSystem ID:\tNo.%d mode %d", num, appOpt->mode);
@@ -161,7 +152,6 @@ int app_main_processOption(int numOpt, app_opt_t *appOpt, char *strArg, int *num
 			}
 			ndPrintf("\r\nOp.mode:\tNo.%d mode %d", num, appOpt->mode);
 			break;
-#endif
 		case 'H':
 			retVal = -1;
 			break;
@@ -178,7 +168,7 @@ int app_main_processOption(int numOpt, app_opt_t *appOpt, char *strArg, int *num
 
 	if((*num + 1) == retVal) {
 		/* get an option with parameter */
-		appOpt->val = atoi(strArg);
+		appOpt->val = (int32_t)atoi(strArg);
 		msg[*num].mode = appOpt->mode;
 		msg[*num].val = appOpt->val;
 		ndPrintf("\t Value %d", appOpt->val);
@@ -188,17 +178,31 @@ int app_main_processOption(int numOpt, app_opt_t *appOpt, char *strArg, int *num
 	return retVal;
 }
 
-void app_main_sendCommand(sysData_type *sdata, int cmd)
+static void (*app_main_sendCommand_arr[PROJECT_ID_TOTAL])(sysData_type *, int) = {
+		app_main_id4_sendCommand,
+		NULL,
+		NULL,
+		app_main_c3_sendCommand,
+		NULL,
+};
+void app_main_sendCommand(uint32_t prj_num, sysData_type *sdata, int cmd)
 {
-	if((0 == sdata->canfd_status) && (sdata->dataCan->updated)) {
-		ndPrintf("\n Sending data '%c' to CAN ...", cmd);
-		msg_canfd_send_tester((uint32_t)cmd);
-		ndPrintf("\n data '%c' to CAN sent!", cmd);
-		sdata->dataCan->updated = BOOL_FALSE;
+	if(app_main_sendCommand_arr[prj_num]) {
+		app_main_sendCommand_arr[prj_num](sdata, cmd);
+	}
+	else {
+		iPrintf("Function app_main_sendCommand No. %d not available!\r\n", prj_num);
 	}
 }
 
-void app_main_initMsg(int num, app_opt_t *appOpt)
+static void (*app_main_initMsg_arr[PROJECT_ID_TOTAL])(msg_opt_t *) = {
+	app_main_id4_getMsginfo,
+	app_main_g3_getMsginfo,
+	app_main_g4r_getMsginfo,
+	app_main_c3_getMsginfo,
+	NULL,
+};
+void app_main_initMsg(uint32_t prj_num, int num, app_opt_t *appOpt)
 {
 	dPrintf("\nTotal msg #: %d", num);
 	ndPrintf("\nMsg name\tNo.\tValue\t | interval\tnum\n");		/* when controlling loop number of every single message */
@@ -206,12 +210,12 @@ void app_main_initMsg(int num, app_opt_t *appOpt)
 
 	for(int i=0; i<num; i++) {
 		/* get the default interval and total number and display msg information */
-#ifdef PROJECT_ID4
-		app_main_id4_getMsginfo(&msg[i]);
-#endif
-#ifdef PROJECT_C3
-		app_main_c3_getMsginfo(&msg[i]);
-#endif
+		if(app_main_initMsg_arr[prj_num]) {
+			app_main_initMsg_arr[prj_num](&msg[i]);
+		}
+		else {
+			iPrintf("Function app_main_initMsg No. %d not available!\r\n", prj_num);
+		}
 		/* use the command interval and total number */
 		//msg[i].interval = appOpt->interval;
 		msg[i].num = appOpt->num;
@@ -244,7 +248,52 @@ int app_main_checkMsg(int num, int mark)
 	return mark;
 }
 
-int app_main_remoteControl(app_opt_t *appOpt, int cmd, sysData_type *sdata)
+static void (*app_main_print_canVeh_arr[PROJECT_ID_TOTAL])(int, int) = {
+	app_main_id4_print_canVeh,
+	app_main_g3_print_canVeh,
+	app_main_g4r_print_canVeh,
+	app_main_c3_print_canVeh,
+	NULL,
+};
+void app_main_print_canVeh(uint32_t prj_num, int msgNum, int msgCount)
+{
+    if(app_main_print_canVeh_arr[prj_num]){
+    	app_main_print_canVeh_arr[prj_num](msgNum, msgCount);
+    }
+	else {
+		iPrintf("Function app_main_print_canVeh No. %d not available!\r\n", prj_num);
+	}
+}
+
+static int (*app_main_commandP_arr[PROJECT_ID_TOTAL])(void) = {
+	app_main_id4_commandP,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+};
+static void (*app_main_commandD_log_arr[PROJECT_ID_TOTAL])(void) = {
+	app_main_id4_commandD_log,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+};
+static int (*app_main_commandD_error_arr[PROJECT_ID_TOTAL])(void) = {
+	app_main_id4_commandD_error,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+};
+static void (*app_main_print_err[PROJECT_ID_TOTAL])(void) = {
+	app_main_id4_print,
+	NULL,
+	NULL,
+	NULL,
+	app_main_navy_print,
+};
+int app_main_remoteControl(uint32_t prj_num, int cmd, sysData_type *sdata)
 {
 	int ret = 0;
 
@@ -253,33 +302,42 @@ int app_main_remoteControl(app_opt_t *appOpt, int cmd, sysData_type *sdata)
 		case COMMAND_F:
 			break;
 		case COMMAND_P:
-#ifdef PROJECT_ID4
-			app_main_id4_commandP();
-#endif
+		    if(app_main_commandP_arr[prj_num]){
+		    	app_main_commandP_arr[prj_num]();
+		    }
+			else {
+				iPrintf("Function app_main_commandP No. %d not available!\r\n", prj_num);
+			}
 			break;
 		case COMMAND_D444:
-#ifdef PROJECT_ID4
-			app_main_id4_commandD_log();
-#endif
+		    if(app_main_commandD_log_arr[prj_num]){
+		    	app_main_commandD_log_arr[prj_num]();
+		    }
+			else {
+				iPrintf("Function app_main_commandD_log No. %d not available!\r\n", prj_num);
+			}
 			break;
 		case COMMAND_D333:
-#ifdef PROJECT_ID4
-			app_main_id4_commandD_error();
-#endif
+		    if(app_main_commandD_error_arr[prj_num]){
+		    	app_main_commandD_error_arr[prj_num]();
+		    }
+			else {
+				iPrintf("Function app_main_commandD_error No. %d not available!\r\n", prj_num);
+			}
 			break;
 		case COMMAND_D222:
 			/* receive CAN messages */
 			if(0 == sdata->canfd_status) {
-				msg_canfd_receive();
+				msg_canfd_receive(prj_num);
 			}
 
 			if(1 < (time(NULL) - timer_display)) {
-#ifdef PROJECT_ID4
-				app_main_id4_print();
-#endif
-#ifdef PROJECT_NAVY
-				msg_canfd_navy_print();
-#endif
+			    if(app_main_print_err[prj_num]){
+			    	app_main_print_err[prj_num]();
+			    }
+				else {
+					iPrintf("Function app_main_print No. %d not available!\r\n", prj_num);
+				}
 				timer_display = time(NULL);
 			}
 			ret = 1;

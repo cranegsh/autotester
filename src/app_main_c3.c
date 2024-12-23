@@ -122,6 +122,8 @@ union CANMSG_ESP21 {
 
 inline struct canfdData_c3 *msg_canfd_getData_c3(void)   { return &canfdio; }
 
+inline uint32_t msg_canfd_getMid_c3(int number) { return canfdio.c3canDataInfo[number].mid; }
+
 /* Function to prepare CANFD data for C3 vehicle messages */
 int32_t msg_canfd_prepare_c3Veh(msg_mode_t msgno, int32_t value, uint8_t *data)
 {
@@ -175,6 +177,16 @@ void msg_canfd_clear_c3(void)
 	for(uint32_t i=0; i<CAN_DATA_IN_LEN_C3; i++)
 	{
 		canfdio.c3dataIn.byte[i] = 0;
+	}
+}
+
+void app_main_c3_sendCommand(sysData_type *sdata, int cmd)
+{
+	if((0 == sdata->canfd_status) && (canfdio.updated)) {
+		ndPrintf("\n Sending data '%c' to CAN ...", cmd);
+		msg_canfd_send_tester(sdata->project_id, (uint32_t)cmd);
+		ndPrintf("\n data '%c' to CAN sent!", cmd);
+		canfdio.updated = BOOL_FALSE;
 	}
 }
 

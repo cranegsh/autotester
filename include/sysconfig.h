@@ -9,24 +9,26 @@
  * if PROJECT_ID4 is selected, select only one from PROJECT_CAN_ID4, PROJECT_CAN_BZ4X and PROJECT_CAN_G3 */
 //#define PROJECT_NAVY
 //#define PROJECT_C3
-#define PROJECT_ID4
-#ifdef PROJECT_ID4				   /* ID4, BZ4X and G3 all are based on PROJECT_ID4, the differences are CAN messages */
-#define PROJECT_CAN_ID4
+//#define PROJECT_ID4
+//#ifdef PROJECT_ID4				   /* ID4, BZ4X and G3 all are based on PROJECT_ID4, the differences are CAN messages */
+//#define PROJECT_CAN_ID4
 //#define PROJECT_CAN_BZ4X
 //#define PROJECT_CAN_G3
-#endif
-#define PROJECT_ID_DEFAULT		2
+//#endif
 
+/* select project by a variable from command line argument */
+#define PROJECT_ID_TOTAL		5
 #define PROJECT_ARGU_ID4		"id4"		/* argument: id4 */
 #define PROJECT_ARGU_G3			"g3"		/* argument: g3 */
 #define PROJECT_ARGU_G4R		"g4r"		/* argument: g4r */
 #define PROJECT_ARGU_C3			"c3"		/* argument: c3 */
 #define PROJECT_ARGU_NAVY		"navy"		/* argument: navy */
-#define PROJECT_ID_ID4			1		/* argument: id4 */
-#define PROJECT_ID_G3			2		/* argument: g3 */
-#define PROJECT_ID_G4R			3		/* argument: g4r */
-#define PROJECT_ID_C3			4		/* argument: c3 */
-#define PROJECT_ID_NAVY			5		/* argument: navy */
+#define PROJECT_ID_ID4			0		/* argument: id4 */
+#define PROJECT_ID_G3			1		/* argument: g3 */
+#define PROJECT_ID_G4R			2		/* argument: g4r */
+#define PROJECT_ID_C3			3		/* argument: c3 */
+#define PROJECT_ID_NAVY			4		/* argument: navy */
+#define PROJECT_ID_DEFAULT		2
 
 /* debug configurations */
 #define MAIN_LOOP_DISPLAY_DOT           0           /* display only . */

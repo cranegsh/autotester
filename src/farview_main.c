@@ -16,10 +16,14 @@
 #include "app_timer.h"
 #include "app_main.h"
 
+/* For identifying the project */
+uint32_t idProject;
+
 int timer_num = 0;							/* each message has a timer and timer number is message number */
 int timer_count = 0;						/* this is to count the message that its submission is complete */
 
 sysData_type farview_data = {
+	.project_id = 0,
 	.canfd_status = -1,
 };
 
@@ -29,7 +33,7 @@ sysData_type farview_data = {
  **************************************************************************************/
 int main(int argc, char *argv[]) {
 	int i, ret = 0, status = 0;
-    int input_value = 0;
+    int input_command = 0;
 
     time_t time_ori;
 	app_opt_t opt;
@@ -69,7 +73,6 @@ int main(int argc, char *argv[]) {
 			idProject = PROJECT_ID_NAVY;
 		}
 		else {
-			idProject = 0;
 			printf("\r\nError in command: wrong argument! Please check help.\r\n");
 			return -1;
 		}
@@ -79,9 +82,11 @@ int main(int argc, char *argv[]) {
 		idProject = PROJECT_ID_DEFAULT;
 		//printf("Error in command: missing argument! Please check help.\r\n");	return -1;
 	}
+	ndPrintf("Project IS is %d\r\n", idProject);
 
 	/* init the system */
 	app_main_test();
+	farview_data.project_id = idProject;
 	farview_data.canfd_status = msg_canfd_init();
 	dataLog_init();
 	app_main_initData(&farview_data);
@@ -89,21 +94,22 @@ int main(int argc, char *argv[]) {
 	/* branch according to the command options */
     if(APP_OPT_UNKNOWN != opt.mode) {
     	/* init the submission of vehicle CAN messages specified by opt.mode */
-		app_main_initMsg(timer_num, &opt);
+		app_main_initMsg(idProject, timer_num, &opt);
 		time_ori = time(NULL);
     }
     else
     {  	/* get the function selection */
-		input_value = app_config();
+       	input_command = app_config_main(idProject);
+
 		/* send CAN messages according to the input from console */
-		app_main_sendCommand(&farview_data, input_value);
+		app_main_sendCommand(idProject, &farview_data, input_command);
     }
 
     /* start the main loop */
-	ndPrintf("\nStart the main loop... input value is %d", input_value);
+	ndPrintf("\nStart the main loop... input value is %d", input_command);
 	for(;;) {
 		/* in remote control mode: process remote control command from console */
-		status = app_main_remoteControl(&opt, input_value, &farview_data);
+		status = app_main_remoteControl(idProject, input_command, &farview_data);
 		if(0 == status) {
 			printf("\r\n");
 			return 0;

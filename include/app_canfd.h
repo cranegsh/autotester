@@ -9,8 +9,9 @@
 #ifndef APPLICATION_CANFDCOMM_H_
 #define APPLICATION_CANFDCOMM_H_
 
+#include <stdint.h>
+
 #include "sysconfig.h"
-#include "app_config.h"
 
 #define PCAN_DEVICE                 PCAN_USBBUS2//PCAN_USBBUS1//
 
@@ -24,19 +25,8 @@
 #define CAN_EID_BITS				18
 #define MAX_DATA_BYTES 				64
 
-#if defined(PROJECT_ID4) || defined(PROJECT_C3) || defined(PROJECT_NAVY)
-#define CAN_VEH_MSG_LEN				8					// depending on project
-#endif
-
-#ifdef PROJECT_ID4
-#define CAN_VEH_MSG_NUM				7
-#endif
-#ifdef PROJECT_C3
-#define CAN_VEH_MSG_NUM				10
-#endif
-#ifdef PROJECT_NAVY
-#define CAN_VEH_MSG_NUM				3
-#endif
+#define CAN_VEH_MSG_LEN				8//64//		/* take the max number of all projects */
+#define CAN_VEH_MSG_NUM				10			/* take the max number of all projects */
 
 /* receive message ID for debugger control */
 #define ID_RCV_DATA		       		0x201
@@ -129,14 +119,15 @@ typedef struct {
 #endif
 
 /* Functions to implement CANFD tasks */
-void msg_canfd_send_veh(msg_mode_t msgno, int32_t value);
-void msg_canfd_send_tester(uint32_t cmd);
+void msg_canfd_send_veh(uint32_t prj_num, msg_mode_t msgno, int32_t value);
+void msg_canfd_send_tester(uint32_t prj_num, uint32_t cmd);
 
-void msg_canfd_receive(void);
+int32_t canfd_messageReceive(uint32_t *mid, uint8_t *data, uint32_t *num);
+void msg_canfd_receive(uint32_t prj_num);
 void msg_canfd_copyData(uint32_t number, uint32_t length, uint8_t *source, uint8_t *dest);
 
-int32_t msg_canfd_rcvCanConfigs(void);
-int32_t msg_canfd_rcvCanLog(void);
+int32_t msg_canfd_rcvCanConfigs(uint32_t prj_num);
+int32_t msg_canfd_rcvCanLog(uint32_t prj_num);
 
 /* Function to initialize CAN FD device */
 int32_t msg_canfd_init(void);

@@ -84,7 +84,7 @@ CAN_DLC canfd_DataBytesToDlc(uint32_t n)
     return dlc;
 }
 
-static int32_t canfd_messageReceive(uint32_t *mid, uint8_t *data, uint32_t *num)
+int32_t canfd_messageReceive(uint32_t *mid, uint8_t *data, uint32_t *num)
 {
     int32_t status = -100;
 #if (CAN_BUS_TYPE_CAN == CAN_BUS_TYPE)
@@ -95,8 +95,8 @@ static int32_t canfd_messageReceive(uint32_t *mid, uint8_t *data, uint32_t *num)
 #else
     TPCANMsgFD Message;
     TPCANTimestampFD ts;
-    TPCANTimestampFD ts_prev;
-    TPCANTimestampFD ts_diff;
+    //TPCANTimestampFD ts_prev;
+    //TPCANTimestampFD ts_diff;
 #endif
     TPCANStatus Status;
 
@@ -185,8 +185,22 @@ static int32_t canfd_messageSend(uint32_t mid, uint8_t *data, uint32_t num)
     //return (int32_t)Status;		// The value is not used other than judging 0 and non-0 in caller
 }
 
+static int32_t (*msg_canfd_prepare_veh_arr[PROJECT_ID_TOTAL])(msg_mode_t, int32_t, uint8_t*) = {
+	msg_canfd_prepare_id4Veh,
+	msg_canfd_prepare_g3Veh,
+	msg_canfd_prepare_g3Veh,		/* g4r shares with g3 */
+	msg_canfd_prepare_c3Veh,
+	NULL,
+};
+static uint32_t (*msg_canfd_getMid_arr[PROJECT_ID_TOTAL])(int) = {
+	msg_canfd_getMid_id4,
+	msg_canfd_getMid_g3,
+	msg_canfd_getMid_g4r,
+	msg_canfd_getMid_c3,
+	NULL,
+};
 /* Function to send data as from vehicle for test */
-void msg_canfd_send_veh(msg_mode_t msgno, int32_t value)
+void msg_canfd_send_veh(uint32_t prj_num, msg_mode_t msgno, int32_t value)
 {
     uint32_t messageID = 0;
     uint8_t messageData[CAN_VEH_MSG_LEN];
@@ -198,30 +212,27 @@ void msg_canfd_send_veh(msg_mode_t msgno, int32_t value)
     for(i=0; i<dataNumber; i++) { messageData[i] = 0;	}
 
     /* prepare the data frame */
-#ifdef PROJECT_CAN_ID4
-    status = msg_canfd_prepare_id4Veh(msgno, value, messageData);
-#endif
-#ifdef PROJECT_CAN_G3
-    status = msg_canfd_prepare_g3Veh(msgno, value, messageData);
-#endif
-#ifdef PROJECT_CAN_BZ4X
-    status = msg_canfd_prepare_bz4xVeh(msgno, value, messageData);
-#endif
-#ifdef PROJECT_C3
-    status = msg_canfd_prepare_c3Veh(msgno, value, messageData);
-#endif
+    if(msg_canfd_prepare_veh_arr[prj_num]){
+    	msg_canfd_prepare_veh_arr[prj_num](msgno, value, (uint8_t*)messageData);
+    }
+	else {
+		iPrintf("Function msg_canfd_send_veh No. %d not available!\r\n", prj_num);
+	}
+
     if(0 != status)
     {
     	ndPrintf("\nData not ready!");
     	return;
     }
 
-#ifdef PROJECT_ID4
-    messageID = msg_canfd_getData_id4()->id4_vehData[(int)msgno].mid;
-#endif
-#ifdef PROJECT_C3
-    messageID = msg_canfd_getData_c3()->c3canDataInfo[(int)msgno].mid;
-#endif
+    /* get message ID */
+    if(msg_canfd_getMid_arr[prj_num]){
+    	messageID = msg_canfd_getMid_arr[prj_num]((int)msgno);
+    }
+	else {
+		iPrintf("Function msg_canfd_getMid No. %d not available!\r\n", prj_num);
+	}
+
     status = canfd_messageSend(messageID, messageData, dataNumber);
     ndPrintf("\n Status %d, Sent message: 0x%X, %d | ", status, messageID >> EID_BITS, dataNumber);
 
@@ -243,8 +254,15 @@ void msg_canfd_send_veh(msg_mode_t msgno, int32_t value)
     }
 }
 
+static int32_t (*msg_canfd_prepare_arr[PROJECT_ID_TOTAL]) (uint32_t, uint32_t*, uint8_t*, uint32_t*) = {
+	msg_canfd_prepare_id4,
+	NULL,
+	NULL,
+	NULL,
+	msg_canfd_prepare_navy,
+};
 /* Function to send data - Farview project */
-void msg_canfd_send_tester(uint32_t cmd)
+void msg_canfd_send_tester(uint32_t prj_num, uint32_t cmd)
 {
     uint32_t messageID = 0;
     uint8_t messageData[MAX_DATA_BYTES];
@@ -256,12 +274,13 @@ void msg_canfd_send_tester(uint32_t cmd)
     for(i=0; i<MAX_DATA_BYTES; i++) { messageData[i] = 0;	}
 
     /* prepare the data frame */
-#ifdef PROJECT_ID4
-    status = msg_canfd_prepare_id4(cmd, &messageID, messageData, &dataNumber);
-#endif
-#ifdef PROJECT_NAVY
-    status = msg_canfd_prepare_navy(cmd, &messageID, messageData, &dataNumber);
-#endif
+    if(msg_canfd_prepare_arr[prj_num]){
+    	status = msg_canfd_prepare_arr[prj_num](cmd, &messageID, messageData, &dataNumber);
+    }
+	else {
+		iPrintf("Function msg_canfd_getMid No. %d not available!\r\n", prj_num);
+	}
+
     if(0 != status)
     {
     	ndPrintf("\nData not ready!");
@@ -289,7 +308,21 @@ void msg_canfd_send_tester(uint32_t cmd)
     }
 }
 
-void msg_canfd_receive(void)
+static void (*msg_canfd_interpret_arr[PROJECT_ID_TOTAL]) (uint32_t, uint8_t*, uint32_t) = {
+	msg_canfd_interpret_id4,
+	NULL,
+	NULL,
+	NULL,
+	msg_canfd_interpret_navy,
+};
+static void (*msg_canfd_clear_arr[PROJECT_ID_TOTAL])(void) = {
+	msg_canfd_clear_id4,
+	NULL,
+	NULL,
+	msg_canfd_clear_c3,
+	msg_canfd_clear_navy,
+};
+void msg_canfd_receive(uint32_t prj_num)
 {
     uint32_t messageID = 0;
     uint8_t messageData[MAX_DATA_BYTES];
@@ -298,7 +331,6 @@ void msg_canfd_receive(void)
     static uint32_t timer_sec = 0;
     time_t now;
     struct tm *systime;
-    uint32_t i;
 
     time( &now );
     systime = localtime( &now );
@@ -314,27 +346,24 @@ void msg_canfd_receive(void)
 		/* check data: wrong data if the number of data is odd or larger than max CANFD data length */
 		if((0 == (dataNumber % 2 )) && (MAX_DATA_BYTES >= dataNumber))
 		{	 /* valid, so process the message */
-#ifdef PROJECT_ID4
-			 msg_canfd_interpret_id4(messageID, messageData, dataNumber);
-#endif
-#ifdef PROJECT_NAVY
-			 msg_canfd_interpret_navy(messageID, messageData, dataNumber);
-#endif
+		    if(msg_canfd_interpret_arr[prj_num]){
+		    	msg_canfd_interpret_arr[prj_num](messageID, (uint8_t*)messageData, dataNumber);
+		    }
+			else {
+				iPrintf("Function msg_canfd_interpret No. %d not available!\r\n", prj_num);
+			}
 		}
 
 		timer_sec = systime->tm_sec;
     }
     else if (1 < systime->tm_sec - timer_sec) {
     	/* didn't receive any message after 1 second, set all data 0 */
-#ifdef PROJECT_ID4
-			msg_canfd_clear_id4();
-#endif
-#ifdef PROJECT_C3
-			msg_canfd_clear_c3();
-#endif
-#ifdef PROJECT_NAVY
-			msg_canfd_clear_navy();
-#endif
+	    if(msg_canfd_clear_arr[prj_num]){
+	    	msg_canfd_clear_arr[prj_num]();
+	    }
+		else {
+			iPrintf("Function msg_canfd_clear No. %d not available!\r\n", prj_num);
+		}
 		timer_sec = systime->tm_sec;
     }
 
@@ -394,7 +423,7 @@ void msg_canfd_copyData(uint32_t number, uint32_t length, uint8_t *source, uint8
 }
 
 /* TODO: avoid blocking */
-int32_t msg_canfd_rcvCanConfigs(void)
+int32_t msg_canfd_rcvCanConfigs(uint32_t prj_num)
 {
     uint32_t messageID = 0;
     uint8_t messageData[MAX_DATA_BYTES];
@@ -406,6 +435,7 @@ int32_t msg_canfd_rcvCanConfigs(void)
 	} while ((0 != status) || ( ID_RCV_DATA_CFG != (messageID >> CAN_EID_BITS)));
 
 	ndebugPrintf("Received 0x%X | %d\t", messageID, dataNumber);
+
 #ifdef PROJECT_ID4
 	msg_canfd_copyConfigs_id4(dataNumber, (uint8_t*)messageData);
 #endif
@@ -414,7 +444,7 @@ int32_t msg_canfd_rcvCanConfigs(void)
 }
 
 /* TODO: avoid blocking */
-int32_t msg_canfd_rcvCanLog(void)
+int32_t msg_canfd_rcvCanLog(uint32_t prj_num)
 {
     uint32_t messageID = 0;
     uint8_t messageData[MAX_DATA_BYTES];
@@ -426,9 +456,10 @@ int32_t msg_canfd_rcvCanLog(void)
 	} while ((0 != status) || ( ID_RCV_LOG != (messageID >> CAN_EID_BITS)));
 
 	ndebugPrintf("Received 0x%X | %d\t", messageID, dataNumber);
+
 #ifdef PROJECT_ID4
 	msg_canfd_copyConfigs_id4(dataNumber, (uint8_t*)messageData);
-#endif	/* #ifdef PROJECT_ID4 */
+#endif
 
 	return status;
 }
