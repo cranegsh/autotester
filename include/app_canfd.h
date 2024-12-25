@@ -122,14 +122,15 @@ typedef struct {
 void msg_canfd_send_veh(uint32_t prj_num, msg_mode_t msgno, int32_t value);
 void msg_canfd_send_tester(uint32_t prj_num, uint32_t cmd);
 
-int32_t canfd_messageReceive(uint32_t *mid, uint8_t *data, uint32_t *num);
+int canfd_messageReceive(uint32_t *mid, uint8_t *data, uint32_t *num);
 void msg_canfd_receive(uint32_t prj_num);
 void msg_canfd_copyData(uint32_t number, uint32_t length, uint8_t *source, uint8_t *dest);
 
-int32_t msg_canfd_rcvCanConfigs(uint32_t prj_num);
-int32_t msg_canfd_rcvCanLog(uint32_t prj_num);
+int msg_canfd_rcvCanConfigs(uint32_t prj_num);
+int msg_canfd_rcvCanLog(uint32_t prj_num);
 
 /* Function to initialize CAN FD device */
-int32_t msg_canfd_init(void);
+int msg_canfd_init(void);
+void msg_canfd_deinit(void);
 
 #endif /* APPLICATION_CANFDCOMM_H_ */

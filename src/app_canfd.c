@@ -20,7 +20,7 @@
 #include "app_main_id4.h"
 #include "app_main_navy.h"
 
-uint32_t canfd_DlcToDataBytes(CAN_DLC dlc)
+static int32_t canfd_DlcToDataBytes(CAN_DLC dlc)
 {
     uint32_t dataBytesInObject = 0;
 
@@ -57,7 +57,7 @@ uint32_t canfd_DlcToDataBytes(CAN_DLC dlc)
     return dataBytesInObject;
 }
 
-CAN_DLC canfd_DataBytesToDlc(uint32_t n)
+static CAN_DLC canfd_DataBytesToDlc(uint32_t n)
 {
 	CAN_DLC dlc = CAN_DLC_0;
 
@@ -84,9 +84,9 @@ CAN_DLC canfd_DataBytesToDlc(uint32_t n)
     return dlc;
 }
 
-int32_t canfd_messageReceive(uint32_t *mid, uint8_t *data, uint32_t *num)
+int canfd_messageReceive(uint32_t *mid, uint8_t *data, uint32_t *num)
 {
-    int32_t status = -100;
+    int status = -100;
 #if (CAN_BUS_TYPE_CAN == CAN_BUS_TYPE)
     TPCANMsg Message;
     TPCANTimestamp ts;
@@ -123,7 +123,7 @@ int32_t canfd_messageReceive(uint32_t *mid, uint8_t *data, uint32_t *num)
 }
 
 /* Function to send a message by calling another function to request send after loading message */
-static int32_t canfd_messageSend(uint32_t mid, uint8_t *data, uint32_t num)
+static int canfd_messageSend(uint32_t mid, uint8_t *data, uint32_t num)
 {
 #if (CAN_BUS_TYPE_CAN == CAN_BUS_TYPE)
     TPCANMsg Message;
@@ -185,14 +185,14 @@ static int32_t canfd_messageSend(uint32_t mid, uint8_t *data, uint32_t num)
     //return (int32_t)Status;		// The value is not used other than judging 0 and non-0 in caller
 }
 
-static int32_t (*msg_canfd_prepare_veh_arr[PROJECT_ID_TOTAL])(msg_mode_t, int32_t, uint8_t*) = {
+static int (*msg_canfd_prepare_veh_arr[PROJECT_ID_TOTAL])(msg_mode_t, int32_t, uint8_t*) = {
 	msg_canfd_prepare_id4Veh,
 	msg_canfd_prepare_g3Veh,
 	msg_canfd_prepare_g3Veh,		/* g4r shares with g3 */
 	msg_canfd_prepare_c3Veh,
 	NULL,
 };
-static uint32_t (*msg_canfd_getMid_arr[PROJECT_ID_TOTAL])(int) = {
+static uint32_t (*msg_canfd_getMid_arr[PROJECT_ID_TOTAL])(uint32_t) = {
 	msg_canfd_getMid_id4,
 	msg_canfd_getMid_g3,
 	msg_canfd_getMid_g4r,
@@ -206,19 +206,19 @@ void msg_canfd_send_veh(uint32_t prj_num, msg_mode_t msgno, int32_t value)
     uint8_t messageData[CAN_VEH_MSG_LEN];
     uint32_t dataNumber = CAN_VEH_MSG_LEN;
     uint32_t i;
-    int32_t status = 0;
+    int status = 0;
 
     /* clear the data buffer */
     for(i=0; i<dataNumber; i++) { messageData[i] = 0;	}
 
     /* prepare the data frame */
     if(msg_canfd_prepare_veh_arr[prj_num]){
-    	msg_canfd_prepare_veh_arr[prj_num](msgno, value, (uint8_t*)messageData);
+    	status = msg_canfd_prepare_veh_arr[prj_num](msgno, value, (uint8_t*)messageData);
     }
 	else {
-		iPrintf("Function msg_canfd_send_veh No. %d not available!\r\n", prj_num);
+		iPrintf("Function msg_canfd_send_veh for %s not available!\r\n", project_name[prj_num]);
+		abort_program();
 	}
-
     if(0 != status)
     {
     	ndPrintf("\nData not ready!");
@@ -227,15 +227,16 @@ void msg_canfd_send_veh(uint32_t prj_num, msg_mode_t msgno, int32_t value)
 
     /* get message ID */
     if(msg_canfd_getMid_arr[prj_num]){
-    	messageID = msg_canfd_getMid_arr[prj_num]((int)msgno);
+    	messageID = msg_canfd_getMid_arr[prj_num]((uint32_t)msgno);
+    	ndPrintf("msgno %d - msgId %d\r\n", (uint32_t)msgno, messageID);
     }
 	else {
-		iPrintf("Function msg_canfd_getMid No. %d not available!\r\n", prj_num);
+		iPrintf("Function msg_canfd_getMid for %s not available!\r\n", project_name[prj_num]);
+		abort_program();
 	}
 
     status = canfd_messageSend(messageID, messageData, dataNumber);
     ndPrintf("\n Status %d, Sent message: 0x%X, %d | ", status, messageID >> EID_BITS, dataNumber);
-
     if(0 != status)
     {	/* submission failed. Resend the data! */
     	// TODO: Need to find out why sometimes there are messages with ID of 0x1FFFFFFF and all data are 0xFF
@@ -254,7 +255,7 @@ void msg_canfd_send_veh(uint32_t prj_num, msg_mode_t msgno, int32_t value)
     }
 }
 
-static int32_t (*msg_canfd_prepare_arr[PROJECT_ID_TOTAL]) (uint32_t, uint32_t*, uint8_t*, uint32_t*) = {
+static int (*msg_canfd_prepare_arr[PROJECT_ID_TOTAL]) (uint32_t, uint32_t*, uint8_t*, uint32_t*) = {
 	msg_canfd_prepare_id4,
 	NULL,
 	NULL,
@@ -278,7 +279,8 @@ void msg_canfd_send_tester(uint32_t prj_num, uint32_t cmd)
     	status = msg_canfd_prepare_arr[prj_num](cmd, &messageID, messageData, &dataNumber);
     }
 	else {
-		iPrintf("Function msg_canfd_getMid No. %d not available!\r\n", prj_num);
+		iPrintf("Function msg_canfd_getMid for %s not available!\r\n", project_name[prj_num]);
+		abort_program();
 	}
 
     if(0 != status)
@@ -327,7 +329,7 @@ void msg_canfd_receive(uint32_t prj_num)
     uint32_t messageID = 0;
     uint8_t messageData[MAX_DATA_BYTES];
     uint32_t dataNumber;
-    int32_t status;
+    int status;
     static uint32_t timer_sec = 0;
     time_t now;
     struct tm *systime;
@@ -350,7 +352,8 @@ void msg_canfd_receive(uint32_t prj_num)
 		    	msg_canfd_interpret_arr[prj_num](messageID, (uint8_t*)messageData, dataNumber);
 		    }
 			else {
-				iPrintf("Function msg_canfd_interpret No. %d not available!\r\n", prj_num);
+				iPrintf("Function msg_canfd_interpret for %s not available!\r\n", project_name[prj_num]);
+				abort_program();
 			}
 		}
 
@@ -362,7 +365,8 @@ void msg_canfd_receive(uint32_t prj_num)
 	    	msg_canfd_clear_arr[prj_num]();
 	    }
 		else {
-			iPrintf("Function msg_canfd_clear No. %d not available!\r\n", prj_num);
+			iPrintf("Function msg_canfd_clear for %s not available!\r\n", project_name[prj_num]);
+			abort_program();
 		}
 		timer_sec = systime->tm_sec;
     }
@@ -370,9 +374,9 @@ void msg_canfd_receive(uint32_t prj_num)
     return;
 }
 
-int32_t msg_canfd_init(void)
+int msg_canfd_init(void)
 {
-	 int32_t retVal = -1;
+	 int retVal = -1;
      TPCANStatus Status;
 
 #if (CAN_BUS_TYPE_CAN == CAN_BUS_TYPE)
@@ -389,16 +393,20 @@ int32_t msg_canfd_init(void)
 #ifdef DEVELOP_VERSION
 		 infoPrintf("CAN bus is initialized successfully!\r\n");
 #endif
-		 iPrintf("\r\nCAN functions are available!\n");
+		 iPrintf("CAN functions are available!\r\n");
+		 retVal = 0;
 	 }
 	 else
 	 {
-		 infoPrintf("CAN bus initialization failed!\n");
-		 iPrintf("\r\nCAN functions are NOT available!\n");
-		 retVal = 0;
+		 iPrintf("CAN bus initialization failed!\r\n");
 	 }
 
 	 return retVal;
+}
+
+void msg_canfd_deinit(void)
+{
+	CAN_Uninitialize(PCAN_DEVICE);
 }
 
 void msg_canfd_copyData(uint32_t number, uint32_t length, uint8_t *source, uint8_t *dest)
@@ -423,12 +431,12 @@ void msg_canfd_copyData(uint32_t number, uint32_t length, uint8_t *source, uint8
 }
 
 /* TODO: avoid blocking */
-int32_t msg_canfd_rcvCanConfigs(uint32_t prj_num)
+int msg_canfd_rcvCanConfigs(uint32_t prj_num)
 {
     uint32_t messageID = 0;
     uint8_t messageData[MAX_DATA_BYTES];
     uint32_t dataNumber;
-	int32_t status;
+	int status;
 
 	do {
 		status = canfd_messageReceive(&messageID, messageData, &dataNumber);
@@ -444,12 +452,12 @@ int32_t msg_canfd_rcvCanConfigs(uint32_t prj_num)
 }
 
 /* TODO: avoid blocking */
-int32_t msg_canfd_rcvCanLog(uint32_t prj_num)
+int msg_canfd_rcvCanLog(uint32_t prj_num)
 {
     uint32_t messageID = 0;
     uint8_t messageData[MAX_DATA_BYTES];
     uint32_t dataNumber;
-	int32_t status;
+	int status;
 
 	do {
 		status = canfd_messageReceive(&messageID, messageData, &dataNumber);

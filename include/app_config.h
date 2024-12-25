@@ -75,6 +75,7 @@ struct petdConfig {
 } __attribute__ ((aligned (MEM_ALIGNMENT)));
 
 int app_config_main(uint32_t prj_num);
+int app_config_mt(uint32_t prj_num);
 
 void writeLogging(void);
 void printLogging(void);

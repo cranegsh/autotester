@@ -17,7 +17,7 @@ typedef struct {
 	char *dev;
 	msg_mode_t mode;		/* CAN message ID */
 	uint32_t option;		/* not used */
-	int32_t val;			/* CAN message value */
+	int32_t val;			/* CAN message parameter value, TODO: upgrade to float type */
 	uint32_t num;			/* loop number */
 	uint32_t interval;		/* interval in ms when repeating message submission */
 	uint32_t period;		/* total running time in seconds */
@@ -27,7 +27,7 @@ typedef struct {
 typedef struct {
 	msg_mode_t mode;		/* CAN message ID */
 	uint32_t option;		/* not used */
-	int32_t val;			/* CAN message value */
+	int32_t val;			/* CAN message parameter value, TODO: upgrade to float type */
 	uint32_t num;			/* loop number */
 	uint32_t interval;		/* interval in ms when repeating message submission */
 	timer_t timer_id;		/* ID of timer for counting interval */
@@ -36,19 +36,22 @@ typedef struct {
 } msg_opt_t;
 
 typedef struct {
-	uint32_t project_id;
-	int canfd_status;
+	uint32_t project_id;	/* project ID */
+	uint32_t project_func;	/* project function: manual test, automatic test, remote control */
+	uint32_t msg_num;		/* CAN message number requested in command options; each message has a timer and timer number is message number */
+	int canfd_status;		/* CAN communication status */
 } sysData_type;
 
 void app_main_displayHelp(const char *app);
 void app_main_initData(sysData_type *sdata);
-int app_main_processOption(int numOpt, app_opt_t *appOpt, char *strArg);
-void app_main_sendCommand(uint32_t prj_num, sysData_type *sdata, int cmd);
-void app_main_initMsg(uint32_t prj_num, app_opt_t *appOpt);
-int app_main_checkMsg(int num, int mark);
-void app_main_print_canVeh(uint32_t prj_num, int msgNum, int msgCount);
-int app_main_remoteControl(uint32_t prj_num, int cmd, sysData_type *sdata);
-int app_main_canTest(app_opt_t *appOpt);
+int app_main_getMsgnum(sysData_type *sdata);
+int app_main_parseOption(sysData_type *sdata, int numOpt, char *strArg, app_opt_t *appOpt);
+void app_main_sendCommand(sysData_type *sdata, int cmd);
+void app_main_print_canVeh(sysData_type *sdata, int msgNum, int msgCount);
+int app_main_remoteControl(sysData_type *sdata, int cmd);
+int app_main_canTest(sysData_type *sdata, app_opt_t *appOpt);
+void app_main_manualTest(sysData_type *sdata);
+int app_main_autoTest(sysData_type *sdata);
 void app_main_test(void);
 
 #endif /* APP_MAIN_H_ */

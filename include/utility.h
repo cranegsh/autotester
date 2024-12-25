@@ -13,6 +13,8 @@
 
 #include "sysconfig.h"
 
+extern char *project_name[PROJECT_ID_TOTAL];
+
 /* For storing the debug information */
 #define DEBUG_BUFF_SIZE         100
 struct debugData {
@@ -57,11 +59,14 @@ extern struct debugData dData;
 #define iPrintf(...)
 #endif
 
+void abort_program(void);
+
 /* Function to interact with console */
 void clear_stdin(void);
 char get_a_char(void);
 int32_t get_a_number(const char *msg);
-int32_t get_a_number_print(const char *msg);
+int32_t get_a_number_mt(const char *msgPromot);
+int32_t get_a_number_print(const char *msgPromot);
 
 /* Function to print an array of integers */
 void print_array_byte(uint8_t *dat, uint32_t num);

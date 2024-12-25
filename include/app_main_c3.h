@@ -39,13 +39,13 @@ struct canfdData_c3 {
 
 /* Function to pass data pointer */
 struct canfdData_c3 *msg_canfd_getData_c3(void);
-uint32_t msg_canfd_getMid_c3(int number);
+uint32_t msg_canfd_getMid_c3(uint32_t number);
 int32_t msg_canfd_prepare_c3Veh(msg_mode_t msgno, int32_t value, uint8_t *data);
 void msg_canfd_clear_c3(void);
 
 void app_main_c3_sendCommand(sysData_type *sdata, int cmd);
 void app_main_c3_getMsginfo(msg_opt_t *msgi);
 void app_main_c3_print(void);
-void app_main_c3_print_canVeh(int msgNum, int msgCount);
+void app_main_c3_print_canVeh(uint32_t func, int msgNum, int msgCount);
 
 #endif /* APPLICATION_CANFDCOMM_C3_H_ */

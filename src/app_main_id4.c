@@ -14,7 +14,6 @@
 #define FILTER_TOTAL                (CAN_VEH_MSG_NUM + 1 + 2 + 7)	/* 1: system ID; 2:two general filters; 7: debugger control */
 #define FILTER_NUMBER				FILTER_TOTAL
 
-/* CAN Message IDs for ID4 project */
 /* ID4 messages */
 #define BMS_20                      0x0CF			/* Voltage */
 #define BMS_22                      0x12DD54D1		/* State of Charge */
@@ -26,14 +25,14 @@
 #define TEMP_01                     0x1A5555A6		/* Outside Temp. */
 #define SYSTEMINFO_01               0x585			/* Bus Identification */
 
-/* BZ4X/G3 shared messages */
+/* G4R/G3 shared messages */
 #define TEMP_AMB_SIG				0x3B0
 #define TEMP_AMB_RAW				0x380
 #define TEMP_CABIN					0x407
 #define SPEED_VEH					0x610
 #define HUMIDITY_CABIN				0x480
 #define DEFROST_SIG					0x381
-/* BZ4X messages */
+/* G4R messages */
 #define G4R_TEMP_AMB				TEMP_AMB_RAW//TEMP_AMB_SIG
 #define G4R_HV_READY				0x3B6
 #define G4R_HV_SOC					0x3B6
@@ -101,7 +100,7 @@ static struct canfdData_id4 canfdio_g3 = {
    }
 };
 
-/* for PROJECT_CAN_BZ4X (G4R) */
+/* for PROJECT_CAN_G4R */
 static struct canfdData_id4 canfdio_g4r = {
    .id4_vehData = {
 	/* The sequence of the members in the array must follow the sequence in msg_mode_t enum !!! */
@@ -175,14 +174,20 @@ union CANMSG_ESP21 {
 
 inline struct canfdData_id4 *msg_canfd_getData_id4(void)   { return &canfdio; }
 
-inline uint32_t msg_canfd_getMid_id4(int number) 	{ return canfdio.id4_vehData[number].mid; }
+uint32_t msg_canfd_getMid_id4(uint32_t number)
+{
+	return (canfdio.id4_vehData[number].mid);
+}
 
-inline uint32_t msg_canfd_getMid_g3(int number) 	{ return canfdio_g3.id4_vehData[number].mid; }
+uint32_t msg_canfd_getMid_g3(uint32_t number)
+{
+	return (canfdio_g3.id4_vehData[number].mid);
+}
 
-inline uint32_t msg_canfd_getMid_g4r(int number) 	{ return canfdio_g4r.id4_vehData[number].mid; }
+uint32_t msg_canfd_getMid_g4r(uint32_t number) 	{ return (canfdio_g4r.id4_vehData[number].mid); }
 
 /* Function to prepare CANFD data for ID4 vehicle messages */
-int32_t msg_canfd_prepare_id4Veh(msg_mode_t msgno, int32_t value, uint8_t *data)
+int msg_canfd_prepare_id4Veh(msg_mode_t msgno, int32_t value, uint8_t *data)
 {
 	switch(msgno) {
 		case APP_OPT_DEV_SEND_FSH:
@@ -233,9 +238,9 @@ int32_t msg_canfd_prepare_id4Veh(msg_mode_t msgno, int32_t value, uint8_t *data)
 	return 0;
 }
 
-/* Function to prepare CANFD data for G3 and BZ4X vehicle messages */
-int32_t msg_canfd_prepare_g3Veh(msg_mode_t msgno, int32_t value, uint8_t *data)
-//int32_t msg_canfd_prepare_bz4xVeh(msg_mode_t msgno, int32_t value, uint8_t *data)
+/* Function to prepare CANFD data for G3 and G4R vehicle messages */
+int msg_canfd_prepare_g3Veh(msg_mode_t msgno, int32_t value, uint8_t *data)
+//int msg_canfd_prepare_g4rVeh(msg_mode_t msgno, int32_t value, uint8_t *data)
 {
 	float temp;
 	switch((int)msgno) {
@@ -284,9 +289,9 @@ int32_t msg_canfd_prepare_g3Veh(msg_mode_t msgno, int32_t value, uint8_t *data)
 }
 
 /* Function to prepare CANFD data for ID4 project */
-int32_t msg_canfd_prepare_id4(uint32_t option, uint32_t *mid, uint8_t *data, uint32_t *num)
+int msg_canfd_prepare_id4(uint32_t option, uint32_t *mid, uint8_t *data, uint32_t *num)
 {
-	int32_t ret = 0;
+	int ret = 0;
 	uint32_t i;
 
 	switch(option) {
@@ -609,12 +614,12 @@ void msg_canfd_clear_id4(void)
 	}
 }
 
-static int32_t msg_canfd_receiveConfigs_id4(void)
+static int msg_canfd_receiveConfigs_id4(void)
 {
     uint32_t messageID = 0;
     uint8_t messageData[MAX_DATA_BYTES];
     uint32_t dataNumber;
-	int32_t status;
+	int status;
 
 	do {
 		status = canfd_messageReceive(&messageID, messageData, &dataNumber);
@@ -627,12 +632,12 @@ static int32_t msg_canfd_receiveConfigs_id4(void)
 	return status;
 }
 
-static int32_t msg_canfd_receiveLog_id4(void)
+static int msg_canfd_receiveLog_id4(void)
 {
     uint32_t messageID = 0;
     uint8_t messageData[MAX_DATA_BYTES];
     uint32_t dataNumber;
-	int32_t status;
+	int status;
 
 	do {
 		status = canfd_messageReceive(&messageID, messageData, &dataNumber);
@@ -645,7 +650,7 @@ static int32_t msg_canfd_receiveLog_id4(void)
 
 void app_main_id4_sendCommand(sysData_type *sdata, int cmd)
 {
-	if((0 == sdata->canfd_status) && (canfdio.updated)) {
+	if(canfdio.updated) {
 		ndPrintf("\n Sending data '%c' to CAN ...", cmd);
 		msg_canfd_send_tester(sdata->project_id, (uint32_t)cmd);
 		ndPrintf("\n data '%c' to CAN sent!", cmd);
@@ -691,6 +696,13 @@ void app_main_g4r_getMsginfo(msg_opt_t *msgi)
 	iPrintf("%s:\t%d\t%d\t | %d\n", canfdio_g4r.id4_vehData[(int)msgi->mode].name, \
 			msgi->mode + 1, msgi->val, msgi->interval);
 }
+
+void app_main_displayMsg_g3(msg_opt_t *msgi)
+{
+	iPrintf("%s:\t%d\t%d\t | %d\n", canfdio_g3.id4_vehData[(int)msgi->mode].name, \
+			msgi->mode + 1, msgi->val, msgi->interval);
+}
+
 void app_main_id4_print(void)
 {
     iPrintf("\n%s", canfdio.id4DataIn_Ctl.data.mode ? "deIce" : "deFog");
@@ -711,19 +723,25 @@ void app_main_id4_print(void)
     iPrintf(" | %dns", canfdio.id4DataIn_Cfg.data.pwmCanConfig.compensation_up3);
 }
 
-void app_main_id4_print_canVeh(int msgNum, int msgCount)
+void app_main_id4_print_canVeh(uint32_t func, int msgNum, int msgCount)
 {
-	iPrintf("%s: %3d | ", canfdio.id4_vehData[msgNum].name, msgCount);
+	if(PROJECT_FUNC_CAN == func) {
+		iPrintf("%s: %3d | ", canfdio.id4_vehData[msgNum].name, msgCount);
+	}
 }
 
-void app_main_g3_print_canVeh(int msgNum, int msgCount)
+void app_main_g3_print_canVeh(uint32_t func, int msgNum, int msgCount)
 {
-	iPrintf("%s: %3d | ", canfdio_g3.id4_vehData[msgNum].name, msgCount);
+	if(PROJECT_FUNC_CAN == func) {
+		iPrintf("%s: %3d | ", canfdio_g3.id4_vehData[msgNum].name, msgCount);
+	}
 }
 
-void app_main_g4r_print_canVeh(int msgNum, int msgCount)
+void app_main_g4r_print_canVeh(uint32_t func, int msgNum, int msgCount)
 {
-	iPrintf("%s: %3d | ", canfdio_g4r.id4_vehData[msgNum].name, msgCount);
+	if(PROJECT_FUNC_CAN == func) {
+		iPrintf("%s: %3d | ", canfdio_g4r.id4_vehData[msgNum].name, msgCount);
+	}
 }
 
 int app_main_id4_commandP(void)

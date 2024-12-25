@@ -5,10 +5,20 @@
  *      Author: Crane Shao
  */
 #include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "utility.h"
 #include "sysconfig.h"
+#include "app_canfd.h"
+
+char *project_name[] = {
+	PROJECT_ARGU_ID4,
+	PROJECT_ARGU_G3,
+	PROJECT_ARGU_G4R,
+	PROJECT_ARGU_C3,
+	PROJECT_ARGU_NAVY,
+};
 
 struct debugData dData = {
     .mark = 0,
@@ -26,6 +36,14 @@ union time_bcd_t {
     } bF;
     uint16_t hword;
 };
+
+void abort_program(void)
+{
+	ndPrintf("Free CANFD handler ...\r\n");
+	msg_canfd_deinit();
+	iPrintf("Exiting with failure ...\r\n");
+	exit(EXIT_FAILURE);
+}
 
 void clear_stdin(void)
 {
@@ -54,7 +72,8 @@ char get_a_char(void)
 }
 
 /* Function to get an integer allowing negative value
- * return INVALID_INPUT if failed to acquire a number
+ * return INVALID_INPUT if failed to acquire a number: there is an assumption that it is an invalid value in all cases.
+ * TODO: the caller must check the value it gets.
  * */
 int32_t get_a_number(const char *msg)
 {
@@ -102,12 +121,74 @@ int32_t get_a_number(const char *msg)
 #endif
 }
 
-/* Function to get number from Stdio inputs and display the result*/
-int32_t get_a_number_print(const char *msg)
+/* Function to get an integer allowing negative value
+ * Blocking call to must get a number!
+ * */
+int32_t get_a_number_mt(const char *msgPromot)
 {
-    int number;
+    int hitkey = 0;
+    unsigned int digit = 0;
+    int number = 0;
+    unsigned int count = 0;
+    int sign = 1;
 
-    number = get_a_number(msg);
+    iPrintf("\r\n Please input %s: ", msgPromot);
+
+    do {
+    	hitkey = getc(stdin);
+#if 0
+    	if(-1 != hitkey) {
+    		ndPrintf("\r\n0: Get an input %d / %c\r\n", hitkey, hitkey);
+    		if ('-' == hitkey)
+    	    {
+    	        sign = -1;
+    	        break;
+    	    }
+    	    else if(('0'<=hitkey) && ('9'>=hitkey))
+    	    {
+    	        digit = hitkey - '0';
+    	        number = digit;
+    	        break;
+    	    }
+    	}
+    } while(1);
+#else
+//    } while( -1 == hitkey);
+    } while (('-' != hitkey)
+			&& (!(('0' <= hitkey) && ('9' >= hitkey))));
+
+    if ('-' == hitkey)
+    {
+        sign = -1;
+    }
+    else if(('0'<=hitkey) && ('9'>=hitkey))
+    {
+        digit = hitkey - '0';
+        number = digit;
+    }
+#endif
+
+    do{
+          hitkey = getc(stdin);
+          ndPrintf("\r\n1: Get an input %d / %c\r\n", hitkey, hitkey);
+          count++;
+          if(('0'<=hitkey) && ('9'>=hitkey))
+          {
+              digit = hitkey - '0';
+              number = number*10 + digit;
+          }
+    } while(('\n' != hitkey) && (1000000 > number));
+
+    ndPrintf("Get number %d and sign %d\r\n", number, sign);
+    return (number * sign);
+}
+
+/* Function to get number from Stdio inputs and display the result */
+int32_t get_a_number_print(const char *msgPromot)
+{
+    int32_t number;
+
+    number = get_a_number(msgPromot);
     iPrintf("You input %d\r\n", number);
 
     return number;

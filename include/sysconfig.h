@@ -6,29 +6,35 @@
 
 /* project definition */
 /* select only one from PROJECT_NAVY, PROJECT_C3 and PROJECT_ID4
- * if PROJECT_ID4 is selected, select only one from PROJECT_CAN_ID4, PROJECT_CAN_BZ4X and PROJECT_CAN_G3 */
+ * if PROJECT_ID4 is selected, select only one from PROJECT_CAN_ID4, PROJECT_CAN_G4R and PROJECT_CAN_G3 */
 //#define PROJECT_NAVY
 //#define PROJECT_C3
 //#define PROJECT_ID4
-//#ifdef PROJECT_ID4				   /* ID4, BZ4X and G3 all are based on PROJECT_ID4, the differences are CAN messages */
+//#ifdef PROJECT_ID4				   /* ID4, G4R and G3 all are based on PROJECT_ID4, the differences are CAN messages */
 //#define PROJECT_CAN_ID4
-//#define PROJECT_CAN_BZ4X
+//#define PROJECT_CAN_G4R
 //#define PROJECT_CAN_G3
 //#endif
 
 /* select project by a variable from command line argument */
 #define PROJECT_ID_TOTAL		5
+#define PROJECT_ID_ID4			0			/* project id4 */
+#define PROJECT_ID_G3			1			/* project g3 */
+#define PROJECT_ID_G4R			2			/* project g4r */
+#define PROJECT_ID_C3			3			/* project c3 */
+#define PROJECT_ID_NAVY			4			/* project navy */
 #define PROJECT_ARGU_ID4		"id4"		/* argument: id4 */
 #define PROJECT_ARGU_G3			"g3"		/* argument: g3 */
 #define PROJECT_ARGU_G4R		"g4r"		/* argument: g4r */
 #define PROJECT_ARGU_C3			"c3"		/* argument: c3 */
 #define PROJECT_ARGU_NAVY		"navy"		/* argument: navy */
-#define PROJECT_ID_ID4			0		/* argument: id4 */
-#define PROJECT_ID_G3			1		/* argument: g3 */
-#define PROJECT_ID_G4R			2		/* argument: g4r */
-#define PROJECT_ID_C3			3		/* argument: c3 */
-#define PROJECT_ID_NAVY			4		/* argument: navy */
-#define PROJECT_ID_DEFAULT		2
+#define PROJECT_CANOPT_ID4		"cfavsth"	/* CAN message options */
+#define PROJECT_CANOPT_C3		"cfavsthdro"/* CAN message options */
+#define PROJECT_CANOPT_NAVY		""			/* CAN message options */
+#define PROJECT_FUNC_MT			'm'			/* manual test */
+#define PROJECT_FUNC_AT			'z'			/* automatic test */
+#define PROJECT_FUNC_RC			'y'			/* remote control */
+#define PROJECT_FUNC_CAN		'x'			/* CAN test */
 
 /* debug configurations */
 #define MAIN_LOOP_DISPLAY_DOT           0           /* display only . */

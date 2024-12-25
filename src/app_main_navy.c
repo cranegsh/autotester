@@ -21,10 +21,10 @@ static struct canfdData_navy canfdio = {
 inline struct canfdData_navy *msg_canfd_getData_navy(void)   { return &canfdio; }
 
 /* Function to prepare data for CAN submission - Navy project */
-int32_t msg_canfd_prepare_navy(uint32_t option, uint32_t *mid, uint8_t *data, uint32_t *num)
+int msg_canfd_prepare_navy(uint32_t option, uint32_t *mid, uint8_t *data, uint32_t *num)
 {
 	uint32_t temp = 0;
-	int32_t ret = 0;
+	int ret = 0;
 
 	switch(option)
 	{

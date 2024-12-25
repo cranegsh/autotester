@@ -5,7 +5,6 @@
 #include <fcntl.h>
 #include <getopt.h>
 #include <signal.h>
-#include <time.h>
 #include <string.h>
 
 #include "sysconfig.h"
@@ -16,14 +15,12 @@
 #include "app_timer.h"
 #include "app_main.h"
 
-/* For identifying the project */
-uint32_t idProject;
-
-sysData_type farview_data = {
-	.project_id = 0,
+static sysData_type farview_data = {
+	.project_id = 0xFF,
+	.project_func = PROJECT_FUNC_CAN,				/* might be modified by the command option */
+	.msg_num = 0,
 	.canfd_status = -1,
 };
-
 
 /**************************************************************************************
  * 						main program
@@ -34,94 +31,102 @@ int main(int argc, char *argv[]) {
 
 	app_opt_t opt;
 	opt.val = 0;
-	opt.num = 0;
+	opt.num = 1;
 	opt.interval = 1000;	/* default interval in ms when repeating messages; not useful any more as each message has its own */
 	opt.period = 0;
 	opt.option = 0xFF;
 	opt.mode = APP_OPT_UNKNOWN;
+	opt.function = 0;
+
+	/* get project number from command argument */
+	if(optind < argc) {
+		for(i=0; i<PROJECT_ID_TOTAL; i++) {
+			ndPrintf("Compare %s to %s\r\n", project_name[i], argv[optind]);
+			if(0 == strcmp(project_name[i], argv[optind])) {
+				/* get the valid argument */
+				farview_data.project_id = (uint32_t)i;
+				break;
+			}
+		}
+		if((PROJECT_ID_TOTAL == i) && (strcmp("-H", argv[optind]))){
+			/* no valid argument */
+			iPrintf("Wrong argument %s in command! Please check help.\r\n", argv[optind]);
+			return -1;
+		}
+	}
+	else {
+		iPrintf("Missing argument in command! Please check help.\r\n");
+		return -1;
+	}
 
 	/* get the option and parameters if needed (followed with :) */
 	//dPrintf("\r\nGetting %d arguments and the option is %d\n", argc, ret);
-	while(-1 != (ret = getopt(argc, argv, "mzl:i:p:f:a:v:c:s:t:h:d:r:o:H"))) {
+	while(-1 != (ret = getopt(argc, argv, "Hmzl:i:p:f:a:v:c:s:t:h:d:r:o:"))) {
 		ndPrintf("\r\nGet %d arguments and the option is %c\n", argc, ret);
-		status = app_main_processOption(ret, &opt, optarg);
+		status = app_main_parseOption(&farview_data, ret, optarg, &opt);
+		ndPrintf("Opt status: %c - %d\r\n", ret, status);
 		if (-1 == status) {
+			/* ask for help or input an out-of-range value */
 			app_main_displayHelp(argv[0]);
 			return -1;
 		}
+		else if (0 == status) {
+			/* set parameters for CAN test: update the number of the CAN messages from command options */
+			farview_data.msg_num++;
+		}
+		else if (2 == status) {
+			/* set parameters for manual test or automatic test */
+			farview_data.msg_num = (uint32_t)app_main_getMsgnum(&farview_data);
+			farview_data.project_func = opt.function;
+		}
+		else if (3 == status) {
+	    	farview_data.project_func = PROJECT_FUNC_RC;
+		}
 	}
-
-	/* get the argument */
-	if(optind < argc) {
-		if(0 == strcmp(PROJECT_ARGU_ID4, argv[optind])) {
-			idProject = PROJECT_ID_ID4;
-		}
-		else if(0 == strcmp(PROJECT_ARGU_G3, argv[optind])) {
-			idProject = PROJECT_ID_G3;
-		}
-		else if(0 == strcmp(PROJECT_ARGU_G4R, argv[optind])) {
-			idProject = PROJECT_ID_G4R;
-		}
-		else if(0 == strcmp(PROJECT_ARGU_C3, argv[optind])) {
-			idProject = PROJECT_ID_C3;
-		}
-		else if(0 == strcmp(PROJECT_ARGU_NAVY, argv[optind])) {
-			idProject = PROJECT_ID_NAVY;
-		}
-		else {
-			printf("\r\nError in command: wrong argument! Please check help.\r\n");
-			return -1;
-		}
-		ndPrintf("\r\nNon-option argument:%s %d\r\n", argv[optind], idProject);
-	}
-	else {
-		idProject = PROJECT_ID_DEFAULT;
-		//printf("Error in command: missing argument! Please check help.\r\n");	return -1;
-	}
-	ndPrintf("Project IS is %d\r\n", idProject);
 
 	/* init the system */
 	app_main_test();
-	farview_data.project_id = idProject;
-	farview_data.canfd_status = msg_canfd_init();
+	if(0 != msg_canfd_init()) {
+		return -1;
+	}
 	dataLog_init();
 	app_main_initData(&farview_data);
+	iPrintf("Project %s - Function %c - opt.mode %d - msg_num %d\r\n",
+			project_name[farview_data.project_id], farview_data.project_func, opt.mode, farview_data.msg_num);
+
 
 	/* set up system: branch according to the command options */
-    if(APP_OPT_UNKNOWN != opt.mode) {
+	if(PROJECT_FUNC_MT == opt.function) {
+		/* run manual test */
+		ndPrintf("Start running manual test ...\r\n");
+		app_main_manualTest(&farview_data);
+		return 0;
+	}
+	else if(PROJECT_FUNC_AT == opt.function) {
+		/* run automatic test */
+		dPrintf("Start running auto test ...\r\n");
+		input_command = PROJECT_FUNC_AT;
+		app_main_autoTest(&farview_data);
+		return 0;
+	}
+	else if(APP_OPT_UNKNOWN != opt.mode) {
     	/* do CAN test by submitting vehicle CAN messages specified by opt.mode */
-		app_main_initMsg(idProject, &opt);
-		status = app_main_canTest(&opt);
+		status = app_main_canTest(&farview_data, &opt);
 		if(0 == status) {
-			printf("\r\n");
 			return 0;
 		}
     }
-    else
-    {  	/* get the function selection */
-    	if('m' == opt.function) {
-    		/* run manual test */
-    		input_command = 'm';
-    		dPrintf("Start running manual test ...\r\n");
-    		return 0;
-    	}
-    	else if('z' == opt.function) {
-    		/* run automatic test */
-    		input_command = 'z';
-    		dPrintf("Start running auto test ...\r\n");
-    		return 0;
-    	}
-    }
+
 
     /* run remote control */
-	input_command = app_config_main(idProject);
+	input_command = app_config_main(farview_data.project_id);
 	/* send CAN messages according to the input from console */
-	app_main_sendCommand(idProject, &farview_data, input_command);
-    /* start the main loop */
+	app_main_sendCommand(&farview_data, input_command);
+    /* start the main loop to display the control status like UART console */
 	ndPrintf("\nStart the main loop... input value is %d", input_command);
 	for(;;) {
 		/* in remote control mode: process remote control command from console */
-		status = app_main_remoteControl(idProject, input_command, &farview_data);
+		status = app_main_remoteControl(&farview_data, input_command);
 		if(0 == status) {
 			printf("\r\n");
 			return 0;

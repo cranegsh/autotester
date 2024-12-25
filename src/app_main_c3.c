@@ -52,12 +52,12 @@ static struct canfdData_c3 canfdio = {
 		{ BMS_22, "S.Charge", 1000, 0 },
 		{ KLIMA_16, "FSH Sts", 1000, 0 },
 		{ TEMP_01, "Amb.Temp.", 2000, 0 },
-		{ BMS_20<<CAN_EID_BITS, "Voltage", 10, 0 },
-		{ ESP_21<<CAN_EID_BITS, "V.Speed", 10, 0 },
+		{ BMS_20<<CAN_EID_BITS, "Voltage", 1000, 0 }, //10, 0 },//	/* too many short intervals cause the issue of exiting the program? */
+		{ ESP_21<<CAN_EID_BITS, "V.Speed", 1000, 0 }, //10, 0 },//
 		{ KLIMA_03<<CAN_EID_BITS, "Cab.Temp.", 2000, 0 },
 		{ KLIMA_S_01<<CAN_EID_BITS, "Humidity", 2000, 0 },
-		{ SYSTEMINFO_01<<CAN_EID_BITS, "Sys. ID", 100, 0 },
-		{ CAN_CUR<<CAN_EID_BITS, "Current", 10, 0 },
+		{ SYSTEMINFO_01<<CAN_EID_BITS, "Sys. ID", 1000, 0 },
+		{ CAN_CUR<<CAN_EID_BITS, "Current", 1000, 0 }, //10, 0 },//
 		{ CAN_OP_MODE<<CAN_EID_BITS, "Op.mode", 1000, 0 },
    }
 };
@@ -122,7 +122,10 @@ union CANMSG_ESP21 {
 
 inline struct canfdData_c3 *msg_canfd_getData_c3(void)   { return &canfdio; }
 
-inline uint32_t msg_canfd_getMid_c3(int number) { return canfdio.c3canDataInfo[number].mid; }
+uint32_t msg_canfd_getMid_c3(uint32_t number)
+{
+	return canfdio.c3canDataInfo[number].mid;
+}
 
 /* Function to prepare CANFD data for C3 vehicle messages */
 int32_t msg_canfd_prepare_c3Veh(msg_mode_t msgno, int32_t value, uint8_t *data)
@@ -182,7 +185,7 @@ void msg_canfd_clear_c3(void)
 
 void app_main_c3_sendCommand(sysData_type *sdata, int cmd)
 {
-	if((0 == sdata->canfd_status) && (canfdio.updated)) {
+	if(canfdio.updated) {
 		ndPrintf("\n Sending data '%c' to CAN ...", cmd);
 		msg_canfd_send_tester(sdata->project_id, (uint32_t)cmd);
 		ndPrintf("\n data '%c' to CAN sent!", cmd);
@@ -203,7 +206,9 @@ void app_main_c3_getMsginfo(msg_opt_t *msgi)
 			msgi->mode + 1, msgi->val, msgi->interval);
 }
 
-void app_main_c3_print_canVeh(int msgNum, int msgCount)
+void app_main_c3_print_canVeh(uint32_t func, int msgNum, int msgCount)
 {
-	iPrintf("%s: %3d | ", canfdio.c3canDataInfo[msgNum].name, msgCount);
+	if(PROJECT_FUNC_CAN == func) {
+		iPrintf("%s: %3d | ", canfdio.c3canDataInfo[msgNum].name, msgCount);
+	}
 }

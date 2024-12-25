@@ -196,12 +196,12 @@ struct canfdData_id4 {
 
 /* Function to pass data pointer */
 struct canfdData_id4 *msg_canfd_getData_id4(void);
-uint32_t msg_canfd_getMid_id4(int number);
-uint32_t msg_canfd_getMid_g3(int number);
-uint32_t msg_canfd_getMid_g4r(int number);
-int32_t msg_canfd_prepare_id4Veh(msg_mode_t msgno, int32_t value, uint8_t *data);
-int32_t msg_canfd_prepare_g3Veh(msg_mode_t msgno, int32_t value, uint8_t *data);
-int32_t msg_canfd_prepare_bz4xVeh(msg_mode_t msgno, int32_t value, uint8_t *data);
+uint32_t msg_canfd_getMid_id4(uint32_t number);
+uint32_t msg_canfd_getMid_g3(uint32_t number);
+uint32_t msg_canfd_getMid_g4r(uint32_t number);
+int msg_canfd_prepare_id4Veh(msg_mode_t msgno, int32_t value, uint8_t *data);
+int msg_canfd_prepare_g3Veh(msg_mode_t msgno, int32_t value, uint8_t *data);
+//int msg_canfd_prepare_g4rVeh(msg_mode_t msgno, int32_t value, uint8_t *data);		/* same as g3 now */
 int32_t msg_canfd_prepare_id4(uint32_t option, uint32_t *mid, uint8_t *data, uint32_t *num);
 BOOL_INT32 msg_canfd_interpret_id4Veh(uint32_t mid, uint8_t *data, uint32_t num);
 void msg_canfd_interpret_id4(uint32_t mid, uint8_t *data, uint32_t num);
@@ -211,11 +211,12 @@ void app_main_id4_sendCommand(sysData_type *sdata, int cmd);
 void app_main_id4_getMsginfo(msg_opt_t *msgi);
 void app_main_g3_getMsginfo(msg_opt_t *msgi);
 void app_main_g4r_getMsginfo(msg_opt_t *msgi);
+void app_main_displayMsg_g3(msg_opt_t *msgi);
 
 void app_main_id4_print(void);
-void app_main_id4_print_canVeh(int msgNum, int msgCount);
-void app_main_g3_print_canVeh(int msgNum, int msgCount);
-void app_main_g4r_print_canVeh(int msgNum, int msgCount);
+void app_main_id4_print_canVeh(uint32_t func, int msgNum, int msgCount);
+void app_main_g3_print_canVeh(uint32_t func, int msgNum, int msgCount);
+void app_main_g4r_print_canVeh(uint32_t func, int msgNum, int msgCount);
 int app_main_id4_commandP(void);
 void app_main_id4_commandD_log(void);
 int app_main_id4_commandD_error(void);

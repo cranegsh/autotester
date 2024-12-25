@@ -102,7 +102,7 @@
 #define FREQ_INIT_MIN                   50000//100000
 #define FREQ_INIT_MAX                   150000
 
-struct powerConfig powerUartConfig = {
+static struct powerConfig powerUartConfig = {
   .mode = MODE_OP_DEFAULT,
   .tempOff = POWER_OFF_TEMP,
   .thVoltagePeak = TH_VOLTAGE_IN_PEAK,
@@ -116,7 +116,7 @@ struct powerConfig powerUartConfig = {
   .configUpdated = BOOL_FALSE,
 };
 
-struct petdConfig petdUartConfig = {
+static struct petdConfig petdUartConfig = {
   .configUpdated = BOOL_FALSE,
   .VoutTarget = DEFAULT_VOUTPUT_TARGET,
   .runtime = DEFAULT_RUN_TIME,
@@ -966,7 +966,7 @@ BOOL_INT32 pwmConfig_check(struct pwmConfig *configIn, struct pwmConfig *configO
     return BOOL_TRUE;
 }
 
-static int app_config_getInput(void)
+static int app_config_main_getInput(void)
 {
     char hitkey;
     hitkey = get_a_char();
@@ -1002,7 +1002,7 @@ static int app_config_main_id4(uint32_t prj_num)
         //iPrintf("\r\n s: send CAN message");
         iPrintf("\r\n ->: ");
 
-        switch(app_config_getInput()) {
+        switch(app_config_main_getInput()) {
 			case COMMAND_P:
 			case (COMMAND_P - 32):
 				/* display some information */
@@ -1015,7 +1015,7 @@ static int app_config_main_id4(uint32_t prj_num)
         	case COMMAND_C:
         	case (COMMAND_C - 32):
 				/* config PETD control parameters */
-				getc(stdin);
+				getc(stdin);		/* get rid of ENTER key for next request */
 				if(petdConfig_input())
 				{
 					petdConfig_print();
@@ -1026,7 +1026,7 @@ static int app_config_main_id4(uint32_t prj_num)
           	case COMMAND_F:
         	case (COMMAND_F - 32):
 				/* config PETD control parameters */
-				getc(stdin);
+				getc(stdin);	/* get rid of ENTER key for next request */
 				if(pwmConfig_input())
 				{
 					pwmConfig_print();          /* display the configurations */
@@ -1037,7 +1037,7 @@ static int app_config_main_id4(uint32_t prj_num)
         	case COMMAND_D:
         	case (COMMAND_D - 32):
 				/* process debug option */
-				getc(stdin);		/* get rid of ENTER key */
+				getc(stdin);		/* get rid of ENTER key for next request */
 				dData.display = get_a_number_print("number for debugging");
 				if(444 == dData.display)
 				{	/* request log data */
@@ -1104,7 +1104,7 @@ static int app_config_main_navy(uint32_t prj_num)
         iPrintf("\r\n d: get the log");
         iPrintf("\r\n ->: ");
 
-        switch(app_config_getInput()) {
+        switch(app_config_main_getInput()) {
         	case COMMAND_P:
         	case (COMMAND_P - 32):
 				powerConfig_print();
@@ -1157,7 +1157,61 @@ int app_config_main(uint32_t prj_num)
     	ret = app_config_main_arr[prj_num](prj_num);
     }
 	else {
-		iPrintf("Function app_config_main No. %d not available!\r\n", prj_num);
+		iPrintf("Function app_config_main for %s not available!\r\n", project_name[prj_num]);
+		abort_program();
+	}
+
+    return ret;
+}
+
+static int app_config_mt_g3(uint32_t prj_num)
+{
+    char hitkey;
+
+    //if(UART_Read_Passwd())                                     // using a protocol instead of just a keyboard hit
+    {
+        iPrintf("\r\nPlease select command:");
+        iPrintf("\r\n a): turn on defrost");
+        iPrintf("\r\n b): turn off defrost");
+        iPrintf("\r\n c): set ambient temperature");
+        iPrintf("\r\n d): set vehicle speed");
+        iPrintf("\r\n e): exit");
+        iPrintf("\r\n ->: ");
+
+        hitkey = get_a_char();
+        while(!((('a' <= hitkey) && ('e' >= hitkey))
+                || (('A' <= hitkey) && ('E' >= hitkey))))			/* TODO: check function key which might contain these letters! */
+        {   // invalid input. Need input again
+        	if(('\n' != hitkey) && ('\r' != hitkey)) {
+        		/* display when it is not an enter after wrong input */
+        		//iPrintf("\r\nInvalid option %d! Please input again!", hitkey);	/* TODO: check what are sent to console which are taken as inputs */
+        	}
+            hitkey = get_a_char();
+        }
+        /* collect the enter key */
+        getc(stdin);
+    }
+
+    return (int)hitkey;
+}
+
+static int (*app_config_mt_arr[PROJECT_ID_TOTAL])(uint32_t) = {
+	NULL,
+	app_config_mt_g3,
+	NULL,
+	NULL,
+	NULL,
+};
+int app_config_mt(uint32_t prj_num)
+{
+	int ret;
+
+    if(app_config_mt_arr[prj_num]){
+    	ret = app_config_mt_arr[prj_num](prj_num);
+    }
+	else {
+		iPrintf("Function app_config_mt for %s not available!\r\n", project_name[prj_num]);
+		abort_program();
 	}
 
     return ret;

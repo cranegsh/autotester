@@ -11,7 +11,7 @@
 #include "app_canfd.h"
 #include "app_main.h"
 
-void start_timer(msg_opt_t (*appid)[CAN_VEH_MSG_NUM], int index, int total);
+void start_timer(msg_opt_t (*appid)[CAN_VEH_MSG_NUM], int index, sysData_type* sdata);
 void start_singletimer(timer_t *timerid, int interval, void (*handler)());
 void stop_timer(timer_t *timerid);
 void delete_timer(timer_t *timerid);
