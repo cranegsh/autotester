@@ -20,13 +20,10 @@
 //#define TEST_USE_SIG_STOP
 
 // Custom data structure to pass arguments to the handler
-static struct TimerHandlerArgs {
+struct TimerHandlerArgs {
 	msg_opt_t (*msgid)[CAN_VEH_MSG_NUM];		/* the message array pointer */
     int index;									/* the message index for a specific message */
-    //int timer_total;							/* the message array size */
-    //uint32_t prj_id;
-    //uint32_t prj_func;
-    sysData_type *sysdata;
+    sysData_type *sysdata;						/* project ID, project function and message total number */
 };
 static struct TimerHandlerArgs args;
 

@@ -10,10 +10,6 @@
 #include "app_main_id4.h"
 #include "utility.h"
 
-//#define CAN_VEH_MSG_NUM				7								/* basic CAN messages for ID4 */
-#define FILTER_TOTAL                (CAN_VEH_MSG_NUM + 1 + 2 + 7)	/* 1: system ID; 2:two general filters; 7: debugger control */
-#define FILTER_NUMBER				FILTER_TOTAL
-
 /* ID4 messages */
 #define BMS_20                      0x0CF			/* Voltage */
 #define BMS_22                      0x12DD54D1		/* State of Charge */
@@ -557,7 +553,7 @@ BOOL_INT32 msg_canfd_interpret_id4Veh(uint32_t mid, uint8_t *data, uint32_t num)
     return status;
 }
 
-/* This is to interpret the messages from the tester */
+/* This is to interpret the messages from the controller */
 void msg_canfd_interpret_id4(uint32_t mid, uint8_t *data, uint32_t num)
 {
     uint32_t i;

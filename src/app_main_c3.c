@@ -22,10 +22,6 @@
 #define CAN_CUR                     0x587U          /* temp for test */
 #define CAN_OP_MODE                 0x588U          /* temp for test */
 
-//#define CAN_VEH_MSG_NUM				10								/* basic CAN messages for C3, ID4 + 2: current and op mode for now. */
-#define FILTER_TOTAL                (CAN_VEH_MSG_NUM + 2 + 7)		/* 1: system ID; 2:two general filters; 7: debugger control */
-#define FILTER_NUMBER				(FILTER_TOTAL)	/* same as ID4 */
-
 /* CANFD data should be interpreted according to the below DBC information:
  * BO_ 207 BMS_20: 8
  * SG_ BMS_Spannung : 52|12@1+ (0.25,0) [0|1000] "Unit_Volt" Vector__XXX
@@ -46,78 +42,31 @@
  */
 //#define CAN_STANDARD_ONLY
 
+/* ID of the messages sent from the controller */
+#define PETD_RUN_TIME               0x396U
+#define PETD_COMMAND                0x05CU
+#define WS_RESISTANCE               0x19ABCDEFU
+#define ERROR_CODE                  0x15793468U
+
+
 static struct canfdData_c3 canfdio = {
    .c3canDataInfo = {
 		/* The sequence of the members in the array must follow the sequence in msg_mode_t enum !!! */
-		{ BMS_22, "S.Charge", 1000, 0 },
-		{ KLIMA_16, "FSH Sts", 1000, 0 },
-		{ TEMP_01, "Amb.Temp.", 2000, 0 },
-		{ BMS_20<<CAN_EID_BITS, "Voltage", 1000, 0 }, //10, 0 },//	/* too many short intervals cause the issue of exiting the program? */
-		{ ESP_21<<CAN_EID_BITS, "V.Speed", 1000, 0 }, //10, 0 },//
-		{ KLIMA_03<<CAN_EID_BITS, "Cab.Temp.", 2000, 0 },
-		{ KLIMA_S_01<<CAN_EID_BITS, "Humidity", 2000, 0 },
-		{ SYSTEMINFO_01<<CAN_EID_BITS, "Sys. ID", 1000, 0 },
-		{ CAN_CUR<<CAN_EID_BITS, "Current", 1000, 0 }, //10, 0 },//
-		{ CAN_OP_MODE<<CAN_EID_BITS, "Op.mode", 1000, 0 },
-   }
+		{ BMS_22, "S.Charge", 1000, 0, 88 },
+		{ KLIMA_16, "FSH Sts", 1000, 0, 0 },
+		{ TEMP_01, "Amb.Temp.", 2000, 0, -10 },
+		{ BMS_20<<CAN_EID_BITS, "Voltage", 1000, 0, 350 }, //10, 0, 0 },//	/* too many short intervals cause the issue of exiting the program? */
+		{ ESP_21<<CAN_EID_BITS, "V.Speed", 1000, 0, 99 }, //10, 0, 0 },//
+		{ KLIMA_03<<CAN_EID_BITS, "Cab.Temp.", 2000, 0, 22 },
+		{ KLIMA_S_01<<CAN_EID_BITS, "Humidity", 2000, 0, 37 },
+		{ SYSTEMINFO_01<<CAN_EID_BITS, "Sys. ID", 1000, 0, 85 },
+		{ CAN_CUR<<CAN_EID_BITS, "Current", 1000, 0, 0 }, //10, 0 },//
+		{ CAN_OP_MODE<<CAN_EID_BITS, "Op.mode", 1000, 0, 0 },
+   },
+   .c3dataIn.data = { 0, 0, 0, 0, 0},
 };
-
-union CANMSG_BMS20 {
-    struct {
-        uint32_t void_word;
-        struct {
-            uint32_t void_bits:16;
-            uint32_t low:8;
-            uint32_t high:8;
-        } bms20_vol;
-    } bF;
-    struct {
-        uint32_t void_word;
-        struct {
-            uint32_t void_bits:20;
-            uint32_t low:4;
-            uint32_t high:8;
-        } bms20_vol;
-    } bitsF;
-    uint16_t hword[4];
-    uint8_t byte[8];
-};
-
-union CANMSG_BMS22 {
-    struct {
-        struct{
-            uint32_t void_bits:16;
-            uint32_t low:8;
-            uint32_t high:8;
-        } bms22_soc;
-        uint32_t void_word;
-    } bF;
-    struct {
-        struct{
-            uint32_t void_bits:17;
-            uint32_t low:7;
-            uint32_t high:4;
-            uint32_t unimplmented;
-        } bms22_soc;
-        uint32_t void_word;
-    } bitsF;
-    uint16_t hword[4];
-    uint8_t byte[8];
-};
-
-union CANMSG_ESP21 {
-    struct {
-        uint32_t void_word;
-        struct {
-            uint32_t low: 8;
-            uint32_t high: 8;
-            uint32_t unplemented1: 7;
-            uint32_t Qbit: 1;
-            uint32_t unplemented2: 8;
-        } esp21_speed;
-    } bitF;
-    uint16_t hword[4];
-    uint8_t byte[8];
+static dataIn_type_c3 data_prev = {
+	.data = {0, 0, 0, 0, 0}
 };
 
 inline struct canfdData_c3 *msg_canfd_getData_c3(void)   { return &canfdio; }
@@ -128,7 +77,7 @@ uint32_t msg_canfd_getMid_c3(uint32_t number)
 }
 
 /* Function to prepare CANFD data for C3 vehicle messages */
-int32_t msg_canfd_prepare_c3Veh(msg_mode_t msgno, int32_t value, uint8_t *data)
+int msg_canfd_prepare_c3Veh(msg_mode_t msgno, int32_t value, uint8_t *data)
 {
 	switch((int)msgno) {
 		case APP_OPT_DEV_SEND_FSH:
@@ -183,6 +132,54 @@ void msg_canfd_clear_c3(void)
 	}
 }
 
+/* This is to interpret the messages from the controller */
+void msg_canfd_interpret_c3(uint32_t mid, uint8_t *data, uint32_t num)
+{
+    uint32_t i;
+    uint16_t temp;
+
+    dbgPrintf_canfd("\n");
+    ndebugPrintf("Received 0x%X | %d\t", mid, num);
+    //print_array_byte(data, num); dPrintf("\n");
+
+	switch(mid)
+	{
+		case PETD_RUN_TIME:
+			dbgPrintf_canfd("PETD Runtime: %d | ", num);
+			temp = data[1];
+			temp = (temp << 8) + data[0];
+			canfdio.c3dataIn.data.petdRuntime = ((float)temp) / 100;			/* converted from 0.01s */
+			break;
+		case PETD_COMMAND:
+			debugPrintf_canfd("PETD Command:\t");
+			canfdio.c3dataIn.data.petdCommand = (uint16_t)data[0];
+			break;
+		case WS_RESISTANCE:
+			dbgPrintf_canfd("Windshield resistance: %d | ", num);
+			temp = data[1];
+			temp = (temp << 8) + data[0];
+			canfdio.c3dataIn.data.resistance = ((float)temp / 1000);		/* converted from 0.001Ohms */
+			break;
+		case ERROR_CODE:
+			debugPrintf_canfd("Error code:\t");
+			temp = data[3];
+			temp = (temp << 8) + data[2];
+			canfdio.c3dataIn.data.errorCode = temp;
+			temp = data[5];
+			temp = (temp << 8) + data[4];
+			canfdio.c3dataIn.data.errorValue = temp;
+			break;
+		default:
+			dbgPrintf_canfd("Invalid data! - ID%X\t", mid);
+			for(i=0; i<num; i++)
+			{
+				dbgPrintf_canfd(" %02X", *(data+i));
+				if((0 == (i+1)%16)) dbgPrintf_canfd("\n\t\t");
+			}
+			break;
+	}
+}
+
 void app_main_c3_sendCommand(sysData_type *sdata, int cmd)
 {
 	if(canfdio.updated) {
@@ -191,6 +188,12 @@ void app_main_c3_sendCommand(sysData_type *sdata, int cmd)
 		ndPrintf("\n data '%c' to CAN sent!", cmd);
 		canfdio.updated = BOOL_FALSE;
 	}
+}
+
+void app_main_c3_getMsgvalue(msg_opt_t *msgi)
+{
+	/* use the default interval and total number */
+	msgi->val = canfdio.c3canDataInfo[(int)msgi->mode].value;
 }
 
 void app_main_c3_getMsginfo(msg_opt_t *msgi)
@@ -206,9 +209,54 @@ void app_main_c3_getMsginfo(msg_opt_t *msgi)
 			msgi->mode + 1, msgi->val, msgi->interval);
 }
 
+void app_main_displayMsg_c3(msg_opt_t *msgi)
+{
+	iPrintf("%s:\t%d\t%d\t | %d\n", canfdio.c3canDataInfo[(int)msgi->mode].name, \
+			msgi->mode + 1, msgi->val, msgi->interval);
+}
+
 void app_main_c3_print_canVeh(uint32_t func, int msgNum, int msgCount)
 {
 	if(PROJECT_FUNC_CAN == func) {
 		iPrintf("%s: %3d | ", canfdio.c3canDataInfo[msgNum].name, msgCount);
 	}
+}
+
+void app_main_displayResult_c3(void)
+{
+	iPrintf("PETD command %d, runtime %6.3f s | WS Res %6.3f Ohms | Error code %8X, value %d\r\n",
+			canfdio.c3dataIn.data.petdCommand, canfdio.c3dataIn.data.petdRuntime, canfdio.c3dataIn.data.resistance,
+			canfdio.c3dataIn.data.errorCode, canfdio.c3dataIn.data.errorValue);
+}
+
+int app_main_checkResult_c3(void)
+{
+	int status = 0;
+	//static dataIn_type_c3 data_prev;
+
+	if(data_prev.data.petdCommand != canfdio.c3dataIn.data.petdCommand) {
+		ndPrintf("petdCommand: %d != %d\t", data_prev.data.petdCommand, canfdio.c3dataIn.data.petdCommand);
+		data_prev.data.petdCommand = canfdio.c3dataIn.data.petdCommand;
+		app_main_displayResult_c3();
+	}
+
+	if((int)(data_prev.data.petdRuntime * 100) != (int)(canfdio.c3dataIn.data.petdRuntime * 100)) {
+		ndPrintf("petdRuntime: %d != %d\t", (int)(data_prev.data.petdRuntime * 100), (int)(canfdio.c3dataIn.data.petdRuntime * 100));
+		data_prev.data.petdRuntime = canfdio.c3dataIn.data.petdRuntime;
+		app_main_displayResult_c3();
+	}
+
+	if((int)(data_prev.data.resistance * 1000) != (int)(canfdio.c3dataIn.data.resistance * 1000)) {
+		ndPrintf("Resistance: %d != %d\t", (int)(data_prev.data.resistance * 1000), (int)(canfdio.c3dataIn.data.resistance * 1000));
+		data_prev.data.resistance = canfdio.c3dataIn.data.resistance;
+		app_main_displayResult_c3();
+	}
+
+	if(data_prev.data.errorCode != canfdio.c3dataIn.data.errorCode) {
+		ndPrintf("errorCode: %d != %d\t", data_prev.data.errorCode, canfdio.c3dataIn.data.errorCode);
+		data_prev.data.errorCode = canfdio.c3dataIn.data.errorCode;
+		app_main_displayResult_c3();
+	}
+
+	return status;
 }

@@ -23,18 +23,29 @@
 #define PROJECT_ID_G4R			2			/* project g4r */
 #define PROJECT_ID_C3			3			/* project c3 */
 #define PROJECT_ID_NAVY			4			/* project navy */
+
 #define PROJECT_ARGU_ID4		"id4"		/* argument: id4 */
 #define PROJECT_ARGU_G3			"g3"		/* argument: g3 */
 #define PROJECT_ARGU_G4R		"g4r"		/* argument: g4r */
 #define PROJECT_ARGU_C3			"c3"		/* argument: c3 */
 #define PROJECT_ARGU_NAVY		"navy"		/* argument: navy */
+
 #define PROJECT_CANOPT_ID4		"cfavsth"	/* CAN message options */
 #define PROJECT_CANOPT_C3		"cfavsthdro"/* CAN message options */
 #define PROJECT_CANOPT_NAVY		""			/* CAN message options */
+
 #define PROJECT_FUNC_MT			'm'			/* manual test */
 #define PROJECT_FUNC_AT			'z'			/* automatic test */
-#define PROJECT_FUNC_RC			'y'			/* remote control */
-#define PROJECT_FUNC_CAN		'x'			/* CAN test */
+#define PROJECT_FUNC_CAN		'y'			/* CAN test */
+#define PROJECT_FUNC_RC			'x'			/* remote control */
+
+#define PROJECT_MT_FUNC1		'a'			/* Turn ON defrost */
+#define PROJECT_MT_FUNC2		'b'			/* Turn OFF defrost */
+#define PROJECT_MT_FUNC3		'c'			/* Set ambient temperature */
+#define PROJECT_MT_FUNC4		'd'			/* Set vehicle speed */
+#define PROJECT_MT_FUNCr		'r'			/* Read the results from controller */
+#define PROJECT_MT_FUNCq		'q'			/* Quit from current action */
+#define PROJECT_MT_FUNCx		'x'			/* Exiting the program */
 
 /* debug configurations */
 #define MAIN_LOOP_DISPLAY_DOT           0           /* display only . */
@@ -82,7 +93,7 @@
 #else  									// 32-bit system
 #define MEM_ALIGNMENT 4
 #endif
-#define MEM_ALIGN_SIZE(size)            (((size) + MEM_ALIGNMENT - 1U) & ~(MEM_ALIGNMENT-1U))
+#define MEM_ALIGN_SIZE(size)            (((size) + MEM_ALIGNMENT - 1U) & (~(MEM_ALIGNMENT - 1U)))
 #define NULL							((void *)0)
 #define BOOL_INT32						int32_t
 #define BOOL_INT16						int16_t

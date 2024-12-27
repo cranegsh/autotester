@@ -81,7 +81,7 @@ union dataOut_cfgPwm_type {
     uint8_t byte[CAN_DATA_OUT_CFG_PWM_LEN];
 };
 
-/* These are the data sent out to tester */
+/* These are the data sent out to tester from the controller */
 #define CAN_DATA_IN_LEN_ID4    			(uint32_t)(MEM_ALIGN_SIZE(sizeof(struct id4DataIn_type)))
 union dataIn_type_id4 {
     struct id4DataIn_type {

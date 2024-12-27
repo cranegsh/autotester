@@ -64,6 +64,9 @@ void abort_program(void);
 /* Function to interact with console */
 void clear_stdin(void);
 char get_a_char(void);
+char get_a_char_nb(void);
+char get_a_char_nb_voidHanlder(void (*handler)(void));
+char get_a_char_nb_wHandler(void (*handler)(uint32_t), uint32_t prj_num);
 int32_t get_a_number(const char *msg);
 int32_t get_a_number_mt(const char *msgPromot);
 int32_t get_a_number_print(const char *msgPromot);

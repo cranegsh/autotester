@@ -1164,59 +1164,6 @@ int app_config_main(uint32_t prj_num)
     return ret;
 }
 
-static int app_config_mt_g3(uint32_t prj_num)
-{
-    char hitkey;
-
-    //if(UART_Read_Passwd())                                     // using a protocol instead of just a keyboard hit
-    {
-        iPrintf("\r\nPlease select command:");
-        iPrintf("\r\n a): turn on defrost");
-        iPrintf("\r\n b): turn off defrost");
-        iPrintf("\r\n c): set ambient temperature");
-        iPrintf("\r\n d): set vehicle speed");
-        iPrintf("\r\n e): exit");
-        iPrintf("\r\n ->: ");
-
-        hitkey = get_a_char();
-        while(!((('a' <= hitkey) && ('e' >= hitkey))
-                || (('A' <= hitkey) && ('E' >= hitkey))))			/* TODO: check function key which might contain these letters! */
-        {   // invalid input. Need input again
-        	if(('\n' != hitkey) && ('\r' != hitkey)) {
-        		/* display when it is not an enter after wrong input */
-        		//iPrintf("\r\nInvalid option %d! Please input again!", hitkey);	/* TODO: check what are sent to console which are taken as inputs */
-        	}
-            hitkey = get_a_char();
-        }
-        /* collect the enter key */
-        getc(stdin);
-    }
-
-    return (int)hitkey;
-}
-
-static int (*app_config_mt_arr[PROJECT_ID_TOTAL])(uint32_t) = {
-	NULL,
-	app_config_mt_g3,
-	NULL,
-	NULL,
-	NULL,
-};
-int app_config_mt(uint32_t prj_num)
-{
-	int ret;
-
-    if(app_config_mt_arr[prj_num]){
-    	ret = app_config_mt_arr[prj_num](prj_num);
-    }
-	else {
-		iPrintf("Function app_config_mt for %s not available!\r\n", project_name[prj_num]);
-		abort_program();
-	}
-
-    return ret;
-}
-
 void writeLogging(void)
 {
 	BOOL_INT32 status;

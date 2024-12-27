@@ -61,7 +61,7 @@ int main(int argc, char *argv[]) {
 
 	/* get the option and parameters if needed (followed with :) */
 	//dPrintf("\r\nGetting %d arguments and the option is %d\n", argc, ret);
-	while(-1 != (ret = getopt(argc, argv, "Hmzl:i:p:f:a:v:c:s:t:h:d:r:o:"))) {
+	while(-1 != (ret = getopt(argc, argv, "Hmzyl:i:p:f:a:v:c:s:t:h:d:r:o:"))) {
 		ndPrintf("\r\nGet %d arguments and the option is %c\n", argc, ret);
 		status = app_main_parseOption(&farview_data, ret, optarg, &opt);
 		ndPrintf("Opt status: %c - %d\r\n", ret, status);
@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
 			farview_data.msg_num++;
 		}
 		else if (2 == status) {
-			/* set parameters for manual test or automatic test */
+			/* set parameters for manual test or automatic test or CAN test */
 			farview_data.msg_num = (uint32_t)app_main_getMsgnum(&farview_data);
 			farview_data.project_func = opt.function;
 		}
@@ -93,6 +93,7 @@ int main(int argc, char *argv[]) {
 	app_main_initData(&farview_data);
 	iPrintf("Project %s - Function %c - opt.mode %d - msg_num %d\r\n",
 			project_name[farview_data.project_id], farview_data.project_func, opt.mode, farview_data.msg_num);
+	app_main_testApp();
 
 
 	/* set up system: branch according to the command options */
@@ -109,7 +110,7 @@ int main(int argc, char *argv[]) {
 		app_main_autoTest(&farview_data);
 		return 0;
 	}
-	else if(APP_OPT_UNKNOWN != opt.mode) {
+	else if((APP_OPT_UNKNOWN != opt.mode) || (PROJECT_FUNC_CAN == opt.function)) {
     	/* do CAN test by submitting vehicle CAN messages specified by opt.mode */
 		status = app_main_canTest(&farview_data, &opt);
 		if(0 == status) {

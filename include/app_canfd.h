@@ -103,7 +103,7 @@ typedef struct {
 	char *name;							/* message name */
 	uint32_t interval;					/* interval time in ms of continuous submission of this message, 0 is infinite */
 	uint32_t num;						/* number of continuous submission of this message */
-	uint32_t value;						/* value of this message */
+	int32_t value;						/* value of this message */
 	uint8_t data[CAN_VEH_MSG_LEN];		/* data in frame of this message */
 } canDataInfo_type;
 
@@ -123,7 +123,9 @@ void msg_canfd_send_veh(uint32_t prj_num, msg_mode_t msgno, int32_t value);
 void msg_canfd_send_tester(uint32_t prj_num, uint32_t cmd);
 
 int canfd_messageReceive(uint32_t *mid, uint8_t *data, uint32_t *num);
-void msg_canfd_receive(uint32_t prj_num);
+int canfd_messageSend(uint32_t mid, uint8_t *data, uint32_t num);
+void msg_canfd_cleanData(uint32_t prj_num);
+int msg_canfd_receive(uint32_t prj_num);
 void msg_canfd_copyData(uint32_t number, uint32_t length, uint8_t *source, uint8_t *dest);
 
 int msg_canfd_rcvCanConfigs(uint32_t prj_num);

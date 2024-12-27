@@ -53,5 +53,6 @@ int app_main_canTest(sysData_type *sdata, app_opt_t *appOpt);
 void app_main_manualTest(sysData_type *sdata);
 int app_main_autoTest(sysData_type *sdata);
 void app_main_test(void);
+void app_main_testApp(void);
 
 #endif /* APP_MAIN_H_ */

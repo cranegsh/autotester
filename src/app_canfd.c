@@ -115,15 +115,19 @@ int canfd_messageReceive(uint32_t *mid, uint8_t *data, uint32_t *num)
 #else
 		*num = canfd_DlcToDataBytes((CAN_DLC)Message.DLC);
 #endif
-		for(uint32_t i=0; i<*num; i++)
+		ndebugPrintf("MID %8X\tnum %d:\t", *mid, *num);
+		for(uint32_t i=0; i<*num; i++) {
 			data[i] = Message.DATA[i];
+			ndPrintf(" %2X | ", data[i]);
+		}
+		ndPrintf("\r\n");
     }
 
     return status;
 }
 
 /* Function to send a message by calling another function to request send after loading message */
-static int canfd_messageSend(uint32_t mid, uint8_t *data, uint32_t num)
+int canfd_messageSend(uint32_t mid, uint8_t *data, uint32_t num)
 {
 #if (CAN_BUS_TYPE_CAN == CAN_BUS_TYPE)
     TPCANMsg Message;
@@ -314,7 +318,7 @@ static void (*msg_canfd_interpret_arr[PROJECT_ID_TOTAL]) (uint32_t, uint8_t*, ui
 	msg_canfd_interpret_id4,
 	NULL,
 	NULL,
-	NULL,
+	msg_canfd_interpret_c3,
 	msg_canfd_interpret_navy,
 };
 static void (*msg_canfd_clear_arr[PROJECT_ID_TOTAL])(void) = {
@@ -324,6 +328,65 @@ static void (*msg_canfd_clear_arr[PROJECT_ID_TOTAL])(void) = {
 	msg_canfd_clear_c3,
 	msg_canfd_clear_navy,
 };
+void msg_canfd_cleanData(uint32_t prj_num)
+{
+	/* set all received data 0 */
+    if(msg_canfd_clear_arr[prj_num]){
+    	msg_canfd_clear_arr[prj_num]();
+    }
+	else {
+		iPrintf("Function msg_canfd_clear for %s not available!\r\n", project_name[prj_num]);
+		abort_program();
+	}
+}
+
+/* received CAN data
+ * return -1 while NOT receiving any data for over one second
+ */
+int msg_canfd_receive(uint32_t prj_num)
+{
+    uint32_t messageID = 0;
+    uint8_t messageData[MAX_DATA_BYTES];
+    uint32_t dataNumber;
+    int status, retVal = 0;
+    static uint32_t timer_sec = 0;
+    time_t now;
+    struct tm *systime;
+
+    time( &now );
+    systime = localtime( &now );
+
+    status = canfd_messageReceive(&messageID, messageData, &dataNumber);
+    /* TODO: investigate Why there are garbage messages with message ID of 0? */
+
+    if((0 == status) && ( 0 != messageID))
+    {
+		ndebugPrintf("Received 0x%X | %d\t", messageID, dataNumber);
+		//print_array_byte(messageData, dataNumber); dPrintf("\n");
+
+		/* check data: wrong data if the number of data is odd or larger than max CANFD data length */
+		if((0 == (dataNumber % 2 )) && (MAX_DATA_BYTES >= dataNumber))
+		{	 /* valid, so process the message */
+		    if(msg_canfd_interpret_arr[prj_num]){
+		    	msg_canfd_interpret_arr[prj_num](messageID, (uint8_t*)messageData, dataNumber);
+		    }
+			else {
+				iPrintf("Function msg_canfd_interpret for %s not available!\r\n", project_name[prj_num]);
+				abort_program();
+			}
+		}
+
+		timer_sec = systime->tm_sec;
+    }
+    else if (1 < systime->tm_sec - timer_sec) {
+    	/* didn't receive any message after 1 second, return -1 */
+    	retVal = -1;
+    	timer_sec = systime->tm_sec;
+    }
+
+    return retVal;
+}
+#if 0
 void msg_canfd_receive(uint32_t prj_num)
 {
     uint32_t messageID = 0;
@@ -373,7 +436,7 @@ void msg_canfd_receive(uint32_t prj_num)
 
     return;
 }
-
+#endif
 int msg_canfd_init(void)
 {
 	 int retVal = -1;

@@ -10,9 +10,15 @@
 #sudo ./farviewpcan $1 -l 0 -f 0 -a -5 -v 390 -c 88 -s 39 -t 5 -h 29
 #sudo ./farviewpcan $1 -l 0 -f 0 -a -5 -v 390 -c 88 -s 39 -t 5 -h 29 -d 55 -r 13 -o 0
 
+# CAN test
+#sudo ./farview c3 -y
+
 # Manual test
 #sudo ./farviewpcan $1 -l 0 -f 0 -a -5 -v 390 -c 88 -s 39 -t 5 -h 29 -d 55 -r 13 -o 0 -m
 sudo ./farviewpcan $1 -m
+
+# Remote control
+#sudo ./farviewpcan $1
 
 while [ 0 = 0 ]
 do

@@ -71,6 +71,126 @@ char get_a_char(void)
 	return ch;
 }
 
+#include <stdio.h>
+#include <termios.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/select.h>
+
+void enable_non_blocking_mode() {
+    struct termios t;
+    tcgetattr(STDIN_FILENO, &t);
+    t.c_lflag &= ~ICANON; // Disable canonical mode
+    t.c_lflag &= ~ECHO;   // Disable echo
+    tcsetattr(STDIN_FILENO, TCSANOW, &t);
+
+    int flags = fcntl(STDIN_FILENO, F_GETFL, 0);
+    fcntl(STDIN_FILENO, F_SETFL, flags | O_NONBLOCK);
+}
+
+void restore_terminal_mode() {
+    struct termios t;
+    tcgetattr(STDIN_FILENO, &t);
+    t.c_lflag |= ICANON; // Enable canonical mode
+    t.c_lflag |= ECHO;   // Enable echo
+    tcsetattr(STDIN_FILENO, TCSANOW, &t);
+}
+
+/* get a char without blocking the program */
+char get_a_char_nb() {
+    struct timeval timeout;
+    fd_set set;
+    char buffer[128];
+
+    // Configure select timeout
+    timeout.tv_sec = 0;  	// Wait up to 0 seconds
+    timeout.tv_usec = 0;	// Wait up to 0 nanoseconds
+
+    // Initialize the file descriptor set
+    FD_ZERO(&set);
+    FD_SET(STDIN_FILENO, &set); // Add stdin (file descriptor 0) to the set
+
+    // Check if there's input in stdin
+    int result = select(STDIN_FILENO + 1, &set, NULL, NULL, &timeout);
+
+    if (result > 0) {
+        // Input is available
+        fgets(buffer, sizeof(buffer), stdin); // Read input
+        ndPrintf("You entered: %s\n", buffer);
+    } else if (result == 0) {
+        // Timeout
+        ndPrintf("No input received within the timeout.\n");
+    } else {
+        // Error occurred
+        //perror("select");
+    }
+
+    return buffer[0];
+}
+
+char get_a_char_nb_voidHanlder(void (*handler)(void))
+{
+    char ch;
+    enable_non_blocking_mode();
+
+    while (1) {
+        fd_set set;
+        struct timeval timeout;
+        FD_ZERO(&set);
+        FD_SET(STDIN_FILENO, &set);
+
+        timeout.tv_sec = 0;
+        timeout.tv_usec = 100000; // Check every 100ms
+
+        int rv = select(STDIN_FILENO + 1, &set, NULL, NULL, &timeout);
+        if (rv > 0) {
+            read(STDIN_FILENO, &ch, 1);
+            if ((' ' <= ch) && ('~' >= ch)) {
+            	break;
+            }
+            ndPrintf("You pressed: %c\n", ch);
+        } else {
+            ndPrintf("."); // Indicate no key press
+            fflush(stdout);
+        }
+    }
+
+    restore_terminal_mode();
+	return ch;
+}
+
+char get_a_char_nb_wHandler(void (*handler)(uint32_t), uint32_t prj_num)
+{
+    char ch;
+    enable_non_blocking_mode();
+
+    while (1) {
+        fd_set set;
+        struct timeval timeout;
+        FD_ZERO(&set);
+        FD_SET(STDIN_FILENO, &set);
+
+        timeout.tv_sec = 0;
+        timeout.tv_usec = 100000; // Check every 100ms
+
+        int rv = select(STDIN_FILENO + 1, &set, NULL, NULL, &timeout);
+        if (rv > 0) {
+            read(STDIN_FILENO, &ch, 1);
+            if ((' ' <= ch) && ('~' >= ch)) {
+            	break;
+            }
+            ndPrintf("You pressed: %c\n", ch);
+        } else {
+            ndPrintf("."); // Indicate no key press
+            handler(prj_num);
+            fflush(stdout);
+        }
+    }
+
+    restore_terminal_mode();
+	return ch;
+}
+
 /* Function to get an integer allowing negative value
  * return INVALID_INPUT if failed to acquire a number: there is an assumption that it is an invalid value in all cases.
  * TODO: the caller must check the value it gets.

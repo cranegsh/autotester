@@ -10,8 +10,6 @@
 #include "app_config.h"
 #include "utility.h"
 
-#define FILTER_NUMBER				3	/* make sure to change this number accordingly */
-
 static struct canfdData_navy canfdio = {
    .navyOut = { {0, 0, 0, 0}, },
    .navyIn = { {0, 0, 0, 0, 0, 0, 0, 0}, },
