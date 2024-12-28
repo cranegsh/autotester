@@ -55,12 +55,12 @@ static struct canfdData_c3 canfdio = {
 		{ BMS_22, "S.Charge", 1000, 0, 88 },
 		{ KLIMA_16, "FSH Sts", 1000, 0, 0 },
 		{ TEMP_01, "Amb.Temp.", 2000, 0, -10 },
-		{ BMS_20<<CAN_EID_BITS, "Voltage", 1000, 0, 350 }, //10, 0, 0 },//	/* too many short intervals cause the issue of exiting the program? */
-		{ ESP_21<<CAN_EID_BITS, "V.Speed", 1000, 0, 99 }, //10, 0, 0 },//
+		{ BMS_20<<CAN_EID_BITS, "Voltage", 10, 0, 350 }, //1000, 0, 0 },//	/* TODO: check why short interval causes failure to exit program by hitting 'x'? */
+		{ ESP_21<<CAN_EID_BITS, "V.Speed", 10, 0, 99 }, //1000, 0, 0 },//
 		{ KLIMA_03<<CAN_EID_BITS, "Cab.Temp.", 2000, 0, 22 },
 		{ KLIMA_S_01<<CAN_EID_BITS, "Humidity", 2000, 0, 37 },
 		{ SYSTEMINFO_01<<CAN_EID_BITS, "Sys. ID", 1000, 0, 85 },
-		{ CAN_CUR<<CAN_EID_BITS, "Current", 1000, 0, 0 }, //10, 0 },//
+		{ CAN_CUR<<CAN_EID_BITS, "Current", 10, 0, 0 }, //1000, 0 },//
 		{ CAN_OP_MODE<<CAN_EID_BITS, "Op.mode", 1000, 0, 0 },
    },
    .c3dataIn.data = { 0, 0, 0, 0, 0},

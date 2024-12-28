@@ -86,13 +86,13 @@ static struct canfdData_id4 canfdio = {
 static struct canfdData_id4 canfdio_g3 = {
    .id4_vehData = {
 	/* The sequence of the members in the array must follow the sequence in msg_mode_t enum !!! */
-		{ G3_HV_SOC<<CAN_EID_BITS, "S. of Charge", 1000, 0 },
-		{ DEFROST_SIG<<CAN_EID_BITS, "Defrost S.", 500, 0 },
-		{ G3_TEMP_AMB<<CAN_EID_BITS, "Amb. Temp. S", 1000, 0 },
-		{ G3_HV_READY<<CAN_EID_BITS, "HV Ready", 500, 0 },
-		{ SPEED_VEH<<CAN_EID_BITS, "Veh. Speed", 100, 0 },
-		{ TEMP_CABIN<<CAN_EID_BITS, "Cab. Temp.", 1000, 0 },
-		{ HUMIDITY_CABIN<<CAN_EID_BITS, "Humidity", 1000, 0 }
+		{ G3_HV_SOC<<CAN_EID_BITS, "S. of Charge", 1000, 0, 55 },
+		{ DEFROST_SIG<<CAN_EID_BITS, "Defrost S.", 500, 0, 0 },
+		{ G3_TEMP_AMB<<CAN_EID_BITS, "Amb. Temp. S", 1000, 0, -10 },
+		{ G3_HV_READY<<CAN_EID_BITS, "HV Ready", 500, 0, 1 },
+		{ SPEED_VEH<<CAN_EID_BITS, "Veh. Speed", 100, 0, 99 },
+		{ TEMP_CABIN<<CAN_EID_BITS, "Cab. Temp.", 1000, 0, 23 },
+		{ HUMIDITY_CABIN<<CAN_EID_BITS, "Humidity", 1000, 0, 35 }
    }
 };
 
@@ -665,6 +665,24 @@ void app_main_id4_getMsginfo(msg_opt_t *msgi)
 			msgi->interval, msgi->num);					/* when controlling loop number of every single message */
 	iPrintf("%s:\t%d\t%d\t | %d\n", canfdio.id4_vehData[(int)msgi->mode].name, \
 			msgi->mode + 1, msgi->val, msgi->interval);
+}
+
+void app_main_id4_getMsgvalue(msg_opt_t *msgi)
+{
+	/* use the default interval and total number */
+	msgi->val = canfdio.id4_vehData[(int)msgi->mode].value;
+}
+
+void app_main_g3_getMsgvalue(msg_opt_t *msgi)
+{
+	/* use the default interval and total number */
+	msgi->val = canfdio_g3.id4_vehData[(int)msgi->mode].value;
+}
+
+void app_main_g4r_getMsgvalue(msg_opt_t *msgi)
+{
+	/* use the default interval and total number */
+	msgi->val = canfdio_g3.id4_vehData[(int)msgi->mode].value;
 }
 
 void app_main_g3_getMsginfo(msg_opt_t *msgi)

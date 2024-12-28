@@ -208,6 +208,9 @@ void msg_canfd_interpret_id4(uint32_t mid, uint8_t *data, uint32_t num);
 void msg_canfd_clear_id4(void);
 
 void app_main_id4_sendCommand(sysData_type *sdata, int cmd);
+void app_main_id4_getMsgvalue(msg_opt_t *msgi);
+void app_main_g3_getMsgvalue(msg_opt_t *msgi);
+void app_main_g4r_getMsgvalue(msg_opt_t *msgi);
 void app_main_id4_getMsginfo(msg_opt_t *msgi);
 void app_main_g3_getMsginfo(msg_opt_t *msgi);
 void app_main_g4r_getMsginfo(msg_opt_t *msgi);

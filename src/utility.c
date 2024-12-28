@@ -100,7 +100,7 @@ void restore_terminal_mode() {
 char get_a_char_nb() {
     struct timeval timeout;
     fd_set set;
-    char buffer[128];
+    char buffer[128], ch;
 
     // Configure select timeout
     timeout.tv_sec = 0;  	// Wait up to 0 seconds
@@ -116,16 +116,23 @@ char get_a_char_nb() {
     if (result > 0) {
         // Input is available
         fgets(buffer, sizeof(buffer), stdin); // Read input
+        ch = buffer[0];
         ndPrintf("You entered: %s\n", buffer);
+
+        ndPrintf("\r\nBuffer: ");
+        for(uint32_t i=0; i<sizeof(buffer); i++) {
+		   ndPrintf("%d/%c | ", buffer[i], buffer[i]);
+        }
+        //fflush(stdout);
     } else if (result == 0) {
         // Timeout
         ndPrintf("No input received within the timeout.\n");
     } else {
-        // Error occurred
+        // Error occurred, don't display it
         //perror("select");
     }
 
-    return buffer[0];
+    return ch;
 }
 
 char get_a_char_nb_voidHanlder(void (*handler)(void))

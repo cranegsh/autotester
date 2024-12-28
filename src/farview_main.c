@@ -121,6 +121,9 @@ int main(int argc, char *argv[]) {
 
     /* run remote control */
 	input_command = app_config_main(farview_data.project_id);
+	if(-1 == input_command) {
+		return 0;
+	}
 	/* send CAN messages according to the input from console */
 	app_main_sendCommand(&farview_data, input_command);
     /* start the main loop to display the control status like UART console */
@@ -132,7 +135,13 @@ int main(int argc, char *argv[]) {
 			printf("\r\n");
 			return 0;
 		}
-
+#if 0	/* not working */
+		/* exit the while loop after pressing 'x' and ENTER */
+		if('x' == get_a_char_nb) {
+			dPrintf("Exiting the program ...\r\n");
+			break;
+		}
+#endif
 		//debugPrintf("Cycle count: %d", i); if(70 == i++) for(;;) {;}
 		if(60 == i++) dPrintf("\n"); // How does it affects the printing?
 	}

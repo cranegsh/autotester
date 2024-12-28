@@ -64,6 +64,7 @@
 #define COMMAND_D333					333
 #define COMMAND_D222					222
 #define COMMAND_S						's'
+#define COMMAND_X						'x'
 
 /* For SPI-CAN devices */
 #if 0

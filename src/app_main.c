@@ -273,9 +273,9 @@ void app_main_sendCommand(sysData_type *sdata, int cmd)
 }
 
 static void (*app_main_getMsgvalue_arr[PROJECT_ID_TOTAL])(msg_opt_t *) = {
-	NULL,
-	NULL,
-	NULL,
+	app_main_id4_getMsgvalue,
+	app_main_g3_getMsgvalue,
+	app_main_g4r_getMsgvalue,
 	app_main_c3_getMsgvalue,
 	NULL,
 };
@@ -709,19 +709,21 @@ static void app_main_checkResult(uint32_t prj_num)
 {
 	int hitkey;
 
-	/* only need for project c3 as it sends out the result through CAN while others don't */
-	if(PROJECT_ID_C3 == prj_num) {
-		iPrintf("\r\nChecking result ... press '%c' to return!\r\n", PROJECT_MT_FUNCq);
-		do {
-			hitkey = (int)get_a_char_nb();
-			/* receive CAN messages */
-			msg_canfd_receive(prj_num);
-			/* check the results */
-			ndPrintf("Checking...");
+	iPrintf("\r\nChecking result ... press '%c' to return!\r\n", PROJECT_MT_FUNCq);
+	do {
+		hitkey = (int)get_a_char_nb();
+		/* receive CAN messages */
+		msg_canfd_receive(prj_num);
+		/* check the results */
+		ndPrintf("Checking...");
+
+		/* only for project c3 now */
+		if(PROJECT_ID_C3 == prj_num) {
 			app_main_checkResult_c3();
-		} while(!(((PROJECT_MT_FUNCq == hitkey) || ((PROJECT_MT_FUNCq - 32) == hitkey))));
-		fflush(stdout);
-	}
+		}
+	} while(!(((PROJECT_MT_FUNCq == hitkey) || ((PROJECT_MT_FUNCq - 32) == hitkey))));
+	fflush(stdout);
+
 }
 
 #if 0
@@ -759,7 +761,9 @@ static int app_config_mt_g3(uint32_t prj_num)
 	iPrintf("\r\n %c): Push defrost OFF", PROJECT_MT_FUNC2);
 	iPrintf("\r\n %c): Set ambient temperature", PROJECT_MT_FUNC3);
 	iPrintf("\r\n %c): Set vehicle speed", PROJECT_MT_FUNC4);
-	iPrintf("\r\n %c): Check result", PROJECT_MT_FUNCr);
+	if(PROJECT_ID_C3 == prj_num) {
+		iPrintf("\r\n %c): Check result", PROJECT_MT_FUNCr);
+	}
 	iPrintf("\r\n %c): exit", PROJECT_MT_FUNCx);
 	iPrintf("\r\n ->: ");
 
@@ -807,11 +811,16 @@ void app_main_manualTest(sysData_type *sdata)
 
 	app_main_getMsgvalue(sdata);
 	app_main_initMsg(sdata);
+	if(PROJECT_FUNC_CAN == sdata->project_func) {
+		app_main_startMsgtimer(sdata);
+	}
+	else {
 #ifdef MT_CAN_MSG_SEND_ONCE
-	app_main_sendMsg(sdata);
+		app_main_sendMsg(sdata);
 #else
-	app_main_startMsgtimer(sdata);
+		app_main_startMsgtimer(sdata);
 #endif
+	}
 
 #if 0	/* for debug console input issue */
 	while(1) {
@@ -822,11 +831,13 @@ void app_main_manualTest(sysData_type *sdata)
 	}
 #endif
 	while(1) {
+		if(PROJECT_ID_C3 == sdata->project_id) {
 #if 0		/* display results periodically */
-		app_main_displayResult(sdata->project_id);
+			app_main_displayResult(sdata->project_id);
 #else		/* display only when any value changes */
-		app_main_checkResult(sdata->project_id);
+			app_main_checkResult(sdata->project_id);
 #endif
+		}
 
 		command = app_config_mt(sdata->project_id);
 		if((PROJECT_MT_FUNCx == command) || ((PROJECT_MT_FUNCx - 32) == command)) {
@@ -835,10 +846,16 @@ void app_main_manualTest(sysData_type *sdata)
 		}
 		else {
 			app_main_resetMsginfo(sdata, command);
+			if(PROJECT_FUNC_CAN != sdata->project_func) {
+				/* submit the message */
+				app_main_sendMsg(sdata);
+			}
+			else {
 #ifdef MT_CAN_MSG_SEND_ONCE
-			/* submit the message */
-			app_main_sendMsg(sdata);
+				/* submit the message */
+				app_main_sendMsg(sdata);
 #endif
+			}
 		}
 	}
 }

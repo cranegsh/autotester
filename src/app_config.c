@@ -975,7 +975,8 @@ static int app_config_main_getInput(void)
             && (COMMAND_F != hitkey) && ((COMMAND_F - 32) != hitkey)
             && (COMMAND_W != hitkey) && ((COMMAND_W - 32) != hitkey)
             && (COMMAND_D != hitkey) && ((COMMAND_P - 32) != hitkey)
-			&& (COMMAND_S != hitkey) && ((COMMAND_S - 32) != hitkey))
+			&& (COMMAND_S != hitkey) && ((COMMAND_S - 32) != hitkey)
+			&& (COMMAND_X != hitkey) && ((COMMAND_X - 32) != hitkey))
     {   // invalid input. Need input again
     	iPrintf("\r\nInvalid input! Please input again!");
         hitkey = get_a_char();
@@ -1000,6 +1001,7 @@ static int app_config_main_id4(uint32_t prj_num)
         iPrintf("\r\n f: config PWM");
         iPrintf("\r\n d: get the log");
         //iPrintf("\r\n s: send CAN message");
+        iPrintf("\r\n x: exit");
         iPrintf("\r\n ->: ");
 
         switch(app_config_main_getInput()) {
@@ -1080,6 +1082,10 @@ static int app_config_main_id4(uint32_t prj_num)
         	case (COMMAND_W - 32):
 				ret = 0;
 				break;
+        	case COMMAND_X:
+        	case (COMMAND_X - 32):
+				ret = -1;
+        		break;
         	default:
         		ret = 0;
         		break;
