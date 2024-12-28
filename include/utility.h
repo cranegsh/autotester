@@ -30,7 +30,7 @@ extern struct debugData dData;
 #define ENABLE_INFO_PRINT
 
 #ifdef ENABLE_DEBUG_PRINT_DRIVER
-#define drvdebugPrintf(...)  { printf("\r\ndrvDbg - "); printf(__VA_ARGS__); }
+#define drvdebugPrintf(...)  { printf("\ndrvDbg - "); printf(__VA_ARGS__); }
 #define drvdPrintf(...)  printf(__VA_ARGS__);
 #else
 #define drvdebugPrintf(...)    // Do nothing
@@ -38,7 +38,7 @@ extern struct debugData dData;
 #endif
 
 #ifdef ENABLE_DEBUG_PRINT_APP
-#define debugPrintf(...)  { printf("\r\nDebug - "); printf(__VA_ARGS__); }
+#define debugPrintf(...)  { printf("\nDebug - "); printf(__VA_ARGS__); }
 #define dPrintf(...)  printf(__VA_ARGS__);
 #else
 #define debugPrintf(...)    // Do nothing
@@ -52,7 +52,7 @@ extern struct debugData dData;
 #define ndPrintf(...)
 
 #ifdef ENABLE_INFO_PRINT
-#define infoPrintf(...)  { printf("\r\nInfo - "); printf(__VA_ARGS__); }
+#define infoPrintf(...)  { printf("\nInfo - "); printf(__VA_ARGS__); }
 #define iPrintf(...)  printf(__VA_ARGS__);
 #else
 #define infoPrintf(...)    // Do nothing

@@ -238,7 +238,7 @@ BOOL_INT32 dataLogbuff_print_word(uint32_t addr, uint32_t num)
 
     for(i=0; i<num; i++)
     {
-        iPrintf("\r\n%u,", logBuff.buff_value[addr+i]);
+        iPrintf("\n%u,", logBuff.buff_value[addr+i]);
 #ifdef DATA_LOG_TIME
         iPrintf("%u,", logBuff.buff_value1[addr+i]);
 #endif
@@ -266,7 +266,7 @@ BOOL_INT32 dataLogbuff_print_byte(uint32_t addr, uint32_t num)
             value = (logBuff.buff_value[(addr+i)/2]) & 0xff;
         }
 
-        //iPrintf("\r\n%u", value);           /* for PC */
+        //iPrintf("\n%u", value);           /* for PC */
         iPrintf("%u\t", value);               /* for human */
     }
 
@@ -400,7 +400,7 @@ BOOL_INT32 dataLogfram_configDisplay_id4(void)
     status = dataLogger_readWord(addr_start, 1, &value);
     if(LOG_MARK_CONFIGS != value)
     {
-        iPrintf("\r\n\nNo valid configs to read!");
+        iPrintf("\n\nNo valid configs to read!");
         return BOOL_FALSE;
     }
 
@@ -409,7 +409,7 @@ BOOL_INT32 dataLogfram_configDisplay_id4(void)
     status = dataLogger_readWord(addr_start, 1, &value);
     if((!status) || (LOG_CONFIGS_SIZE != value))
     {
-        iPrintf("\r\n\nError in reading logged config count!");
+        iPrintf("\n\nError in reading logged config count!");
         return BOOL_FALSE;
     }
 
@@ -425,7 +425,7 @@ BOOL_INT32 dataLogfram_configDisplay_id4(void)
         }
         else
         {
-            iPrintf("\r\n\nError in reading logged config!");
+            iPrintf("\n\nError in reading logged config!");
             return BOOL_FALSE;
         }
     }
@@ -452,7 +452,7 @@ BOOL_INT32 dataLogfram_configDisplay_id4(void)
 #endif
 
     /* display the configs */
-    iPrintf("\r\n\nThe stored configs are read successfully from FRAM!");
+    iPrintf("\n\nThe stored configs are read successfully from FRAM!");
     pwmConfig_print();
     petdConfig_print();
 
@@ -526,7 +526,7 @@ BOOL_INT32 dataLogfram_errorWrite(void)
 
 void dataLogfram_errorPrint(void)
 {
-    iPrintf("\r\nError#%3u", logBuf_error.errorLog.logerrorInfo.errno);
+    iPrintf("\nError#%3u", logBuf_error.errorLog.logerrorInfo.errno);
     iPrintf(" | T % 6.2fs", (float)logBuf_error.errorLog.logerrorInfo.runningtime/100.0f);
     iPrintf(" | %s", logBuf_error.errorLog.logerrorInfo.logParameters.modeCtrl ? "CL":"OL");
     iPrintf(" | %s", logBuf_error.errorLog.logerrorInfo.logParameters.modeOp ? "Deice":"Defog");
@@ -556,7 +556,7 @@ BOOL_INT32 dataLogfram_errorDisplay(void)
     status = dataLogger_readWord(addr_start, 1, &value);
     if((LOG_MARK_ERRORINFO != value) || !status)
     {
-        iPrintf("\r\n\nFailed to read error info from FRAM! status %d | addr %u | value %X", status, addr_start, value);
+        iPrintf("\n\nFailed to read error info from FRAM! status %d | addr %u | value %X", status, addr_start, value);
         return BOOL_FALSE;
     }
 
@@ -565,7 +565,7 @@ BOOL_INT32 dataLogfram_errorDisplay(void)
     status = dataLogger_readWord(addr_start, 1, &value);
     if((LOG_ERROR_SIZE != value) || !status)
     {
-        iPrintf("\r\n\nError info size not right!");
+        iPrintf("\n\nError info size not right!");
         return BOOL_FALSE;
     }
 
@@ -581,7 +581,7 @@ BOOL_INT32 dataLogfram_errorDisplay(void)
     {
         logBuf_error.errorCount = value;
         logBuf_error.logPosi = value % LOG_ERROR_NUMBER;
-        iPrintf("\r\n\nTotally %u errors caused!", value);
+        iPrintf("\n\nTotally %u errors caused!", value);
         if(0 == value)
         {   /* no error stored */
             return BOOL_TRUE;
@@ -601,7 +601,7 @@ BOOL_INT32 dataLogfram_errorDisplay(void)
     }
     else
     {   /* it already exceeds the ring, so maximum is LOG_ERROR_NUMBER and start from the middle */
-        iPrintf("\r\nThe last %u errors are:", LOG_ERROR_NUMBER);
+        iPrintf("\nThe last %u errors are:", LOG_ERROR_NUMBER);
         pStart = logBuf_error.logPosi % LOG_ERROR_NUMBER;
         num = LOG_ERROR_NUMBER;
     }
@@ -697,7 +697,7 @@ BOOL_INT32 dataLogfram_readfmbuff_wordn(uint32_t addr, uint32_t num_No)
         value3 = logBuff.buff_value3[addr+i];
         dataLogger_writeWord(addr+i*8+6, 1, &value3);
 
-//        iPrintf("\r\n%d, %d, %d, %u", value1, value2, value3, value4);
+//        iPrintf("\n%d, %d, %d, %u", value1, value2, value3, value4);
     }
 
     return BOOL_TRUE;
@@ -861,12 +861,12 @@ BOOL_INT32 dataLogger_print_wordn(uint32_t addr, uint32_t num)
         if(status1 & status2 & status3 & status4)
         {
 #ifdef LOG_TEMPERATURES
-            iPrintf("\r\n%d, ", (int16_t)value1);
+            iPrintf("\n%d, ", (int16_t)value1);
             iPrintf("%d, ", (int16_t)value2);
             iPrintf("%d, ", (int16_t)value3);
             iPrintf("%d", (int16_t)value4);
 #else
-            iPrintf("\r\n%u, ", (int16_t)value1);
+            iPrintf("\n%u, ", (int16_t)value1);
             iPrintf("%u, ", (int16_t)value3);
             iPrintf("%u", (int16_t)value4);
 #endif
@@ -902,7 +902,7 @@ BOOL_INT32 dataLogger_print_word(uint32_t addr, uint32_t num)
 
         if(status)
         {   /* valid value */
-            iPrintf("\r\n%d", value);
+            iPrintf("\n%d", value);
         }
         else
         {   /* end reading */
@@ -935,7 +935,7 @@ BOOL_INT32 dataLogger_print_byte(uint32_t addr, uint32_t num)
 
         if(status)
         {   /* valid value */
-            iPrintf("\r\n%d", value);
+            iPrintf("\n%d", value);
         }
         else
         {   /* end reading */

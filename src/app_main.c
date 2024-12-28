@@ -142,58 +142,58 @@ int app_main_parseOption(sysData_type *sdata, int numOpt, char *strArg, app_opt_
 			else {
 				/* invalid option parameter */
 				retVal = -1;
-				iPrintf("Invalid FSH option %d!\r\n", appOpt->val);
+				iPrintf("Invalid FSH option %d!\n", appOpt->val);
 			}
-			ndPrintf("\r\nFSH Sts:\tNo.%d mode %d", timer_num, appOpt->mode);
+			ndPrintf("\nFSH Sts:\tNo.%d mode %d", timer_num, appOpt->mode);
 			break;
 		case 'a':
 			appOpt->mode = APP_OPT_DEV_SEND_ATEMP;
 			appOpt->val = (int32_t)atoi(strArg);
 			dData.display = 3;
 			dData.number = appOpt->val;
-			ndPrintf("\r\nAmb.Temp.:\tNo.%d mode %d", timer_num, appOpt->mode);
+			ndPrintf("\nAmb.Temp.:\tNo.%d mode %d", timer_num, appOpt->mode);
 			if(0 == app_main_checkOpt(sdata->project_id, 'a')) {
 				retVal++;
 			}
 			break;
 		case 'v':
 			appOpt->mode = APP_OPT_DEV_SEND_VOLTAGE;
-			ndPrintf("\r\nVoltage:\tNo.%d mode %d", timer_num, appOpt->mode);
+			ndPrintf("\nVoltage:\tNo.%d mode %d", timer_num, appOpt->mode);
 			if(0 == app_main_checkOpt(sdata->project_id, 'v')) {
 				retVal++;
 			}
 			break;
 		case 'c':
 			appOpt->mode = APP_OPT_DEV_SEND_SOC;
-			ndPrintf("\r\nS.Charge:\tNo.%d mode %d", timer_num, appOpt->mode);
+			ndPrintf("\nS.Charge:\tNo.%d mode %d", timer_num, appOpt->mode);
 			if(0 == app_main_checkOpt(sdata->project_id, 'c')) {
 				retVal++;
 			}
 			break;
 		case 's':
 			appOpt->mode = APP_OPT_DEV_SEND_SPEED;
-			ndPrintf("\r\nV. Speed:\tNo.%d mode %d", timer_num, appOpt->mode);
+			ndPrintf("\nV. Speed:\tNo.%d mode %d", timer_num, appOpt->mode);
 			if(0 == app_main_checkOpt(sdata->project_id, 's')) {
 				retVal++;
 			}
 			break;
 		case 't':
 			appOpt->mode = APP_OPT_DEV_SEND_CTEMP;
-			ndPrintf("\r\nCab Temp.:\tNo.%d mode %d", timer_num, appOpt->mode);
+			ndPrintf("\nCab Temp.:\tNo.%d mode %d", timer_num, appOpt->mode);
 			if(0 == app_main_checkOpt(sdata->project_id, 't')) {
 				retVal++;
 			}
 			break;
 		case 'h':
 			appOpt->mode = APP_OPT_DEV_SEND_HUMIDITY;
-			ndPrintf("\r\nHumidity:\tNo.%d mode %d", timer_num, appOpt->mode);
+			ndPrintf("\nHumidity:\tNo.%d mode %d", timer_num, appOpt->mode);
 			if(0 == app_main_checkOpt(sdata->project_id, 'h')) {
 				retVal++;
 			}
 			break;
 		case 'd':
 			appOpt->mode = APP_OPT_DEV_SEND_SYSID;
-			ndPrintf("\r\nSystem ID:\tNo.%d mode %d", timer_num, appOpt->mode);
+			ndPrintf("\nSystem ID:\tNo.%d mode %d", timer_num, appOpt->mode);
 			if(0 == app_main_checkOpt(sdata->project_id, 'd')) {
 				retVal++;
 			}
@@ -203,7 +203,7 @@ int app_main_parseOption(sysData_type *sdata, int numOpt, char *strArg, app_opt_
 			break;
 		case 'r':
 			appOpt->mode = APP_OPT_DEV_SEND_CURRENT;
-			ndPrintf("\r\nCurrent:\tNo.%d mode %d", timer_num, appOpt->mode);
+			ndPrintf("\nCurrent:\tNo.%d mode %d", timer_num, appOpt->mode);
 			if(0 == app_main_checkOpt(sdata->project_id, 'r')) {
 				retVal++;
 			}
@@ -224,10 +224,10 @@ int app_main_parseOption(sysData_type *sdata, int numOpt, char *strArg, app_opt_
 			}
 			else {
 				/* invalid option parameter */
-				iPrintf("\r\nInvalid operation mode option %d!\r\n", appOpt->val);
+				iPrintf("\nInvalid operation mode option %d!\n", appOpt->val);
 				retVal = -1;
 			}
-			ndPrintf("\r\nOp.mode:\tNo.%d mode %d", timer_num, appOpt->mode);
+			ndPrintf("\nOp.mode:\tNo.%d mode %d", timer_num, appOpt->mode);
 			break;
 		case 'H':
 			retVal = -1;
@@ -267,7 +267,7 @@ void app_main_sendCommand(sysData_type *sdata, int cmd)
 		app_main_sendCommand_arr[sdata->project_id](sdata, cmd);
 	}
 	else {
-		iPrintf("Function app_main_sendCommand for %s not available!\r\n", project_name[sdata->project_id]);
+		iPrintf("Function app_main_sendCommand for %s not available!\n", project_name[sdata->project_id]);
 		abort_program();
 	}
 }
@@ -298,7 +298,7 @@ static void app_main_getMsgvalue(sysData_type *sdata)
 			app_main_getMsgvalue_arr[sdata->project_id](&msg[i]);
 		}
 		else {
-			iPrintf("Function app_main_getMsgvalue for %s not available!\r\n", project_name[sdata->project_id]);
+			iPrintf("Function app_main_getMsgvalue for %s not available!\n", project_name[sdata->project_id]);
 			abort_program();
 		}
 	}
@@ -325,7 +325,7 @@ static void app_main_initMsgsend(sysData_type *sdata)
 			app_main_getMsginfo_arr[sdata->project_id](&msg[i]);
 		}
 		else {
-			iPrintf("Function app_main_getMsginfo for %s not available!\r\n", project_name[sdata->project_id]);
+			iPrintf("Function app_main_getMsginfo for %s not available!\n", project_name[sdata->project_id]);
 			abort_program();
 		}
 	}
@@ -349,7 +349,7 @@ static void app_main_initMsg(sysData_type *sdata)
 			app_main_getMsginfo_arr[sdata->project_id](&msg[i]);
 		}
 		else {
-			iPrintf("Function app_main_getMsginfo for %s not available!\r\n", project_name[sdata->project_id]);
+			iPrintf("Function app_main_getMsginfo for %s not available!\n", project_name[sdata->project_id]);
 			abort_program();
 		}
 	}
@@ -406,7 +406,7 @@ void app_main_print_canVeh(sysData_type *sdata, int msgNum, int msgCount)
     	app_main_print_canVeh_arr[sdata->project_id](sdata->project_func, msgNum, msgCount);
     }
 	else {
-		iPrintf("Function app_main_print_canVeh for %s not available!\r\n", project_name[sdata->project_id]);
+		iPrintf("Function app_main_print_canVeh for %s not available!\n", project_name[sdata->project_id]);
 		abort_program();
 	}
 }
@@ -448,7 +448,7 @@ static void app_main_periodicDisplay(uint32_t prj_num)
 	    	app_main_print_arr[prj_num]();
 	    }
 		else {
-			iPrintf("Function app_main_print for %s not available!\r\n", project_name[prj_num]);
+			iPrintf("Function app_main_print for %s not available!\n", project_name[prj_num]);
 			abort_program();
 		}
 		timer_display = time(NULL);
@@ -470,7 +470,7 @@ int app_main_remoteControl(sysData_type *sdata, int cmd)
 		    	app_main_commandP_arr[prj_num]();
 		    }
 			else {
-				iPrintf("Function app_main_commandP for %s not available!\r\n", project_name[prj_num]);
+				iPrintf("Function app_main_commandP for %s not available!\n", project_name[prj_num]);
 				abort_program();
 			}
 			break;
@@ -479,7 +479,7 @@ int app_main_remoteControl(sysData_type *sdata, int cmd)
 		    	app_main_commandD_log_arr[prj_num]();
 		    }
 			else {
-				iPrintf("Function app_main_commandD_log for %s not available!\r\n", project_name[prj_num]);
+				iPrintf("Function app_main_commandD_log for %s not available!\n", project_name[prj_num]);
 				abort_program();
 			}
 			break;
@@ -488,7 +488,7 @@ int app_main_remoteControl(sysData_type *sdata, int cmd)
 		    	app_main_commandD_error_arr[prj_num]();
 		    }
 			else {
-				iPrintf("Function app_main_commandD_error for %s not available!\r\n", project_name[prj_num]);
+				iPrintf("Function app_main_commandD_error for %s not available!\n", project_name[prj_num]);
 				abort_program();
 			}
 			break;
@@ -515,7 +515,7 @@ int app_main_canTest(sysData_type *sdata, app_opt_t *appOpt)
 
     if(PROJECT_FUNC_CAN == sdata->project_func) {
     	/* use the value in the spec (source code) */
-    	dPrintf("app_main_canTest: set message mode and value\r\n");
+    	dPrintf("app_main_canTest: set message mode and value\n");
     	app_main_getMsgvalue(sdata);
     	appOpt->period = 0;
     }
@@ -534,7 +534,7 @@ int app_main_canTest(sysData_type *sdata, app_opt_t *appOpt)
 			//msg[i].interval = appOpt->interval;	/* from -i option, default is in source code (structure initialized) */
 			msg[i].num = appOpt->num;				/* from -l option, default is 1 (0 is infinite loop) */
 		}
-		ndPrintf("msg count: #%d %d\r\n", i, msg[i].num);
+		ndPrintf("msg count: #%d %d\n", i, msg[i].num);
 	}
 
     time_ori = time(NULL);
@@ -545,19 +545,19 @@ int app_main_canTest(sysData_type *sdata, app_opt_t *appOpt)
 			|| ((0 != appOpt->period) && (appOpt->period < (time(NULL) - time_ori)))) {
 			/* all the submission for all messages is complete or test time is up */
 			fflush(stdout);			/* TODO: check how to flush the stdout buffer? */
-			ndPrintf("Compare %d to %d\r\n", msg_done_count, sdata->msg_num);
-			ndPrintf("Test time %d[s] is up. \r\n", appOpt->period);
+			ndPrintf("Compare %d to %d\n", msg_done_count, sdata->msg_num);
+			ndPrintf("Test time %d[s] is up. \n", appOpt->period);
 			break;
 		}
 
 		/* exit the while loop after pressing 'x' and ENTER */
 		if('x' == getc(stdin)) {
-			dPrintf("Exiting the program ...\r\n");
+			dPrintf("Exiting the program ...\n");
 			break;
 		}
 	}
 
-	printf("\r\n");
+	iPrintf("\n");
 	return 0;
 }
 
@@ -579,7 +579,7 @@ static void app_main_displayMsg(sysData_type *sdata)
 			app_main_displayMsg_arr[sdata->project_id](&msg[i]);
 		}
 		else {
-			iPrintf("Function app_main_displayMsg for %s not available!\r\n", project_name[sdata->project_id]);
+			iPrintf("Function app_main_displayMsg for %s not available!\n", project_name[sdata->project_id]);
 			abort_program();
 		}
 	}
@@ -593,7 +593,7 @@ static int app_main_updateMsg(int cmd, uint32_t total)
 	switch(cmd) {
 		case PROJECT_MT_FUNC1:
 		case (PROJECT_MT_FUNC1 - 32):
-			ndPrintf("Push defrost ON ...\r\n");
+			ndPrintf("Push defrost ON ...\n");
 			for(i=0; i<total; i++) {
 				if(APP_OPT_DEV_SEND_FSH == msg[i].mode) {
 					if(0 == msg[i].val) {
@@ -605,7 +605,7 @@ static int app_main_updateMsg(int cmd, uint32_t total)
 			break;
 		case PROJECT_MT_FUNC2:
 		case (PROJECT_MT_FUNC2 - 32):
-			ndPrintf("Push defrost OFF ...\r\n");
+			ndPrintf("Push defrost OFF ...\n");
 			for(i=0; i<total; i++) {
 				if(APP_OPT_DEV_SEND_FSH == msg[i].mode) {
 					if(1 == msg[i].val) {
@@ -617,7 +617,7 @@ static int app_main_updateMsg(int cmd, uint32_t total)
 			break;
 		case PROJECT_MT_FUNC3:
 		case (PROJECT_MT_FUNC3 - 32):
-			ndPrintf("Set ambient temperature ...\r\n");
+			ndPrintf("Set ambient temperature ...\n");
 			for(i=0; i<total; i++) {
 				if(APP_OPT_DEV_SEND_ATEMP == msg[i].mode) {
 					msg[i].val = get_a_number_mt("ambient temperature");
@@ -627,7 +627,7 @@ static int app_main_updateMsg(int cmd, uint32_t total)
 			break;
 		case PROJECT_MT_FUNC4:
 		case (PROJECT_MT_FUNC4 - 32):
-			ndPrintf("Set vehicle speed ...\r\n");
+			ndPrintf("Set vehicle speed ...\n");
 			for(i=0; i<total; i++) {
 				if(APP_OPT_DEV_SEND_SPEED == msg[i].mode) {
 					msg[i].val = get_a_number_mt("vehicle speed");
@@ -639,7 +639,7 @@ static int app_main_updateMsg(int cmd, uint32_t total)
 			break;
 	}
 
-	ndPrintf("Returning %d\r\n", retVal);
+	ndPrintf("Returning %d\n", retVal);
 	return retVal;
 }
 
@@ -653,7 +653,7 @@ void app_main_resetMsginfo(sysData_type *sdata, int cmd)
 		app_main_displayMsg(sdata);
 	}
 	else {
-		iPrintf("Function app_main_updateMsg for %s not available!\r\n", project_name[sdata->project_id]);
+		iPrintf("Function app_main_updateMsg for %s not available!\n", project_name[sdata->project_id]);
 		abort_program();
 	}
 }
@@ -709,7 +709,7 @@ static void app_main_checkResult(uint32_t prj_num)
 {
 	int hitkey;
 
-	iPrintf("\r\nChecking result ... press '%c' to return!\r\n", PROJECT_MT_FUNCq);
+	iPrintf("\nChecking result ... press '%c' to return!\n", PROJECT_MT_FUNCq);
 	do {
 		hitkey = (int)get_a_char_nb();
 		/* receive CAN messages */
@@ -731,13 +731,13 @@ static int app_config_mt_g3(uint32_t prj_num)
 {
     int hitkey;
 
-	iPrintf("\r\nPlease select command:");
-	iPrintf("\r\n %c): Push defrost ON", PROJECT_MT_FUNC1);
-	iPrintf("\r\n %c): Push defrost OFF", PROJECT_MT_FUNC2);
-	iPrintf("\r\n %c): Set ambient temperature", PROJECT_MT_FUNC3);
-	iPrintf("\r\n %c): Set vehicle speed", PROJECT_MT_FUNC4);
-	iPrintf("\r\n %c): exit", PROJECT_MT_FUNCx);
-	iPrintf("\r\n ->: ");
+	iPrintf("\nPlease select command:");
+	iPrintf("\n %c): Push defrost ON", PROJECT_MT_FUNC1);
+	iPrintf("\n %c): Push defrost OFF", PROJECT_MT_FUNC2);
+	iPrintf("\n %c): Set ambient temperature", PROJECT_MT_FUNC3);
+	iPrintf("\n %c): Set vehicle speed", PROJECT_MT_FUNC4);
+	iPrintf("\n %c): exit", PROJECT_MT_FUNCx);
+	iPrintf("\n ->: ");
 
 	do {
 		//hitkey = (int)get_a_char_nb_wHandler(app_main_displayResult, prj_num);
@@ -756,16 +756,16 @@ static int app_config_mt_g3(uint32_t prj_num)
 
 static int app_config_mt_g3(uint32_t prj_num)
 {
-	iPrintf("\r\nPlease select command:");
-	iPrintf("\r\n %c): Push defrost ON", PROJECT_MT_FUNC1);
-	iPrintf("\r\n %c): Push defrost OFF", PROJECT_MT_FUNC2);
-	iPrintf("\r\n %c): Set ambient temperature", PROJECT_MT_FUNC3);
-	iPrintf("\r\n %c): Set vehicle speed", PROJECT_MT_FUNC4);
+	iPrintf("\nPlease select command:");
+	iPrintf("\n %c): Push defrost ON", PROJECT_MT_FUNC1);
+	iPrintf("\n %c): Push defrost OFF", PROJECT_MT_FUNC2);
+	iPrintf("\n %c): Set ambient temperature", PROJECT_MT_FUNC3);
+	iPrintf("\n %c): Set vehicle speed", PROJECT_MT_FUNC4);
 	if(PROJECT_ID_C3 == prj_num) {
-		iPrintf("\r\n %c): Check result", PROJECT_MT_FUNCr);
+		iPrintf("\n %c): Check result", PROJECT_MT_FUNCr);
 	}
-	iPrintf("\r\n %c): exit", PROJECT_MT_FUNCx);
-	iPrintf("\r\n ->: ");
+	iPrintf("\n %c): exit", PROJECT_MT_FUNCx);
+	iPrintf("\n ->: ");
 
 	int hitkey = 0;
 	do {
@@ -797,7 +797,7 @@ static int app_config_mt(uint32_t prj_num)
     	ret = app_config_mt_arr[prj_num](prj_num);
     }
 	else {
-		iPrintf("Function app_config_mt for %s not available!\r\n", project_name[prj_num]);
+		iPrintf("Function app_config_mt for %s not available!\n", project_name[prj_num]);
 		abort_program();
 	}
 
@@ -825,7 +825,7 @@ void app_main_manualTest(sysData_type *sdata)
 #if 0	/* for debug console input issue */
 	while(1) {
 		if(PROJECT_MT_FUNCx == getc(stdin)) {
-			dPrintf("Exiting the program ...\r\n");
+			dPrintf("Exiting the program ...\n");
 			break;
 		}
 	}

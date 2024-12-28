@@ -760,10 +760,10 @@ void app_main_g4r_print_canVeh(uint32_t func, int msgNum, int msgCount)
 
 int app_main_id4_commandP(void)
 {
-	ndPrintf("\r\n print command sent out");
+	ndPrintf("\n print command sent out");
 	int32_t status = msg_canfd_receiveConfigs_id4();
 	if(0 == status) {
-			ndPrintf("\r\n Config received");
+			ndPrintf("\n Config received");
 		pwmConfig_check(&canfdio.id4DataIn_Cfg.data.pwmCanConfig, pwmConfig_get(), BOOL_FALSE);
 		pwmConfig_get()->configUpdated = BOOL_TRUE;
 		petdConfig_check(&canfdio.id4DataIn_Cfg.data.petdCanConfig, petdConfig_get(), BOOL_FALSE);
@@ -790,7 +790,7 @@ void app_main_id4_displayLog(struct canfdData_id4 *candata)
 
 void app_main_id4_commandD_log(void)
 {
-	ndPrintf("\r\n request log command sent out");
+	ndPrintf("\n request log command sent out");
 	iPrintf("\n log data (position, No., values ...):");
 	uint16_t position, number;
 	int index = -1;
@@ -825,7 +825,7 @@ void app_main_id4_commandD_log(void)
 
 int app_main_id4_commandD_error(void)
 {
-	ndPrintf("\r\n request error command sent out");
+	ndPrintf("\n request error command sent out");
 	iPrintf("\n error data (Error No., parameters ...):");
 
 	return 0;

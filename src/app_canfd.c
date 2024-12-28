@@ -120,7 +120,7 @@ int canfd_messageReceive(uint32_t *mid, uint8_t *data, uint32_t *num)
 			data[i] = Message.DATA[i];
 			ndPrintf(" %2X | ", data[i]);
 		}
-		ndPrintf("\r\n");
+		ndPrintf("\n");
     }
 
     return status;
@@ -147,12 +147,12 @@ int canfd_messageSend(uint32_t mid, uint8_t *data, uint32_t num)
     }
 #if (CAN_BUS_TYPE_CAN == CAN_BUS_TYPE)
     Message.LEN = (BYTE)(canfd_DataBytesToDlc((uint8_t)num));
-    ndPrintf("\r\nmid %8X, DLC %02d", Message.ID, Message.LEN);
+    ndPrintf("\nmid %8X, DLC %02d", Message.ID, Message.LEN);
 #else
     Message.DLC = (BYTE)(canfd_DataBytesToDlc(num));
     Message.MSGTYPE |= PCAN_MESSAGE_FD;
     Message.MSGTYPE |= PCAN_MESSAGE_BRS;
-    ndPrintf("\r\nmid %8X, DLC %02d", Message.ID, Message.DLC);
+    ndPrintf("\nmid %8X, DLC %02d", Message.ID, Message.DLC);
 #endif
 
     // Initialize transmit data
@@ -220,7 +220,7 @@ void msg_canfd_send_veh(uint32_t prj_num, msg_mode_t msgno, int32_t value)
     	status = msg_canfd_prepare_veh_arr[prj_num](msgno, value, (uint8_t*)messageData);
     }
 	else {
-		iPrintf("Function msg_canfd_send_veh for %s not available!\r\n", project_name[prj_num]);
+		iPrintf("Function msg_canfd_send_veh for %s not available!\n", project_name[prj_num]);
 		abort_program();
 	}
     if(0 != status)
@@ -232,10 +232,10 @@ void msg_canfd_send_veh(uint32_t prj_num, msg_mode_t msgno, int32_t value)
     /* get message ID */
     if(msg_canfd_getMid_arr[prj_num]){
     	messageID = msg_canfd_getMid_arr[prj_num]((uint32_t)msgno);
-    	ndPrintf("msgno %d - msgId %d\r\n", (uint32_t)msgno, messageID);
+    	ndPrintf("msgno %d - msgId %d\n", (uint32_t)msgno, messageID);
     }
 	else {
-		iPrintf("Function msg_canfd_getMid for %s not available!\r\n", project_name[prj_num]);
+		iPrintf("Function msg_canfd_getMid for %s not available!\n", project_name[prj_num]);
 		abort_program();
 	}
 
@@ -283,7 +283,7 @@ void msg_canfd_send_tester(uint32_t prj_num, uint32_t cmd)
     	status = msg_canfd_prepare_arr[prj_num](cmd, &messageID, messageData, &dataNumber);
     }
 	else {
-		iPrintf("Function msg_canfd_getMid for %s not available!\r\n", project_name[prj_num]);
+		iPrintf("Function msg_canfd_getMid for %s not available!\n", project_name[prj_num]);
 		abort_program();
 	}
 
@@ -335,7 +335,7 @@ void msg_canfd_cleanData(uint32_t prj_num)
     	msg_canfd_clear_arr[prj_num]();
     }
 	else {
-		iPrintf("Function msg_canfd_clear for %s not available!\r\n", project_name[prj_num]);
+		iPrintf("Function msg_canfd_clear for %s not available!\n", project_name[prj_num]);
 		abort_program();
 	}
 }
@@ -371,7 +371,7 @@ int msg_canfd_receive(uint32_t prj_num)
 		    	msg_canfd_interpret_arr[prj_num](messageID, (uint8_t*)messageData, dataNumber);
 		    }
 			else {
-				iPrintf("Function msg_canfd_interpret for %s not available!\r\n", project_name[prj_num]);
+				iPrintf("Function msg_canfd_interpret for %s not available!\n", project_name[prj_num]);
 				abort_program();
 			}
 		}
@@ -415,7 +415,7 @@ void msg_canfd_receive(uint32_t prj_num)
 		    	msg_canfd_interpret_arr[prj_num](messageID, (uint8_t*)messageData, dataNumber);
 		    }
 			else {
-				iPrintf("Function msg_canfd_interpret for %s not available!\r\n", project_name[prj_num]);
+				iPrintf("Function msg_canfd_interpret for %s not available!\n", project_name[prj_num]);
 				abort_program();
 			}
 		}
@@ -428,7 +428,7 @@ void msg_canfd_receive(uint32_t prj_num)
 	    	msg_canfd_clear_arr[prj_num]();
 	    }
 		else {
-			iPrintf("Function msg_canfd_clear for %s not available!\r\n", project_name[prj_num]);
+			iPrintf("Function msg_canfd_clear for %s not available!\n", project_name[prj_num]);
 			abort_program();
 		}
 		timer_sec = systime->tm_sec;
@@ -444,24 +444,24 @@ int msg_canfd_init(void)
 
 #if (CAN_BUS_TYPE_CAN == CAN_BUS_TYPE)
      Status = CAN_Initialize(PCAN_DEVICE, PCAN_BAUD_500K, 0, 0, 0);
-     printf("CAN_Initialize(%xh): Status=0x%x\n", PCAN_DEVICE, (int)Status);
+     iPrintf("CAN_Initialize(%xh): Status=0x%x\n", PCAN_DEVICE, (int)Status);
 #else
      Status = CAN_InitializeFD(PCAN_DEVICE, CANFD_BIT_RATE);
-     printf("CANFD_Initialize(%xh): Status=0x%x\n", PCAN_DEVICE, (int)Status);
+     iPrintf("CANFD_Initialize(%xh): Status=0x%x\n", PCAN_DEVICE, (int)Status);
 #endif
 
 	 if(PCAN_ERROR_OK == Status)
 	 {
 		 //canfd_configCheck();
 #ifdef DEVELOP_VERSION
-		 infoPrintf("CAN bus is initialized successfully!\r\n");
+		 iPrintf("CAN bus is initialized successfully!\n");
 #endif
-		 iPrintf("CAN functions are available!\r\n");
+		 iPrintf("CAN functions are available!\n");
 		 retVal = 0;
 	 }
 	 else
 	 {
-		 iPrintf("CAN bus initialization failed!\r\n");
+		 iPrintf("CAN bus initialization failed!\n");
 	 }
 
 	 return retVal;

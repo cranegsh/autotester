@@ -46,7 +46,7 @@ void timer_handler(int signo, siginfo_t *info, void *context) {
     }
 
 	for(i=0; i<temp->sysdata->msg_num; i++) {
-		ndPrintf("%d \t%5d \t%5d \t%d\r\n", i, (*temp->msgid)[i].mode, (*temp->msgid)[i].interval, (*temp->msgid)[i].num);
+		ndPrintf("%d \t%5d \t%5d \t%d\n", i, (*temp->msgid)[i].mode, (*temp->msgid)[i].interval, (*temp->msgid)[i].num);
 	}							/* This way it works to get the correct value */
 	ndPrintf("\n");
 
@@ -73,12 +73,12 @@ void start_timer(msg_opt_t (*appid)[CAN_VEH_MSG_NUM], int index, sysData_type* s
 
     ndPrintf("Start_timer No. %d:\t %p %p %d\n", index, appid, &appid[index]->timer_id, sdata->msg_num);
 	for(uint32_t i=0; i<sdata->msg_num; i++) {
-		ndPrintf("%d \t%d \t%d \t%d\r\n", i, (*appid)[i].mode, (*appid)[i].interval, (*appid)[i].num);
+		ndPrintf("%d \t%d \t%d \t%d\n", i, (*appid)[i].mode, (*appid)[i].interval, (*appid)[i].num);
 	}
 
     sec = (*appid)[index].interval / 1000;
     ms = (*appid)[index].interval % 1000;
-    ndPrintf("start_timer #%d:\t%d\t%d\t%d\r\n", index, (*appid)[index].interval, sec, ms);
+    ndPrintf("start_timer #%d:\t%d\t%d\t%d\n", index, (*appid)[index].interval, sec, ms);
 
     // Set up the timer handler function
     struct sigaction sa;

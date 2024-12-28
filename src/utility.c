@@ -39,9 +39,9 @@ union time_bcd_t {
 
 void abort_program(void)
 {
-	ndPrintf("Free CANFD handler ...\r\n");
+	ndPrintf("Free CANFD handler ...\n");
 	msg_canfd_deinit();
-	iPrintf("Exiting with failure ...\r\n");
+	iPrintf("Exiting with failure ...\n");
 	exit(EXIT_FAILURE);
 }
 
@@ -119,7 +119,7 @@ char get_a_char_nb() {
         ch = buffer[0];
         ndPrintf("You entered: %s\n", buffer);
 
-        ndPrintf("\r\nBuffer: ");
+        ndPrintf("\nBuffer: ");
         for(uint32_t i=0; i<sizeof(buffer); i++) {
 		   ndPrintf("%d/%c | ", buffer[i], buffer[i]);
         }
@@ -211,14 +211,14 @@ int32_t get_a_number(const char *msg)
     int sign = 1;
 
 #if 0
-    printf("%s: ", msg);
+    iPrintf("%s: ", msg);
     sign = scanf("%d", &number);
     if(1 != sign) {
     	number = INVALID_INPUT;
     }
     return number;
 #else
-    printf("\r\n Please input %s: ", msg);
+    iPrintf("\r\n Please input %s: ", msg);
     hitkey = getc(stdin);
     if('\n' == hitkey)
     {
@@ -259,13 +259,13 @@ int32_t get_a_number_mt(const char *msgPromot)
     unsigned int count = 0;
     int sign = 1;
 
-    iPrintf("\r\n Please input %s: ", msgPromot);
+    iPrintf("\n Please input %s: ", msgPromot);
 
     do {
     	hitkey = getc(stdin);
 #if 0
     	if(-1 != hitkey) {
-    		ndPrintf("\r\n0: Get an input %d / %c\r\n", hitkey, hitkey);
+    		ndPrintf("\n0: Get an input %d / %c\n", hitkey, hitkey);
     		if ('-' == hitkey)
     	    {
     	        sign = -1;
@@ -297,7 +297,7 @@ int32_t get_a_number_mt(const char *msgPromot)
 
     do{
           hitkey = getc(stdin);
-          ndPrintf("\r\n1: Get an input %d / %c\r\n", hitkey, hitkey);
+          ndPrintf("\n1: Get an input %d / %c\n", hitkey, hitkey);
           count++;
           if(('0'<=hitkey) && ('9'>=hitkey))
           {
@@ -306,7 +306,7 @@ int32_t get_a_number_mt(const char *msgPromot)
           }
     } while(('\n' != hitkey) && (1000000 > number));
 
-    ndPrintf("Get number %d and sign %d\r\n", number, sign);
+    ndPrintf("Get number %d and sign %d\n", number, sign);
     return (number * sign);
 }
 
@@ -316,7 +316,7 @@ int32_t get_a_number_print(const char *msgPromot)
     int32_t number;
 
     number = get_a_number(msgPromot);
-    iPrintf("You input %d\r\n", number);
+    iPrintf("You input %d\n", number);
 
     return number;
 }
@@ -327,7 +327,7 @@ void print_array_byte(uint8_t *dat, uint32_t num)
 
     for(i=0; i<num; i++)
     {
-        printf(" %02X", dat[i] & 0xFF);
+        iPrintf(" %02X", dat[i] & 0xFF);
     }
 
     return;
@@ -339,7 +339,7 @@ void print_array(uint16_t *dat, uint32_t num)
 
     for(i=0; i<num; i++)
     {
-        printf(" %02X", dat[i] & 0xFF);
+        iPrintf(" %02X", dat[i] & 0xFF);
     }
 
     return;

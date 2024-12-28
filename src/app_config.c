@@ -169,26 +169,26 @@ BOOL_INT32 powerConfig_input(void)
 {
     struct powerConfig temp_cfg;
 
-	iPrintf("\r\n\nNavy Configuration");
-    iPrintf("\r\nPress ENTER to pass!\r\n");
+	iPrintf("\n\nNavy Configuration");
+    iPrintf("\nPress ENTER to pass!\r\n");
 
     clear_stdin();
-    temp_cfg.mode = get_a_number("\r\nOperation mode (0 ~ 3)");
-    temp_cfg.tempOff = get_a_number("\r\nAC switch off windshield temp (-20 - 20°C)");
-    temp_cfg.tempOn = get_a_number("\r\nAC switch on windshield temp (-20 - 20°C)");               /* Windshield temperature to turn off AC switch */
-    temp_cfg.thRes = get_a_number("\r\nWindshield resistance threshold (0 - 52Ohms)");
-    temp_cfg.thVoltagePeak = get_a_number("\r\nVoltage peak check threshold (0 - 660V)");
-    temp_cfg.thVoltageRms = get_a_number("\r\nVoltage rms check threshold (0 - 440V)");
-    temp_cfg.thCurrentPeak = get_a_number("\r\nCurrent peak check threshold (0 - 15A)\0");
-    temp_cfg.thCurrentRms = get_a_number("\r\nCurrent rms check threshold (0 - 10A)\0");
+    temp_cfg.mode = get_a_number("\nOperation mode (0 ~ 3)");
+    temp_cfg.tempOff = get_a_number("\nAC switch off windshield temp (-20 - 20°C)");
+    temp_cfg.tempOn = get_a_number("\nAC switch on windshield temp (-20 - 20°C)");               /* Windshield temperature to turn off AC switch */
+    temp_cfg.thRes = get_a_number("\nWindshield resistance threshold (0 - 52Ohms)");
+    temp_cfg.thVoltagePeak = get_a_number("\nVoltage peak check threshold (0 - 660V)");
+    temp_cfg.thVoltageRms = get_a_number("\nVoltage rms check threshold (0 - 440V)");
+    temp_cfg.thCurrentPeak = get_a_number("\nCurrent peak check threshold (0 - 15A)\0");
+    temp_cfg.thCurrentRms = get_a_number("\nCurrent rms check threshold (0 - 10A)\0");
 
     // confirm the selections
     int hitkey;
-    iPrintf("\r\n\r\nPlease confirm y or n:");
+    iPrintf("\n\nPlease confirm y or n:");
     hitkey = getc(stdin);
     while(('y' != hitkey) && ('n' != hitkey) && ('Y' != hitkey) && ('N' != hitkey))
     {   // invalid input. Need input again
-    	iPrintf("\r\nInvalid input! Please input again!");
+    	iPrintf("\nInvalid input! Please input again!");
         hitkey = getc(stdin);
     }
 
@@ -196,7 +196,7 @@ BOOL_INT32 powerConfig_input(void)
     if(('y' == hitkey) || ('Y' == hitkey))
     {   /* copy the input */
         powerConfig_check(&temp_cfg, &powerUartConfig, BOOL_TRUE);
-        iPrintf("\r\nConfiguration confirmed!\r\n");
+        iPrintf("\nConfiguration confirmed!\r\n");
         powerUartConfig.configUpdated = BOOL_TRUE;
         return BOOL_TRUE;
     }
@@ -212,16 +212,16 @@ struct powerConfig *powerConfig_get(void)
 
 void powerConfig_print(void)
 {
-    iPrintf("\r\nNavy configuration:");
+    iPrintf("\nNavy configuration:");
 
-    iPrintf("\r\nOperation mode \t\t [ %d ]", powerUartConfig.mode);
-    iPrintf("\r\nAC Switch off windshield temp. \t[ %d ]°C", powerUartConfig.tempOff);
-    iPrintf("\r\nAC Switch on windshield temp. \t[ %d ]°C", powerUartConfig.tempOn);
-    iPrintf("\r\nWindshield res. check: \t[ %d ] Ohms,\t%s", powerUartConfig.thRes, (powerUartConfig.checkRes)?"Enabled\0":"Disabled");
-    iPrintf("\r\nVoltage peak check: \t[ %d ] V, \t%s", powerUartConfig.thVoltagePeak, powerUartConfig.checkVoltage?"Enabled":"Disabled");
-    iPrintf("\r\nVoltage rms check: \t[ %d ] V, \t%s", powerUartConfig.thVoltageRms, powerUartConfig.checkVoltage?"Enabled":"Disabled");
-    iPrintf("\r\nCurrent peak check: \t[ %d ] A, \t%s", powerUartConfig.thCurrentPeak, powerUartConfig.checkCurrent?"Enabled":"Disabled");
-    iPrintf("\r\nCurrent rms check: \t[ %d ] A, \t%s", powerUartConfig.thCurrentRms, powerUartConfig.checkCurrent?"Enabled":"Disabled");
+    iPrintf("\nOperation mode \t\t [ %d ]", powerUartConfig.mode);
+    iPrintf("\nAC Switch off windshield temp. \t[ %d ]°C", powerUartConfig.tempOff);
+    iPrintf("\nAC Switch on windshield temp. \t[ %d ]°C", powerUartConfig.tempOn);
+    iPrintf("\nWindshield res. check: \t[ %d ] Ohms,\t%s", powerUartConfig.thRes, (powerUartConfig.checkRes)?"Enabled\0":"Disabled");
+    iPrintf("\nVoltage peak check: \t[ %d ] V, \t%s", powerUartConfig.thVoltagePeak, powerUartConfig.checkVoltage?"Enabled":"Disabled");
+    iPrintf("\nVoltage rms check: \t[ %d ] V, \t%s", powerUartConfig.thVoltageRms, powerUartConfig.checkVoltage?"Enabled":"Disabled");
+    iPrintf("\nCurrent peak check: \t[ %d ] A, \t%s", powerUartConfig.thCurrentPeak, powerUartConfig.checkCurrent?"Enabled":"Disabled");
+    iPrintf("\nCurrent rms check: \t[ %d ] A, \t%s", powerUartConfig.thCurrentRms, powerUartConfig.checkCurrent?"Enabled":"Disabled");
 }
 
 BOOL_INT32 powerConfig_check(struct powerConfig *configIn, struct powerConfig *configOut, BOOL_INT32 ignore)
@@ -236,7 +236,7 @@ BOOL_INT32 powerConfig_check(struct powerConfig *configIn, struct powerConfig *c
         }
         else
         {
-            iPrintf("\r\nOperation mode is out of range, ignored!\r\n");
+            iPrintf("\nOperation mode is out of range, ignored!\r\n");
             if(!ignore)
             {
                 configOut->mode = MODE_OP_DEFAULT;
@@ -253,7 +253,7 @@ BOOL_INT32 powerConfig_check(struct powerConfig *configIn, struct powerConfig *c
         }
         else
         {
-            iPrintf("\r\nTemp winshield is out of range, ignored!\r\n");
+            iPrintf("\nTemp winshield is out of range, ignored!\r\n");
             if(!ignore)
             {
                 configOut->tempOff = POWER_OFF_TEMP;
@@ -271,7 +271,7 @@ BOOL_INT32 powerConfig_check(struct powerConfig *configIn, struct powerConfig *c
         }
         else
         {
-            iPrintf("\r\nTemp winshield is out of range, ignored!\r\n");
+            iPrintf("\nTemp winshield is out of range, ignored!\r\n");
             if(!ignore)
             {
                 configOut->tempOn = POWER_ON_TEMP;
@@ -294,7 +294,7 @@ BOOL_INT32 powerConfig_check(struct powerConfig *configIn, struct powerConfig *c
         }
         else
         {
-            iPrintf("\r\nWindshield resistance is out of range, ignored!\r\n");
+            iPrintf("\nWindshield resistance is out of range, ignored!\r\n");
             if(!ignore)
             {
                 configOut->thRes = TH_RES_WINDSHIELD;
@@ -318,7 +318,7 @@ BOOL_INT32 powerConfig_check(struct powerConfig *configIn, struct powerConfig *c
         }
         else
         {
-            iPrintf("\r\nVoltage peak is out of range, ignored!\r\n");
+            iPrintf("\nVoltage peak is out of range, ignored!\r\n");
             if(!ignore)
             {
                 configOut->thVoltagePeak = TH_VOLTAGE_IN_PEAK;
@@ -342,7 +342,7 @@ BOOL_INT32 powerConfig_check(struct powerConfig *configIn, struct powerConfig *c
         }
         else
         {
-            iPrintf("\r\nVoltage rms is out of range, ignored!\r\n");
+            iPrintf("\nVoltage rms is out of range, ignored!\r\n");
             if(!ignore)
             {
                 configOut->thVoltageRms = TH_VOLTAGE_IN_RMS;
@@ -366,7 +366,7 @@ BOOL_INT32 powerConfig_check(struct powerConfig *configIn, struct powerConfig *c
         }
         else
         {
-            iPrintf("\r\nCurrent peak is out of range, ignored!\r\n");
+            iPrintf("\nCurrent peak is out of range, ignored!\r\n");
             if(!ignore)
             {
                 configOut->thCurrentPeak = TH_CURRENT_IN_PEAK;
@@ -390,7 +390,7 @@ BOOL_INT32 powerConfig_check(struct powerConfig *configIn, struct powerConfig *c
         }
         else
         {
-            iPrintf("\r\nCurrent rms is out of range, ignored!\r\n");
+            iPrintf("\nCurrent rms is out of range, ignored!\r\n");
             if(!ignore)
             {
                 configOut->thCurrentRms = TH_CURRENT_IN_RMS;
@@ -425,8 +425,8 @@ void petdConfig_updateCan(void)
 
 BOOL_INT32 petdConfig_input(void)
 {
-    iPrintf("\r\n\nPETD Configuration:");
-    //iPrintf("\r\nPress ENTER to pass!\r\n");
+    iPrintf("\n\nPETD Configuration:");
+    //iPrintf("\nPress ENTER to pass!\r\n");
 
     struct petdConfig temp_cfg;
 
@@ -453,35 +453,35 @@ BOOL_INT32 petdConfig_input(void)
 
     if(MODE_CTRL_OPEN_LOOP == temp_cfg.modeControl)
     {
-        temp_cfg.psTarget = get_a_number("\r\nDesired Final Phase Shift (10 - 160) °");
+        temp_cfg.psTarget = get_a_number("\nDesired Final Phase Shift (10 - 160) °");
     }
     else
     {
-        temp_cfg.VoutTarget = get_a_number("\r\nDesired Output Voltage (20 - 95)V");
+        temp_cfg.VoutTarget = get_a_number("\nDesired Output Voltage (20 - 95)V");
     }
 
-    temp_cfg.runtime = get_a_number("\r\nDesired Run Time (0 - 600s)");
+    temp_cfg.runtime = get_a_number("\nDesired Run Time (0 - 600s)");
     if(INVALID_INPUT != temp_cfg.runtime) {
         /* invalid input, get the last value */
         temp_cfg.runtime = petdUartConfig.runtime;
     }
     if(0 == temp_cfg.runtime) {
-        temp_cfg.addRuntime = get_a_number("\r\nAdditional run time (0 - 30s)\0");
+        temp_cfg.addRuntime = get_a_number("\nAdditional run time (0 - 30s)\0");
     }
 
-    temp_cfg.thTempTransfo = get_a_number("\r\nTransfo Temp. threshold (-10°C - 30°C)");
-    temp_cfg.checkHV = get_a_number("\r\nHigh voltage enable/disable (1 to enable, 0 to disable)");
-    temp_cfg.thReslow = get_a_number("\r\nResistance threshold low (0 - 2500 mOhms)");
-    temp_cfg.thReshigh = get_a_number("\r\nResistance threshold high (1500 - 5000) mOhms");
-    temp_cfg.thCout = get_a_number("\r\nCurrent Output threshold (0 - 80A)");
+    temp_cfg.thTempTransfo = get_a_number("\nTransfo Temp. threshold (-10°C - 30°C)");
+    temp_cfg.checkHV = get_a_number("\nHigh voltage enable/disable (1 to enable, 0 to disable)");
+    temp_cfg.thReslow = get_a_number("\nResistance threshold low (0 - 2500 mOhms)");
+    temp_cfg.thReshigh = get_a_number("\nResistance threshold high (1500 - 5000) mOhms");
+    temp_cfg.thCout = get_a_number("\nCurrent Output threshold (0 - 80A)");
 
     // confirm the selections
     int hitkey;
-    iPrintf("\r\n\r\nPlease confirm y or n:");
+    iPrintf("\n\nPlease confirm y or n:");
     hitkey = get_a_char();
     while(('y' != hitkey) && ('n' != hitkey) && ('Y' != hitkey) && ('N' != hitkey))
     {   // invalid input. Need input again
-        iPrintf("\r\nInvalid input! Please input again!");
+        iPrintf("\nInvalid input! Please input again!");
         hitkey = get_a_char();
     }
 
@@ -489,7 +489,7 @@ BOOL_INT32 petdConfig_input(void)
     if(('y' == hitkey) || ('Y' == hitkey))
     {   /* copy the input */
         petdConfig_check(&temp_cfg, &petdUartConfig, BOOL_TRUE);
-        iPrintf("\r\nConfiguration confirmed!\r\n");
+        iPrintf("\nConfiguration confirmed!\n");
         petdUartConfig.configUpdated = BOOL_TRUE;
         return BOOL_TRUE;
     }
@@ -505,26 +505,26 @@ struct petdConfig *petdConfig_get(void)
 
 void petdConfig_print(void)
 {
-    iPrintf("\r\nPETD configuration:");
+    iPrintf("\nPETD configuration:");
 
-    iPrintf("\r\nControl mode:\t\t[ %s ]", petdUartConfig.modeControl ? "Close" : "Open");
+    iPrintf("\nControl mode:\t\t[ %s ]", petdUartConfig.modeControl ? "Close" : "Open");
     if(MODE_CTRL_OPEN_LOOP == petdUartConfig.modeControl)
     {
-        iPrintf("\r\nFinal phase shift: \t[ %d ]°", petdUartConfig.psTarget);
+        iPrintf("\nFinal phase shift: \t[ %d ]°", petdUartConfig.psTarget);
     }
     else
     {
-        iPrintf("\r\nDesired Output Voltage: [ %d ] V", petdUartConfig.VoutTarget);
+        iPrintf("\nDesired Output Voltage: [ %d ] V", petdUartConfig.VoutTarget);
     }
-    iPrintf("\r\nDesired Run Time: \t[ %d ] s,\t%s", petdUartConfig.runtime, (petdUartConfig.forceRuntime)?"Enabled": "Disabled");
+    iPrintf("\nDesired Run Time: \t[ %d ] s,\t%s", petdUartConfig.runtime, (petdUartConfig.forceRuntime)?"Enabled": "Disabled");
     if(0 == petdUartConfig.runtime) {
-        iPrintf("\r\nAdditional run Time: \t[ %d ] s", petdUartConfig.addRuntime);
+        iPrintf("\nAdditional run Time: \t[ %d ] s", petdUartConfig.addRuntime);
     }
-    iPrintf("\r\nTransfo Temp. threshold: [ %d ] °C,\t%s", petdUartConfig.thTempTransfo, (petdUartConfig.checkTempransfo)?"Enabled":"Disabled");
-    iPrintf("\r\nHigh Voltage check (250V-470V): \t%s", petdUartConfig.checkHV?"Enabled":"Disabled");
-    iPrintf("\r\nResistance check: [ %d-%d ] mOhms, \t%s", petdUartConfig.thReslow, petdUartConfig.thReshigh, petdUartConfig.checkRes?"Enabled":"Disabled");
-    iPrintf("\r\nCurrent output check: \t[ %d ] A, \t%s", petdUartConfig.thCout, petdUartConfig.checkCout?"Enabled":"Disabled");
-    iPrintf("\r\n");
+    iPrintf("\nTransfo Temp. threshold: [ %d ] °C,\t%s", petdUartConfig.thTempTransfo, (petdUartConfig.checkTempransfo)?"Enabled":"Disabled");
+    iPrintf("\nHigh Voltage check (250V-470V): \t%s", petdUartConfig.checkHV?"Enabled":"Disabled");
+    iPrintf("\nResistance check: [ %d-%d ] mOhms, \t%s", petdUartConfig.thReslow, petdUartConfig.thReshigh, petdUartConfig.checkRes?"Enabled":"Disabled");
+    iPrintf("\nCurrent output check: \t[ %d ] A, \t%s", petdUartConfig.thCout, petdUartConfig.checkCout?"Enabled":"Disabled");
+    iPrintf("\n");
 }
 
 /* Function to check the config and assigned it accordingly
@@ -549,7 +549,7 @@ BOOL_INT32 petdConfig_check(struct petdConfig *configIn, struct petdConfig *conf
             }
             else
             {
-                iPrintf("\r\nPhase shift is out of range, ignored!");
+                iPrintf("\nPhase shift is out of range, ignored!");
                 if(!ignore)
                 {
                     configOut->psTarget = DEFAULT_PHASESHIFT_TARGET;
@@ -567,7 +567,7 @@ BOOL_INT32 petdConfig_check(struct petdConfig *configIn, struct petdConfig *conf
             }
             else
             {
-                iPrintf("\r\nOutput Voltage is out of range, ignored!");
+                iPrintf("\nOutput Voltage is out of range, ignored!");
                 if(!ignore)
                 {
                     configOut->VoutTarget = DEFAULT_VOUTPUT_TARGET;
@@ -591,7 +591,7 @@ BOOL_INT32 petdConfig_check(struct petdConfig *configIn, struct petdConfig *conf
         }
         else
         {
-            iPrintf("\r\nRun Time is out of range, ignored!");
+            iPrintf("\nRun Time is out of range, ignored!");
             if(!ignore)
             {
                 configOut->runtime = DEFAULT_RUN_TIME;
@@ -609,7 +609,7 @@ BOOL_INT32 petdConfig_check(struct petdConfig *configIn, struct petdConfig *conf
         }
         else
         {
-            iPrintf("\r\nAdditional Run Time is out of range, ignored!\r\n");
+            iPrintf("\nAdditional Run Time is out of range, ignored!\n");
             if(!ignore)
             {
                 configOut->addRuntime = DEFAULT_ADD_RUNTIME;
@@ -632,7 +632,7 @@ BOOL_INT32 petdConfig_check(struct petdConfig *configIn, struct petdConfig *conf
         }
         else
         {
-            iPrintf("\r\nTemp transfo is out of range, ignored!");
+            iPrintf("\nTemp transfo is out of range, ignored!");
             if(!ignore)
             {
                 configOut->thTempTransfo = TEMP_TRANSFORMER_RUN;
@@ -654,7 +654,7 @@ BOOL_INT32 petdConfig_check(struct petdConfig *configIn, struct petdConfig *conf
         }
         else
         {
-            iPrintf("\r\nHV input invalid, ignored!");
+            iPrintf("\nHV input invalid, ignored!");
             if(!ignore)
             {
                 configOut->checkHV = BOOL_TRUE;
@@ -677,7 +677,7 @@ BOOL_INT32 petdConfig_check(struct petdConfig *configIn, struct petdConfig *conf
         }
         else
         {
-            iPrintf("\r\nRes low threshold out of range, ignored!");
+            iPrintf("\nRes low threshold out of range, ignored!");
             if(!ignore)
             {
                 configOut->thReslow = WINDSHIELD_RES_MIN;
@@ -695,7 +695,7 @@ BOOL_INT32 petdConfig_check(struct petdConfig *configIn, struct petdConfig *conf
         }
         else
         {
-            iPrintf("\r\nRes high threshold out of range, ignored!");
+            iPrintf("\nRes high threshold out of range, ignored!");
             if(!ignore)
             {
                 configOut->thReslow = WINDSHIELD_RES_MAX;
@@ -724,7 +724,7 @@ BOOL_INT32 petdConfig_check(struct petdConfig *configIn, struct petdConfig *conf
         }
         else
         {
-            iPrintf("\r\nCurrent threshold out of range, ignored!");
+            iPrintf("\nCurrent threshold out of range, ignored!");
             if(!ignore)
             {
                 configOut->thCout = CURRETNT_OUTPUT_MAX;
@@ -758,61 +758,61 @@ void pwmConfig_updateCan(void)
 
 BOOL_INT32 pwmConfig_input(void)
 {
-    iPrintf("\r\n\nPWM Configuration");
-    iPrintf("\r\nPress ENTER to pass!\r\n");
+    iPrintf("\n\nPWM Configuration");
+    iPrintf("\nPress ENTER to pass!\n");
 
     int32_t temp = 0;
 
     struct pwmConfig temp_cfg;
 
     /* set frequency of PWM1 and PWM2 */
-    temp = get_a_number("\r\nPWM1/2/3/4 Frequency (*KHz, 50~150)");
+    temp = get_a_number("\nPWM1/2/3/4 Frequency (*KHz, 50~150)");
     temp *= 1000;
     temp_cfg.freq = temp;
 
     /* set dead band for PWM1 and PWM2 RED and FED, ns */
-    temp = get_a_number("\r\nDead Band PWM1 RED (0~100 of 10ns)");
+    temp = get_a_number("\nDead Band PWM1 RED (0~100 of 10ns)");
     temp_cfg.deadband_red1 = temp/10;
-    temp = get_a_number("\r\nDead Band PWM1 FED (0~100 of 10ns)");
+    temp = get_a_number("\nDead Band PWM1 FED (0~100 of 10ns)");
     temp_cfg.deadband_fed1 = temp/10;
-    temp = get_a_number("\r\nDead Band PWM2 RED (0~100 of 10ns)");
+    temp = get_a_number("\nDead Band PWM2 RED (0~100 of 10ns)");
     temp_cfg.deadband_red2 = temp/10;
-    temp = get_a_number("\r\nDead Band PWM2 FED (0~100 of 10ns)");
+    temp = get_a_number("\nDead Band PWM2 FED (0~100 of 10ns)");
     temp_cfg.deadband_fed2 = temp/10;
 
     /* set dead band for PWM1 and PWM2 RED and FED, ns */
-//    temp = get_a_number("\r\nCompensation PWM3A DOWN (0~100 of 10ns)");
+//    temp = get_a_number("\nCompensation PWM3A DOWN (0~100 of 10ns)");
 //    temp_cfg.compensation_down3 = temp/10;
-//    temp = get_a_number("\r\nCompensation PWM4A DOWN (0~100 of 10ns)");
+//    temp = get_a_number("\nCompensation PWM4A DOWN (0~100 of 10ns)");
 //    temp_cfg.compensation_down4 = temp/10;
-    temp = get_a_number("\r\nCompensation PWM3A UP (0~100 of 10ns)");
+    temp = get_a_number("\nCompensation PWM3A UP (0~100 of 10ns)");
     temp_cfg.compensation_up3 = temp/10;
-    temp = get_a_number("\r\nCompensation PWM4A UP (0~100 of 10ns)");
+    temp = get_a_number("\nCompensation PWM4A UP (0~100 of 10ns)");
     temp_cfg.compensation_up4 = temp/10;
-    temp = get_a_number("\r\nCompensation Lik (1000~8000 pH )\0");
+    temp = get_a_number("\nCompensation Lik (1000~8000 pH )\0");
     temp_cfg.compensation_lik = temp;
-    temp = get_a_number("\r\nCompensation N (20~30) *0.1\0");
+    temp = get_a_number("\nCompensation N (20~30) *0.1\0");
     temp_cfg.compensation_n = temp;
-    temp = get_a_number("\r\nCompensation Rload (100~10000)mOhms\0");
+    temp = get_a_number("\nCompensation Rload (100~10000)mOhms\0");
     temp_cfg.compensation_rload = temp;
 
     // confirm the selections
     int hitkey;
-    iPrintf("\r\n\r\nPlease confirm y or n:");
+    iPrintf("\n\nPlease confirm y or n:");
     hitkey = get_a_char();
     while(('y' != hitkey) && ('n' != hitkey) && ('Y' != hitkey) && ('N' != hitkey))
     {   // invalid input. Need input again
-    	iPrintf("\r\nInvalid input! Please input again!");
+    	iPrintf("\nInvalid input! Please input again!");
         hitkey = get_a_char();
     }
     if(('y' == hitkey) || ('Y' == hitkey))
     {
-        iPrintf("\r\nConfiguration confirmed!");
+        iPrintf("\nConfiguration confirmed!");
         pwmConfig_check(&temp_cfg, &pwmUartConfig, BOOL_TRUE);
     }
     else
     {
-        iPrintf("\r\nConfiguration ignored!");
+        iPrintf("\nConfiguration ignored!");
         return BOOL_FALSE;
     }
 
@@ -821,19 +821,19 @@ BOOL_INT32 pwmConfig_input(void)
 
 void pwmConfig_print(void)
 {
-    iPrintf("\r\nPWM configuration:");
-    iPrintf("\r\nFreq: %dKHz", (int)(pwmUartConfig.freq/1000));
-    iPrintf("\r\nDeadband RED1: %dns", pwmUartConfig.deadband_red1 * 10);
-    iPrintf("\r\nDeadband FED1: %dns", pwmUartConfig.deadband_fed1 * 10);
-    iPrintf("\r\nDeadband RED2: %dns", pwmUartConfig.deadband_red2 * 10);
-    iPrintf("\r\nDeadband FED2: %dns", pwmUartConfig.deadband_fed2 * 10);
-//    iPrintf("\r\nCompensation PWM3A DOWN: %dns", pwmUartConfig.compensation_down3 * 10);
-//    iPrintf("\r\nCompensation PWM4A DOWN: %dns", pwmUartConfig.compensation_down4 * 10);
-    iPrintf("\r\nCompensation PWM3A UP: %dns", pwmUartConfig.compensation_up3 * 10);
-    iPrintf("\r\nCompensation PWM4A UP: %dns", pwmUartConfig.compensation_up4 * 10);
-    iPrintf("\r\nCompensation PWM3A Lik: \t%4.2f uH", (float)pwmUartConfig.compensation_lik / 1000);
-    iPrintf("\r\nCompensation PWM4A n: \t\t%3.1f", (float)pwmUartConfig.compensation_n / 10);
-    iPrintf("\r\nCompensation PWM3A Rload: \t%4.2f Ohms\r\n", (float)pwmUartConfig.compensation_rload /1000);
+    iPrintf("\nPWM configuration:");
+    iPrintf("\nFreq: %dKHz", (int)(pwmUartConfig.freq/1000));
+    iPrintf("\nDeadband RED1: %dns", pwmUartConfig.deadband_red1 * 10);
+    iPrintf("\nDeadband FED1: %dns", pwmUartConfig.deadband_fed1 * 10);
+    iPrintf("\nDeadband RED2: %dns", pwmUartConfig.deadband_red2 * 10);
+    iPrintf("\nDeadband FED2: %dns", pwmUartConfig.deadband_fed2 * 10);
+//    iPrintf("\nCompensation PWM3A DOWN: %dns", pwmUartConfig.compensation_down3 * 10);
+//    iPrintf("\nCompensation PWM4A DOWN: %dns", pwmUartConfig.compensation_down4 * 10);
+    iPrintf("\nCompensation PWM3A UP: %dns", pwmUartConfig.compensation_up3 * 10);
+    iPrintf("\nCompensation PWM4A UP: %dns", pwmUartConfig.compensation_up4 * 10);
+    iPrintf("\nCompensation PWM3A Lik: \t%4.2f uH", (float)pwmUartConfig.compensation_lik / 1000);
+    iPrintf("\nCompensation PWM4A n: \t\t%3.1f", (float)pwmUartConfig.compensation_n / 10);
+    iPrintf("\nCompensation PWM3A Rload: \t%4.2f Ohms\r\n", (float)pwmUartConfig.compensation_rload /1000);
 }
 
 struct pwmConfig* pwmConfig_get(void)
@@ -978,7 +978,7 @@ static int app_config_main_getInput(void)
 			&& (COMMAND_S != hitkey) && ((COMMAND_S - 32) != hitkey)
 			&& (COMMAND_X != hitkey) && ((COMMAND_X - 32) != hitkey))
     {   // invalid input. Need input again
-    	iPrintf("\r\nInvalid input! Please input again!");
+    	iPrintf("\nInvalid input! Please input again!");
         hitkey = get_a_char();
     }
 
@@ -994,15 +994,15 @@ static int app_config_main_id4(uint32_t prj_num)
 
     //if(UART_Read_Passwd())                                     // using a protocol instead of just a keyboard hit
     {
-        //iPrintf("\r\nPlease input command (p, c, f, d, s)");
-        iPrintf("\r\nPlease input command (p, c, f, d)");
-        iPrintf("\r\n p: get the config and print out them");
-        iPrintf("\r\n c: config PETD");
-        iPrintf("\r\n f: config PWM");
-        iPrintf("\r\n d: get the log");
-        //iPrintf("\r\n s: send CAN message");
-        iPrintf("\r\n x: exit");
-        iPrintf("\r\n ->: ");
+        //iPrintf("\nPlease input command (p, c, f, d, s)");
+        iPrintf("\nPlease input command (p, c, f, d)");
+        iPrintf("\n p: get the config and print out them");
+        iPrintf("\n c: config PETD");
+        iPrintf("\n f: config PWM");
+        iPrintf("\n d: get the log");
+        //iPrintf("\n s: send CAN message");
+        iPrintf("\n x: exit");
+        iPrintf("\n ->: ");
 
         switch(app_config_main_getInput()) {
 			case COMMAND_P:
@@ -1067,10 +1067,10 @@ static int app_config_main_id4(uint32_t prj_num)
         	case (COMMAND_S - 32):
 				/* process sending the CAN message */
 				getc(stdin);		/* get rid of ENTER key */
-        		iPrintf("\r\nPlease input number for debugging");
-		        iPrintf("\r\n 1: FSH OFF");
-		        iPrintf("\r\n 2: FSH ON");
-		        iPrintf("\r\n 3: Ambient temperature");
+        		iPrintf("\nPlease input number for debugging");
+		        iPrintf("\n 1: FSH OFF");
+		        iPrintf("\n 2: FSH ON");
+		        iPrintf("\n 3: Ambient temperature");
 		        dData.display = get_a_number_print("->");
 		        if(3 == dData.display) {
 				    dData.number = get_a_number("\r\nAmbient Temp. (-30°C - 30°C)");
@@ -1104,11 +1104,11 @@ static int app_config_main_navy(uint32_t prj_num)
 
     //if(UART_Read_Passwd())                                     // using a protocol instead of just a keyboard hit
     {
-        iPrintf("\r\nPlease input command (p, c, d)");
-        iPrintf("\r\n p: get the config and print them out");
-        iPrintf("\r\n c: config Power");
-        iPrintf("\r\n d: get the log");
-        iPrintf("\r\n ->: ");
+        iPrintf("\nPlease input command (p, c, d)");
+        iPrintf("\n p: get the config and print them out");
+        iPrintf("\n c: config Power");
+        iPrintf("\n d: get the log");
+        iPrintf("\n ->: ");
 
         switch(app_config_main_getInput()) {
         	case COMMAND_P:
@@ -1163,7 +1163,7 @@ int app_config_main(uint32_t prj_num)
     	ret = app_config_main_arr[prj_num](prj_num);
     }
 	else {
-		iPrintf("Function app_config_main for %s not available!\r\n", project_name[prj_num]);
+		iPrintf("Function app_config_main for %s not available!\n", project_name[prj_num]);
 		abort_program();
 	}
 
@@ -1178,16 +1178,16 @@ void writeLogging(void)
     uint16_t value = 0;
     char hitkey;
 
-    address = (uint32_t)get_a_number("\r\nWrite FRAM from (0 ~ 131072/0x20000)");
-    number = (uint32_t)get_a_number("\r\nWrite words of (1 ~ 65535)");
-    value = (uint16_t)get_a_number("\r\nWrite value of (0 ~ 65535)");
+    address = (uint32_t)get_a_number("\nWrite FRAM from (0 ~ 131072/0x20000)");
+    number = (uint32_t)get_a_number("\nWrite words of (1 ~ 65535)");
+    value = (uint16_t)get_a_number("\nWrite value of (0 ~ 65535)");
 
     do{
-        iPrintf("\r\nWrite %2d W @0x%5X:\t", number, address);
+        iPrintf("\nWrite %2d W @0x%5X:\t", number, address);
         status = dataLogger_writeWord(address, number, &value);
         if(!status)
         {
-            iPrintf("\r\nError writing FRAM %d words at %d!", number, address);
+            iPrintf("\nError writing FRAM %d words at %d!", number, address);
         }
 
         address += number * 2;
@@ -1197,7 +1197,7 @@ void writeLogging(void)
             address = 0;
         }
 
-        iPrintf("\r\nWriting FRAM %d words at %d successfully!", number, address);
+        iPrintf("\nWriting FRAM %d words at %d successfully!", number, address);
         hitkey = get_a_char();
     } while('\r' != hitkey);
 }
@@ -1218,10 +1218,10 @@ void printLogging(void)
 
         do{
 #ifdef DATA_LOG_BYTE
-            iPrintf("\r\nRead %2d bytes @%d:\n\r", number, address);
+            iPrintf("\nRead %2d bytes @%d:\n", number, address);
             dataLogbuff_print_byte(address, number);
 #else
-            iPrintf("\r\nRead %2d words @%d:\n\r", number, address);
+            iPrintf("\nRead %2d words @%d:\n", number, address);
             dataLogbuff_print_word(address, number);
 #endif
             address += number;
@@ -1235,16 +1235,16 @@ void printLogging(void)
     /* printf values from Storage */
     do{
 #ifdef DATA_LOG_BYTE
-        iPrintf("\r\nRead %2d Bytes @%d:\t", number, address);
+        iPrintf("\nRead %2d Bytes @%d:\t", number, address);
 
         status = dataLogger_print_byte(address, number);
         if(!status)
         {
-            iPrintf("\r\nError reading FRAM %d bytes at %d!", number, address);
+            iPrintf("\nError reading FRAM %d bytes at %d!", number, address);
         }
         address += number;
 #else
-        iPrintf("\r\nRead %2d Words @%d:\t", number, address);
+        iPrintf("\nRead %2d Words @%d:\t", number, address);
 
         /* read and display only one word */
 //        status = dataLogger_print_word(address, number);     address += number * 2;
@@ -1252,7 +1252,7 @@ void printLogging(void)
         status = dataLogger_print_wordn(address, number);    address += number * 8;
         if(!status)
         {
-            iPrintf("\r\nError reading FRAM %d words at %d!", number, address);
+            iPrintf("\nError reading FRAM %d words at %d!", number, address);
         }
 #endif
 

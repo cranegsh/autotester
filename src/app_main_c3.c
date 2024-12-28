@@ -224,7 +224,7 @@ void app_main_c3_print_canVeh(uint32_t func, int msgNum, int msgCount)
 
 void app_main_displayResult_c3(void)
 {
-	iPrintf("PETD command %d, runtime %6.3f s | WS Res %6.3f Ohms | Error code %8X, value %d\r\n",
+	iPrintf("PETD command %d, runtime %6.3f s | WS Res %6.3f Ohms | Error code %8X, value %d\n",
 			canfdio.c3dataIn.data.petdCommand, canfdio.c3dataIn.data.petdRuntime, canfdio.c3dataIn.data.resistance,
 			canfdio.c3dataIn.data.errorCode, canfdio.c3dataIn.data.errorValue);
 }

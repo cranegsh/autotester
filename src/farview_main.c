@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
 	/* get project number from command argument */
 	if(optind < argc) {
 		for(i=0; i<PROJECT_ID_TOTAL; i++) {
-			ndPrintf("Compare %s to %s\r\n", project_name[i], argv[optind]);
+			ndPrintf("Compare %s to %s\n", project_name[i], argv[optind]);
 			if(0 == strcmp(project_name[i], argv[optind])) {
 				/* get the valid argument */
 				farview_data.project_id = (uint32_t)i;
@@ -50,21 +50,21 @@ int main(int argc, char *argv[]) {
 		}
 		if((PROJECT_ID_TOTAL == i) && (strcmp("-H", argv[optind]))){
 			/* no valid argument */
-			iPrintf("Wrong argument %s in command! Please check help.\r\n", argv[optind]);
+			iPrintf("Wrong argument %s in command! Please check help.\n", argv[optind]);
 			return -1;
 		}
 	}
 	else {
-		iPrintf("Missing argument in command! Please check help.\r\n");
+		iPrintf("Missing argument in command! Please check help.\n");
 		return -1;
 	}
 
 	/* get the option and parameters if needed (followed with :) */
-	//dPrintf("\r\nGetting %d arguments and the option is %d\n", argc, ret);
+	//dPrintf("\nGetting %d arguments and the option is %d\n", argc, ret);
 	while(-1 != (ret = getopt(argc, argv, "Hmzyl:i:p:f:a:v:c:s:t:h:d:r:o:"))) {
-		ndPrintf("\r\nGet %d arguments and the option is %c\n", argc, ret);
+		ndPrintf("\nGet %d arguments and the option is %c\n", argc, ret);
 		status = app_main_parseOption(&farview_data, ret, optarg, &opt);
-		ndPrintf("Opt status: %c - %d\r\n", ret, status);
+		ndPrintf("Opt status: %c - %d\n", ret, status);
 		if (-1 == status) {
 			/* ask for help or input an out-of-range value */
 			app_main_displayHelp(argv[0]);
@@ -91,7 +91,7 @@ int main(int argc, char *argv[]) {
 	}
 	dataLog_init();
 	app_main_initData(&farview_data);
-	iPrintf("Project %s - Function %c - opt.mode %d - msg_num %d\r\n",
+	iPrintf("Project %s - Function %c - opt.mode %d - msg_num %d\n",
 			project_name[farview_data.project_id], farview_data.project_func, opt.mode, farview_data.msg_num);
 	app_main_testApp();
 
@@ -99,13 +99,13 @@ int main(int argc, char *argv[]) {
 	/* set up system: branch according to the command options */
 	if(PROJECT_FUNC_MT == opt.function) {
 		/* run manual test */
-		ndPrintf("Start running manual test ...\r\n");
+		ndPrintf("Start running manual test ...\n");
 		app_main_manualTest(&farview_data);
 		return 0;
 	}
 	else if(PROJECT_FUNC_AT == opt.function) {
 		/* run automatic test */
-		dPrintf("Start running auto test ...\r\n");
+		dPrintf("Start running auto test ...\n");
 		input_command = PROJECT_FUNC_AT;
 		app_main_autoTest(&farview_data);
 		return 0;
@@ -132,13 +132,13 @@ int main(int argc, char *argv[]) {
 		/* in remote control mode: process remote control command from console */
 		status = app_main_remoteControl(&farview_data, input_command);
 		if(0 == status) {
-			printf("\r\n");
+			iPrintf("\n");
 			return 0;
 		}
 #if 0	/* not working */
 		/* exit the while loop after pressing 'x' and ENTER */
 		if('x' == get_a_char_nb) {
-			dPrintf("Exiting the program ...\r\n");
+			dPrintf("Exiting the program ...\n");
 			break;
 		}
 #endif
