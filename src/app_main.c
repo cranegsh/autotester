@@ -635,6 +635,16 @@ static int app_main_updateMsg(int cmd, uint32_t total)
 				}
 			}
 			break;
+		case PROJECT_MT_FUNC5:
+		case (PROJECT_MT_FUNC5 - 32):
+			ndPrintf("Set cabin temperature ...\n");
+			for(i=0; i<total; i++) {
+				if(APP_OPT_DEV_SEND_CTEMP == msg[i].mode) {
+					msg[i].val = get_a_number_mt("cabin temperature");
+					retVal = cmd;
+				}
+			}
+			break;
 		default:
 			break;
 	}
@@ -761,6 +771,7 @@ static int app_config_mt_g3(uint32_t prj_num)
 	iPrintf("\n %c): Push defrost OFF", PROJECT_MT_FUNC2);
 	iPrintf("\n %c): Set ambient temperature", PROJECT_MT_FUNC3);
 	iPrintf("\n %c): Set vehicle speed", PROJECT_MT_FUNC4);
+	iPrintf("\n %c): Set cabin temperature", PROJECT_MT_FUNC5);
 	if(PROJECT_ID_C3 == prj_num) {
 		iPrintf("\n %c): Check result", PROJECT_MT_FUNCr);
 	}
@@ -770,8 +781,8 @@ static int app_config_mt_g3(uint32_t prj_num)
 	int hitkey = 0;
 	do {
 		hitkey = (int)get_a_char();
-	} while(!(((PROJECT_MT_FUNC1 <= hitkey) && (PROJECT_MT_FUNC4 >= hitkey))
-			|| (((PROJECT_MT_FUNC1 - 32) <= hitkey) && ((PROJECT_MT_FUNC1 - 32) >= hitkey))
+	} while(!(((PROJECT_MT_FUNC1 <= hitkey) && (PROJECT_MT_FUNC5 >= hitkey))
+			|| (((PROJECT_MT_FUNC1 - 32) <= hitkey) && ((PROJECT_MT_FUNC5- 32) >= hitkey))
 			|| ((PROJECT_MT_FUNCr == hitkey) && (PROJECT_MT_FUNCr == hitkey))
 			|| ((PROJECT_MT_FUNCx == hitkey) && (PROJECT_MT_FUNCx == hitkey))));		/* TODO: check function key which might contain these letters! */
 

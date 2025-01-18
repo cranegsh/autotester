@@ -43,6 +43,7 @@
 #define PROJECT_MT_FUNC2		'b'			/* Turn OFF defrost */
 #define PROJECT_MT_FUNC3		'c'			/* Set ambient temperature */
 #define PROJECT_MT_FUNC4		'd'			/* Set vehicle speed */
+#define PROJECT_MT_FUNC5		'e'			/* Set cabin temperature */
 #define PROJECT_MT_FUNCr		'r'			/* Read the results from controller */
 #define PROJECT_MT_FUNCq		'q'			/* Quit from current action */
 #define PROJECT_MT_FUNCx		'x'			/* Exiting the program */
