@@ -1,9 +1,10 @@
 /*
  * canfdComm.c
  *
- *  Created on: Dec. 21, 2024
- *  modified on Dec. 21, 2024 from app_canfd.c
- *      Author: Crane Shao
+ *  Created on:    May 05, 2024
+ *  Last modified: May 09, 2024
+ *  Created from: app_main_c3.c
+ *      Author: Sameed Sohani
  */
 
 #include "app_main_volvo.h"

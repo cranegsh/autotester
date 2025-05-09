@@ -1,9 +1,10 @@
 /*
- * canfdComm.h
+ * canfdComm.c
  *
- *  Created on: Dec. 21, 2024
- *  Modified on Dec. 21, 2024 from app_canfd.h
- *      Author: Crane Shao
+ *  Created on:    May 05, 2024
+ *  Last modified: May 09, 2024
+ *  Created from: app_main_c3.h
+ *      Author: Sameed Sohani
  */
 
 #ifndef APPLICATION_CANFDCOMM_VOLVO_H_

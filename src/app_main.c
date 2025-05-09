@@ -71,10 +71,10 @@ void app_main_displayHelp(const char *app)
 		"\t -r <number>: Send Current (A).\n"
 		"\t -o <0 / 1>: Send Op Mode (0 or 1).\n"
 		"\t -b <number>: Send Ambient Air Temperature (celsius degree).\n"
-		"\t -w <number>: Send Ambient Air Temperature (celsius degree).\n"
-		"\t -n <number>: Send Ambient Air Temperature (celsius degree).\n"
-		"\t -g <number>: Send Ambient Air Temperature (celsius degree).\n"
-		"\t -u <number>: Send Ambient Air Temperature (celsius degree).\n"
+		"\t -w <number>: Send Wheel Based Vehicle Speed (Km/h).\n"
+		"\t -n <number>: Send Powertrain Driveline Status.\n"
+		"\t -g <number>: Send High Voltage (V).\n"
+		"\t -u <number>: Send Timestamp.\n"
 		"Options for functions (default to run remote control):\n"
 		"\t -m: run manual test.\n"
 		"\t -z: run auto test.\n"
@@ -602,6 +602,75 @@ static void app_main_displayMsg(sysData_type *sdata)
 	}
 }
 
+static int app_main_updateMsg_volvo(int cmd, uint32_t total)
+{
+	uint32_t i, j;
+	uint64_t temp = 0;
+	char time_prompts[][8] = {"seconds", "minutes", "hours", "months", "days", "years"};
+	int retval = 0;
+
+	switch(cmd) {
+		case PROJECT_MT_FUNC1:
+		case (PROJECT_MT_FUNC1 - 32):
+			ndPrintf("Set ambient air temperature ...\n");
+			for (i = 0; i < total; i++) {
+				if(APP_OPT_DEV_SEND_AATEMP == (msg[i].mode + MSGNO_OFFSET)) {
+					msg[i].val = get_a_number_mt("ambient air temperature");
+					retval = cmd;
+				}
+			}
+			break;
+		case PROJECT_MT_FUNC2:
+		case (PROJECT_MT_FUNC2 - 32):
+			ndPrintf("Set wheel based vehicle speed ...\n");
+			for (i = 0; i < total; i++) {
+				if(APP_OPT_DEV_SEND_WBVEHSPEED == (msg[i].mode + MSGNO_OFFSET)) {
+					msg[i].val = get_a_number_mt("wheel based vehicle speed");
+					retval = cmd;
+				}
+			}
+			break;
+		case PROJECT_MT_FUNC3:
+		case (PROJECT_MT_FUNC3 - 32):
+			ndPrintf("Set powertrain driveline status ...\n");
+			for (i = 0; i < total; i++) {
+				if(APP_OPT_DEV_SEND_PTDRVLNSTATUS == (msg[i].mode + MSGNO_OFFSET)) {
+					msg[i].val = get_a_number_mt("powertrain driveline status");
+					retval = cmd;
+				}
+			}
+			break;
+		case PROJECT_MT_FUNC4:
+		case (PROJECT_MT_FUNC4 - 32):
+			ndPrintf("Set high voltage ...\n");
+			for (i = 0; i < total; i++) {
+				if(APP_OPT_DEV_SEND_HIGHVOLTAGE == (msg[i].mode + MSGNO_OFFSET)) {
+					msg[i].val = get_a_number_mt("high voltage");
+					retval = cmd;
+				}
+			}
+			break;
+		case PROJECT_MT_FUNC5:
+		case (PROJECT_MT_FUNC5 - 32):
+			ndPrintf("Set time ...\n");
+			for (i = 0; i < total; i++) {
+				if(APP_OPT_DEV_SEND_TIME == (msg[i].mode + MSGNO_OFFSET)) {
+					for (j = 0; j < 6; j++)
+					{
+						temp += (get_a_number_mt(time_prompts[j]) << (8 * j));
+					}
+					msg[i].val = temp;
+					retval = cmd;
+				}
+			}
+			break;
+		default:
+			break;
+	}
+	ndPrintf("Returning %d\n", retVal);
+	return retval;
+}
+
 static int app_main_updateMsg(int cmd, uint32_t total)
 {
 	uint32_t i;
@@ -675,7 +744,13 @@ void app_main_resetMsginfo(sysData_type *sdata, int cmd)
 	/* update message and send it out, no need for project navy */
 	if(PROJECT_ID_NAVY != sdata->project_id) {
 		/* execute the command to update messages with new value */
-		app_main_updateMsg(cmd, sdata->msg_num);
+		if(PROJECT_ID_VOLVO != sdata->project_id)
+		{
+			app_main_updateMsg(cmd, sdata->msg_num);
+		} else
+		{
+			app_main_updateMsg_volvo(cmd, sdata->msg_num);
+		}
 		/* update messages' display */
 		app_main_displayMsg(sdata);
 	}
@@ -810,14 +885,40 @@ static int app_config_mt_g3(uint32_t prj_num)
     return hitkey;
 }
 
+static int app_config_mt_volvo(uint32_t prj_num)
+{
+	iPrintf("\nPlease select command:")
+	iPrintf("\n %c): Set ambient air temperature", PROJECT_MT_FUNC1);
+	iPrintf("\n %c): Set wheel based vehicle speed", PROJECT_MT_FUNC2);
+	iPrintf("\n %c): Set powertrain driveline status", PROJECT_MT_FUNC3);
+	iPrintf("\n %c): Set high voltage", PROJECT_MT_FUNC4);
+	iPrintf("\n %c): Set time", PROJECT_MT_FUNC5);
+	iPrintf("\n %c): exit", PROJECT_MT_FUNCx);
+	iPrintf("\n ->: ");
+
+	int hitkey = 0;
+	do {
+		hitkey = (int)get_a_char();
+	} while(!(((PROJECT_MT_FUNC1 <= hitkey) && (PROJECT_MT_FUNC5 >= hitkey))
+			|| (((PROJECT_MT_FUNC1 - 32) <= hitkey) && ((PROJECT_MT_FUNC5- 32) >= hitkey))
+			|| ((PROJECT_MT_FUNCr == hitkey) && (PROJECT_MT_FUNCr == hitkey))
+			|| ((PROJECT_MT_FUNCx == hitkey) && (PROJECT_MT_FUNCx == hitkey))));		/* TODO: check function key which might contain these letters! */
+
+	/* collect the enter key */
+	//getc(stdin);
+	fflush(stdout);
+	return hitkey;
+}
+
 static int (*app_config_mt_arr[PROJECT_ID_TOTAL])(uint32_t) = {
 	NULL,
 	app_config_mt_g3,
 	NULL,
 	app_config_mt_g3,			/* same as g3 for now */
 	NULL,
-	app_config_mt_g3,
+	app_config_mt_volvo,
 };
+
 static int app_config_mt(uint32_t prj_num)
 {
 	int ret;

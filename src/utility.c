@@ -252,7 +252,7 @@ int32_t get_a_number(const char *msg)
 /* Function to get an integer allowing negative value
  * Blocking call to must get a number!
  * */
-int32_t get_a_number_mt(const char *msgPromot)
+int64_t get_a_number_mt(const char *msgPromot)
 {
     int hitkey = 0;
     unsigned int digit = 0;
