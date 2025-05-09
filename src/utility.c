@@ -18,6 +18,7 @@ char *project_name[] = {
 	PROJECT_ARGU_G4R,
 	PROJECT_ARGU_C3,
 	PROJECT_ARGU_NAVY,
+	PROJECT_ARGU_VOLVO,
 };
 
 struct debugData dData = {

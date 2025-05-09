@@ -19,6 +19,7 @@
 #include "app_main_id4.h"
 #include "app_main_c3.h"
 #include "app_main_navy.h"
+#include "app_main_volvo.h"
 
 static msg_opt_t msg[CAN_VEH_MSG_NUM] = {
 	{ .timer_count = 0, .timer_mark = BOOL_TRUE },
@@ -39,6 +40,7 @@ static char *project_canopt[PROJECT_ID_TOTAL] = {
 	PROJECT_CANOPT_ID4,
 	PROJECT_CANOPT_C3,
 	PROJECT_CANOPT_NAVY,
+	PROJECT_CANOPT_VOLVO,
 };
 
 void app_main_displayHelp(const char *app)
@@ -53,6 +55,7 @@ void app_main_displayHelp(const char *app)
 		"\t g4r:    g4r project\n"
 		"\t c3:     c3 project\n"
 		"\t navy:   navy project\n"
+		"\t volvo:  volvo project\n"
 		"Options for sending CAN message(s):\n"
 		"\t -l <number>: loop numbers (default 1; 0 for infinite loop).\n"
 		"\t -i <number>: interval time (millisecond, default in spec.). \n"
@@ -67,6 +70,11 @@ void app_main_displayHelp(const char *app)
 		"\t -d <number>: Send System ID.\n"
 		"\t -r <number>: Send Current (A).\n"
 		"\t -o <0 / 1>: Send Op Mode (0 or 1).\n"
+		"\t -b <number>: Send Ambient Air Temperature (celsius degree).\n"
+		"\t -w <number>: Send Ambient Air Temperature (celsius degree).\n"
+		"\t -n <number>: Send Ambient Air Temperature (celsius degree).\n"
+		"\t -g <number>: Send Ambient Air Temperature (celsius degree).\n"
+		"\t -u <number>: Send Ambient Air Temperature (celsius degree).\n"
 		"Options for functions (default to run remote control):\n"
 		"\t -m: run manual test.\n"
 		"\t -z: run auto test.\n"
@@ -260,6 +268,7 @@ static void (*app_main_sendCommand_arr[PROJECT_ID_TOTAL])(sysData_type *, int) =
 		NULL,
 		app_main_c3_sendCommand,
 		NULL,
+		app_main_Volvo_sendCommand,
 };
 void app_main_sendCommand(sysData_type *sdata, int cmd)
 {
@@ -278,6 +287,7 @@ static void (*app_main_getMsgvalue_arr[PROJECT_ID_TOTAL])(msg_opt_t *) = {
 	app_main_g4r_getMsgvalue,
 	app_main_c3_getMsgvalue,
 	NULL,
+	app_main_Volvo_getMsgvalue,
 };
 static void app_main_getMsgvalue(sysData_type *sdata)
 {
@@ -311,6 +321,7 @@ static void (*app_main_getMsginfo_arr[PROJECT_ID_TOTAL])(msg_opt_t *) = {
 	app_main_g4r_getMsginfo,
 	app_main_c3_getMsginfo,//app_main_id4_getMsginfo, // replace with id4's for debugging the issue of exiting program
 	NULL,
+	app_main_Volvo_getMsginfo,
 };
 #if 0
 static void app_main_initMsgsend(sysData_type *sdata)
@@ -399,6 +410,7 @@ static void (*app_main_print_canVeh_arr[PROJECT_ID_TOTAL])(uint32_t, int, int) =
 	app_main_g4r_print_canVeh,
 	app_main_c3_print_canVeh,
 	NULL,
+	app_main_Volvo_print_canVeh,
 };
 void app_main_print_canVeh(sysData_type *sdata, int msgNum, int msgCount)
 {
@@ -417,9 +429,11 @@ static int (*app_main_commandP_arr[PROJECT_ID_TOTAL])(void) = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
 };
 static void (*app_main_commandD_log_arr[PROJECT_ID_TOTAL])(void) = {
 	app_main_id4_commandD_log,
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -431,6 +445,7 @@ static int (*app_main_commandD_error_arr[PROJECT_ID_TOTAL])(void) = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
 };
 static void (*app_main_print_arr[PROJECT_ID_TOTAL])(void) = {
 	app_main_id4_print,
@@ -438,6 +453,7 @@ static void (*app_main_print_arr[PROJECT_ID_TOTAL])(void) = {
 	NULL,
 	NULL,
 	app_main_navy_print,
+	NULL,
 };
 
 static void app_main_periodicDisplay(uint32_t prj_num)
@@ -567,6 +583,7 @@ static void (*app_main_displayMsg_arr[PROJECT_ID_TOTAL])(msg_opt_t *) = {
 	NULL,
 	app_main_displayMsg_c3,
 	NULL,
+	app_main_displayMsg_Volvo,
 };
 
 static void app_main_displayMsg(sysData_type *sdata)
@@ -799,6 +816,7 @@ static int (*app_config_mt_arr[PROJECT_ID_TOTAL])(uint32_t) = {
 	NULL,
 	app_config_mt_g3,			/* same as g3 for now */
 	NULL,
+	app_config_mt_g3,
 };
 static int app_config_mt(uint32_t prj_num)
 {

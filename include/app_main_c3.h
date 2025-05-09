@@ -56,7 +56,7 @@ struct canfdData_c3 {
 /* Function to pass data pointer */
 struct canfdData_c3 *msg_canfd_getData_c3(void);
 uint32_t msg_canfd_getMid_c3(uint32_t number);
-int msg_canfd_prepare_c3Veh(msg_mode_t msgno, int32_t value, uint8_t *data);
+int msg_canfd_prepare_c3Veh(msg_mode_t msgno, int64_t value, uint8_t *data);
 void msg_canfd_clear_c3(void);
 void msg_canfd_interpret_c3(uint32_t mid, uint8_t *data, uint32_t num);
 

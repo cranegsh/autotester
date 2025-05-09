@@ -15,7 +15,7 @@
 
 #define PCAN_DEVICE                 PCAN_USBBUS2//PCAN_USBBUS1//
 
-#define CAN_BUS_TYPE_CAN            0
+#define CAN_BUS_TYPE_CAN            1
 #define CAN_BUS_TYPE_CANFD          1
 #define CAN_BUS_TYPE                1//CAN_BUS_TYPE_CAN//FD
 #define CANFD_BIT_RATE              "f_clock_mhz=80, nom_brp=2, nom_tseg1=63, nom_tseg2=16, nom_sjw=16, data_brp=2, data_tseg1=15, data_tseg2=4, data_sjw=4" //500K-2M, copied from PCAN Explorer config
@@ -76,6 +76,11 @@ typedef enum {
 	APP_OPT_DEV_SEND_SYSID,
 	APP_OPT_DEV_SEND_CURRENT,
 	APP_OPT_DEV_SEND_OPMODE,
+	APP_OPT_DEV_SEND_AATEMP,
+	APP_OPT_DEV_SEND_WBVEHSPEED,
+	APP_OPT_DEV_SEND_PTDRVLNSTATUS,
+	APP_OPT_DEV_SEND_HIGHVOLTAGE,
+	APP_OPT_DEV_SEND_TIME,
 	APP_OPT_UNKNOWN
 } msg_mode_t;
 
@@ -103,7 +108,7 @@ typedef struct {
 	char *name;							/* message name */
 	uint32_t interval;					/* interval time in ms of continuous submission of this message, 0 is infinite */
 	uint32_t num;						/* number of continuous submission of this message */
-	int32_t value;						/* value of this message */
+	int64_t value;						/* value of this message */
 	uint8_t data[CAN_VEH_MSG_LEN];		/* data in frame of this message */
 } canDataInfo_type;
 
@@ -119,7 +124,7 @@ typedef struct {
 #endif
 
 /* Functions to implement CANFD tasks */
-void msg_canfd_send_veh(uint32_t prj_num, msg_mode_t msgno, int32_t value);
+void msg_canfd_send_veh(uint32_t prj_num, msg_mode_t msgno, int64_t value);
 void msg_canfd_send_tester(uint32_t prj_num, uint32_t cmd);
 
 int canfd_messageReceive(uint32_t *mid, uint8_t *data, uint32_t *num);

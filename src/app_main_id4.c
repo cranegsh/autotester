@@ -183,7 +183,7 @@ uint32_t msg_canfd_getMid_g3(uint32_t number)
 uint32_t msg_canfd_getMid_g4r(uint32_t number) 	{ return (canfdio_g4r.id4_vehData[number].mid); }
 
 /* Function to prepare CANFD data for ID4 vehicle messages */
-int msg_canfd_prepare_id4Veh(msg_mode_t msgno, int32_t value, uint8_t *data)
+int msg_canfd_prepare_id4Veh(msg_mode_t msgno, int64_t value, uint8_t *data)
 {
 	switch(msgno) {
 		case APP_OPT_DEV_SEND_FSH:
@@ -235,7 +235,7 @@ int msg_canfd_prepare_id4Veh(msg_mode_t msgno, int32_t value, uint8_t *data)
 }
 
 /* Function to prepare CANFD data for G3 and G4R vehicle messages */
-int msg_canfd_prepare_g3Veh(msg_mode_t msgno, int32_t value, uint8_t *data)
+int msg_canfd_prepare_g3Veh(msg_mode_t msgno, int64_t value, uint8_t *data)
 //int msg_canfd_prepare_g4rVeh(msg_mode_t msgno, int32_t value, uint8_t *data)
 {
 	float temp;
@@ -663,7 +663,7 @@ void app_main_id4_getMsginfo(msg_opt_t *msgi)
 	ndPrintf("%s:\t%d\t%d\t | %d\t%d \n", canfdio.id4_vehData[(int)msgi->mode].name, \
 			msgi->mode + 1, msgi->val, \
 			msgi->interval, msgi->num);					/* when controlling loop number of every single message */
-	iPrintf("%s:\t%d\t%d\t | %d\n", canfdio.id4_vehData[(int)msgi->mode].name, \
+	iPrintf("%s:\t%d\t%lld\t | %d\n", canfdio.id4_vehData[(int)msgi->mode].name, \
 			msgi->mode + 1, msgi->val, msgi->interval);
 }
 
@@ -694,7 +694,7 @@ void app_main_g3_getMsginfo(msg_opt_t *msgi)
 	ndPrintf("%s:\t%d\t%d\t | %d\t%d \n", canfdio_g3.id4_vehData[(int)msgi->mode].name, \
 			msgi->mode + 1, msgi->val, \
 			msgi->interval, msgi->num);					/* when controlling loop number of every single message */
-	iPrintf("%s:\t%d\t%d\t | %d\n", canfdio_g3.id4_vehData[(int)msgi->mode].name, \
+	iPrintf("%s:\t%d\t%lld\t | %d\n", canfdio_g3.id4_vehData[(int)msgi->mode].name, \
 			msgi->mode + 1, msgi->val, msgi->interval);
 }
 
@@ -707,13 +707,13 @@ void app_main_g4r_getMsginfo(msg_opt_t *msgi)
 	ndPrintf("%s:\t%d\t%d\t | %d\t%d \n", canfdio_g4r.id4_vehData[(int)msgi->mode].name, \
 			msgi->mode + 1, msgi->val, \
 			msgi->interval, msgi->num);					/* when controlling loop number of every single message */
-	iPrintf("%s:\t%d\t%d\t | %d\n", canfdio_g4r.id4_vehData[(int)msgi->mode].name, \
+	iPrintf("%s:\t%d\t%lld\t | %d\n", canfdio_g4r.id4_vehData[(int)msgi->mode].name, \
 			msgi->mode + 1, msgi->val, msgi->interval);
 }
 
 void app_main_displayMsg_g3(msg_opt_t *msgi)
 {
-	iPrintf("%s:\t%d\t%d\t | %d\n", canfdio_g3.id4_vehData[(int)msgi->mode].name, \
+	iPrintf("%s:\t%d\t%lld\t | %d\n", canfdio_g3.id4_vehData[(int)msgi->mode].name, \
 			msgi->mode + 1, msgi->val, msgi->interval);
 }
 

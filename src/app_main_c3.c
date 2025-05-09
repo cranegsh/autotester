@@ -77,7 +77,7 @@ uint32_t msg_canfd_getMid_c3(uint32_t number)
 }
 
 /* Function to prepare CANFD data for C3 vehicle messages */
-int msg_canfd_prepare_c3Veh(msg_mode_t msgno, int32_t value, uint8_t *data)
+int msg_canfd_prepare_c3Veh(msg_mode_t msgno, int64_t value, uint8_t *data)
 {
 	switch((int)msgno) {
 		case APP_OPT_DEV_SEND_FSH:
@@ -205,13 +205,13 @@ void app_main_c3_getMsginfo(msg_opt_t *msgi)
 	ndPrintf("%s:\t%d\t%d\t | %d\t%d \n", canfdio.c3canDataInfo[(int)msgi->mode].name, \
 			msgi->mode + 1, msgi->val, \
 			msgi->interval, msgi->num);					/* when controlling loop number of every single message */
-	iPrintf("%s:\t%d\t%d\t | %d\n", canfdio.c3canDataInfo[(int)msgi->mode].name, \
+	iPrintf("%s:\t%d\t%lld\t | %d\n", canfdio.c3canDataInfo[(int)msgi->mode].name, \
 			msgi->mode + 1, msgi->val, msgi->interval);
 }
 
 void app_main_displayMsg_c3(msg_opt_t *msgi)
 {
-	iPrintf("%s:\t%d\t%d\t | %d\n", canfdio.c3canDataInfo[(int)msgi->mode].name, \
+	iPrintf("%s:\t%d\t%lld\t | %d\n", canfdio.c3canDataInfo[(int)msgi->mode].name, \
 			msgi->mode + 1, msgi->val, msgi->interval);
 }
 

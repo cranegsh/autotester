@@ -27,7 +27,7 @@ typedef struct {
 typedef struct {
 	msg_mode_t mode;		/* CAN message ID */
 	uint32_t option;		/* not used */
-	int32_t val;			/* CAN message parameter value, TODO: upgrade to float type */
+	int64_t val;			/* CAN message parameter value, TODO: upgrade to float type */
 	uint32_t num;			/* loop number */
 	uint32_t interval;		/* interval in ms when repeating message submission */
 	timer_t timer_id;		/* ID of timer for counting interval */

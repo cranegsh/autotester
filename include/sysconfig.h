@@ -17,22 +17,25 @@
 //#endif
 
 /* select project by a variable from command line argument */
-#define PROJECT_ID_TOTAL		5
+#define PROJECT_ID_TOTAL		6
 #define PROJECT_ID_ID4			0			/* project id4 */
 #define PROJECT_ID_G3			1			/* project g3 */
 #define PROJECT_ID_G4R			2			/* project g4r */
 #define PROJECT_ID_C3			3			/* project c3 */
 #define PROJECT_ID_NAVY			4			/* project navy */
+#define PROJECT_ID_VOLVO		5
 
 #define PROJECT_ARGU_ID4		"id4"		/* argument: id4 */
 #define PROJECT_ARGU_G3			"g3"		/* argument: g3 */
 #define PROJECT_ARGU_G4R		"g4r"		/* argument: g4r */
 #define PROJECT_ARGU_C3			"c3"		/* argument: c3 */
 #define PROJECT_ARGU_NAVY		"navy"		/* argument: navy */
+#define PROJECT_ARGU_VOLVO		"volvo"
 
 #define PROJECT_CANOPT_ID4		"cfavsth"	/* CAN message options */
 #define PROJECT_CANOPT_C3		"cfavsthdro"/* CAN message options */
 #define PROJECT_CANOPT_NAVY		""			/* CAN message options */
+#define PROJECT_CANOPT_VOLVO	"bwngu"
 
 #define PROJECT_FUNC_MT			'm'			/* manual test */
 #define PROJECT_FUNC_AT			'z'			/* automatic test */

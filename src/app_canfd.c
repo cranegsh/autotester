@@ -19,6 +19,7 @@
 #include "app_main_c3.h"
 #include "app_main_id4.h"
 #include "app_main_navy.h"
+#include "app_main_volvo.h"
 
 static int32_t canfd_DlcToDataBytes(CAN_DLC dlc)
 {
@@ -189,12 +190,13 @@ int canfd_messageSend(uint32_t mid, uint8_t *data, uint32_t num)
     //return (int32_t)Status;		// The value is not used other than judging 0 and non-0 in caller
 }
 
-static int (*msg_canfd_prepare_veh_arr[PROJECT_ID_TOTAL])(msg_mode_t, int32_t, uint8_t*) = {
+static int (*msg_canfd_prepare_veh_arr[PROJECT_ID_TOTAL])(msg_mode_t, int64_t, uint8_t*) = {
 	msg_canfd_prepare_id4Veh,
 	msg_canfd_prepare_g3Veh,
 	msg_canfd_prepare_g3Veh,		/* g4r shares with g3 */
 	msg_canfd_prepare_c3Veh,
 	NULL,
+	msg_canfd_prepare_VolvoVeh,
 };
 static uint32_t (*msg_canfd_getMid_arr[PROJECT_ID_TOTAL])(uint32_t) = {
 	msg_canfd_getMid_id4,
@@ -202,9 +204,10 @@ static uint32_t (*msg_canfd_getMid_arr[PROJECT_ID_TOTAL])(uint32_t) = {
 	msg_canfd_getMid_g4r,
 	msg_canfd_getMid_c3,
 	NULL,
+	msg_canfd_getMid_Volvo,
 };
 /* Function to send data as from vehicle for test */
-void msg_canfd_send_veh(uint32_t prj_num, msg_mode_t msgno, int32_t value)
+void msg_canfd_send_veh(uint32_t prj_num, msg_mode_t msgno, int64_t value)
 {
     uint32_t messageID = 0;
     uint8_t messageData[CAN_VEH_MSG_LEN];
@@ -265,6 +268,7 @@ static int (*msg_canfd_prepare_arr[PROJECT_ID_TOTAL]) (uint32_t, uint32_t*, uint
 	NULL,
 	NULL,
 	msg_canfd_prepare_navy,
+	NULL,
 };
 /* Function to send data - Farview project */
 void msg_canfd_send_tester(uint32_t prj_num, uint32_t cmd)
@@ -320,6 +324,7 @@ static void (*msg_canfd_interpret_arr[PROJECT_ID_TOTAL]) (uint32_t, uint8_t*, ui
 	NULL,
 	msg_canfd_interpret_c3,
 	msg_canfd_interpret_navy,
+	msg_canfd_interpret_Volvo,
 };
 static void (*msg_canfd_clear_arr[PROJECT_ID_TOTAL])(void) = {
 	msg_canfd_clear_id4,
@@ -327,6 +332,7 @@ static void (*msg_canfd_clear_arr[PROJECT_ID_TOTAL])(void) = {
 	NULL,
 	msg_canfd_clear_c3,
 	msg_canfd_clear_navy,
+	msg_canfd_clear_Volvo,
 };
 void msg_canfd_cleanData(uint32_t prj_num)
 {
@@ -443,7 +449,7 @@ int msg_canfd_init(void)
      TPCANStatus Status;
 
 #if (CAN_BUS_TYPE_CAN == CAN_BUS_TYPE)
-     Status = CAN_Initialize(PCAN_DEVICE, PCAN_BAUD_500K, 0, 0, 0);
+     Status = CAN_Initialize(PCAN_DEVICE, PCAN_BAUD_250K, 0, 0, 0);
      iPrintf("CAN_Initialize(%xh): Status=0x%x\n", PCAN_DEVICE, (int)Status);
 #else
      Status = CAN_InitializeFD(PCAN_DEVICE, CANFD_BIT_RATE);
