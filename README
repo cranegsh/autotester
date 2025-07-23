@@ -1,4 +1,5 @@
 Auto Tester application
+Use PCAN-USB Pro and Linux driver provided by PCAN to access CAN bus
 
 dev dependency (needed for building this project): PCAN package libraries and headers.
 run dependency (needed for runningt this application): PCAN package driver and shared libraries, actually only libpcanbasic.so.
