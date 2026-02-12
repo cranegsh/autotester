@@ -663,7 +663,7 @@ void app_main_id4_getMsginfo(msg_opt_t *msgi)
 	ndPrintf("%s:\t%d\t%d\t | %d\t%d \n", canfdio.id4_vehData[(int)msgi->mode].name, \
 			msgi->mode + 1, msgi->val, \
 			msgi->interval, msgi->num);					/* when controlling loop number of every single message */
-	iPrintf("%s:\t%d\t%lld\t | %d\n", canfdio.id4_vehData[(int)msgi->mode].name, \
+	iPrintf("%s:\t%d\t%ld\t | %d\n", canfdio.id4_vehData[(int)msgi->mode].name, \
 			msgi->mode + 1, msgi->val, msgi->interval);
 }
 
@@ -694,7 +694,7 @@ void app_main_g3_getMsginfo(msg_opt_t *msgi)
 	ndPrintf("%s:\t%d\t%d\t | %d\t%d \n", canfdio_g3.id4_vehData[(int)msgi->mode].name, \
 			msgi->mode + 1, msgi->val, \
 			msgi->interval, msgi->num);					/* when controlling loop number of every single message */
-	iPrintf("%s:\t%d\t%lld\t | %d\n", canfdio_g3.id4_vehData[(int)msgi->mode].name, \
+	iPrintf("%s:\t%d\t%ld\t | %d\n", canfdio_g3.id4_vehData[(int)msgi->mode].name, \
 			msgi->mode + 1, msgi->val, msgi->interval);
 }
 
@@ -707,13 +707,13 @@ void app_main_g4r_getMsginfo(msg_opt_t *msgi)
 	ndPrintf("%s:\t%d\t%d\t | %d\t%d \n", canfdio_g4r.id4_vehData[(int)msgi->mode].name, \
 			msgi->mode + 1, msgi->val, \
 			msgi->interval, msgi->num);					/* when controlling loop number of every single message */
-	iPrintf("%s:\t%d\t%lld\t | %d\n", canfdio_g4r.id4_vehData[(int)msgi->mode].name, \
+	iPrintf("%s:\t%d\t%ld\t | %d\n", canfdio_g4r.id4_vehData[(int)msgi->mode].name, \
 			msgi->mode + 1, msgi->val, msgi->interval);
 }
 
 void app_main_displayMsg_g3(msg_opt_t *msgi)
 {
-	iPrintf("%s:\t%d\t%lld\t | %d\n", canfdio_g3.id4_vehData[(int)msgi->mode].name, \
+	iPrintf("%s:\t%d\t%ld\t | %d\n", canfdio_g3.id4_vehData[(int)msgi->mode].name, \
 			msgi->mode + 1, msgi->val, msgi->interval);
 }
 

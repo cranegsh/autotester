@@ -11,12 +11,12 @@ DIR_SRC = ./src
 #DIR_SRC = ./
 
 # build common flags
-CC = $(CROSS_COMPILE)gcc
+#CC = $(CROSS_COMPILE)gcc
 CFLAGS = -Wall -I$(DIR_INC) -lrt #-ggdb # the option "-lrt" is for using the timer related APIs
 # -g might not generate debug information for some file, instead use -ggdb
 
 # specify path to standard headers
-CFLAGS += --sysroot=/opt/poky/0.1/sysroots/cortexa76-poky-linux
+#CFLAGS += --sysroot=/opt/poky/0.1/sysroots/cortexa76-poky-linux
 #LDFLAGS += --sysroot=/opt/poky/0.1/sysroots/cortexa76-poky-linux
 
 CFLAGS += -D__ARM_PCS_VFP
@@ -31,7 +31,7 @@ OBJS += $(DIR_SRC)/utility.o
 OBJS += $(DIR_SRC)/app_canfd.o
 OBJS += $(DIR_SRC)/app_config.o $(DIR_SRC)/app_log.o $(DIR_SRC)/app_timer.o
 OBJS += $(DIR_SRC)/app_file.o
-OBJS += $(DIR_SRC)/app_main_id4.o $(DIR_SRC)/app_main_c3.o $(DIR_SRC)/app_main_navy.o
+OBJS += $(DIR_SRC)/app_main_id4.o $(DIR_SRC)/app_main_c3.o $(DIR_SRC)/app_main_navy.o $(DIR_SRC)/app_main_volvo.o
 OBJS += $(DIR_SRC)/app_main.o $(DIR_SRC)/farview_main.o
 
 TARGET = farviewpcan

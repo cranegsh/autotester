@@ -188,13 +188,13 @@ void app_main_Volvo_getMsginfo(msg_opt_t *msgi)
 	ndPrintf("%s:\t%d\t%d\t | %d\t%d \n", canfdio.volvocanDataInfo[(int)msgi->mode].name, \
 			msgi->mode + 1, msgi->val, \
 			msgi->interval, msgi->num);					/* when controlling loop number of every single message */
-	iPrintf("%s:\t%d\t%lld\t | %d\n", canfdio.volvocanDataInfo[(int)msgi->mode].name, \
+	iPrintf("%s:\t%d\t%ld\t | %d\n", canfdio.volvocanDataInfo[(int)msgi->mode].name, \
 			msgi->mode + 1, msgi->val, msgi->interval);
 }
 
 void app_main_displayMsg_Volvo(msg_opt_t *msgi)
 {
-	iPrintf("%s:\t%d\t%lld\t | %d\n", canfdio.volvocanDataInfo[(int)msgi->mode].name, \
+	iPrintf("%s:\t%d\t%ld\t | %d\n", canfdio.volvocanDataInfo[(int)msgi->mode].name, \
 			msgi->mode + 1, msgi->val, msgi->interval);
 }
 
