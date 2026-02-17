@@ -11,12 +11,12 @@ DIR_SRC = ./src
 #DIR_SRC = ./
 
 # build common flags
-CC = $(CROSS_COMPILE)gcc
+#CC = $(CROSS_COMPILE)gcc
 CFLAGS = -Wall -I$(DIR_INC) -lrt #-ggdb # the option "-lrt" is for using the timer related APIs
 # -g might not generate debug information for some file, instead use -ggdb
 
 # specify path to standard headers
-CFLAGS += --sysroot=/opt/poky/0.1/sysroots/cortexa76-poky-linux
+#CFLAGS += --sysroot=/opt/poky/0.1/sysroots/cortexa76-poky-linux
 #LDFLAGS += --sysroot=/opt/poky/0.1/sysroots/cortexa76-poky-linux
 
 CFLAGS += -D__ARM_PCS_VFP

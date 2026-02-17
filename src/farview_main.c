@@ -42,6 +42,7 @@ static void help(const char *app) {
 		"\t -s <number>: Send Speed (Km/h).\n"
 		"\t -t <number>: Send Cabin Temperature (celsius degree).\n"
 		"\t -h <number>: Send Humidity (percentage).\n"
+	    "\t -w <number>: Send Windshield Temparature (Clsius degree).\n"
 #ifdef PROJECT_C3
 		"\t -d <number>: Send System ID.\n"
 		"\t -r <number>: Send Current (V).\n"
@@ -115,10 +116,12 @@ int main(int argc, char *argv[]) {
 	opt.period = 0;
 	opt.option = 0xFF;
 	opt.mode = APP_OPT_UNKNOWN;
+	int humidity_timer_num = 0;
+	int32_t temp_value = 0;
 
 	/* get the option and parameters if needed (followed with :) */
 //	dPrintf("\r\nGetting %d arguments and the option is %d\n", argc, ret);
-	while(-1 != (ret = getopt(argc, argv, "l:i:p:f:a:v:c:s:t:h:d:r:o:H"))) {
+	while(-1 != (ret = getopt(argc, argv, "l:i:p:f:a:v:c:s:t:h:d:r:o:w:H"))) {
 		ndPrintf("\r\nGet %d arguments and the option is %c\n", argc, ret);
 		switch(ret) {
 			case 'l':
@@ -190,11 +193,35 @@ int main(int argc, char *argv[]) {
 			case 'h':
 				opt.mode = APP_OPT_DEV_SEND_HUMIDITY;
 				opt.val = atoi(optarg);
-				ndPrintf("\r\nHumidity:\tNo.%d mode %d", timer_num, opt.mode);
-				msg[timer_num].mode = opt.mode;
-				msg[timer_num].val = opt.val;
-				timer_num++;
+				if(0 == humidity_timer_num) {
+                    ndPrintf("\r\nHumidity:\tNo.%d mode %d", timer_num, opt.mode);
+                    msg[timer_num].mode = opt.mode;
+                    msg[timer_num].val = opt.val;
+                    humidity_timer_num = timer_num;
+                    timer_num++;
+				}
+				else {
+                    ndPrintf("\r\nW.Temp:\tNo.%d mode %d", humidity_timer_num, msg[humidity_timer_num].mode);
+                    msg[humidity_timer_num].val |= (uint16_t)opt.val;  /* add humidity value on top of humidity in the same message */
+				}
 				break;
+			case 'w':
+			    opt.mode = APP_OPT_DEV_SEND_HUMIDITY;
+			    opt.val = atoi(optarg);
+                if(0 == humidity_timer_num) {
+                    ndPrintf("\r\nHumidity:\tNo.%d mode %d", timer_num, opt.mode);
+                    msg[timer_num].mode = opt.mode;
+                    msg[timer_num].val = (int32_t)opt.val;
+                    msg[timer_num].val <<= 16;
+                    humidity_timer_num = timer_num;
+                    timer_num++;
+                }
+                else {
+                    ndPrintf("\r\nW.Temp:\tNo.%d mode %d", humidity_timer_num, msg[humidity_timer_num].mode);
+                    temp_value = (int32_t)opt.val;
+                    msg[humidity_timer_num].val = temp_value << 16 | (uint16_t)msg[humidity_timer_num].val;  /* add w.temp value on top of humidity in the same message */
+                }
+                break;
 #ifdef PROJECT_C3
 			case 'd':
 				opt.mode = APP_OPT_DEV_SEND_SYSID;

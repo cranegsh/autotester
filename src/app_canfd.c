@@ -967,6 +967,7 @@ static BOOL_INT32 msg_canfd_interpret_id4(uint32_t mid, uint8_t *data, uint32_t 
 /* Function to prepare CANFD data for C3 vehicle messages */
 static int32_t msg_canfd_prepare_c3Veh(msg_mode_t msgno, int32_t value, uint8_t *data)
 {
+	int32_t temp;
 	switch((int)msgno) {
 		case APP_OPT_DEV_SEND_FSH:
 			if(0 != value) {
@@ -995,7 +996,14 @@ static int32_t msg_canfd_prepare_c3Veh(msg_mode_t msgno, int32_t value, uint8_t 
 			data[4] = ((value + 50 ) * 2 ) & 0xFF;
 			break;
 		case APP_OPT_DEV_SEND_HUMIDITY:
+			temp = value >> 16;                     /* take windshield temperature part */
+			value = value & 0xFFFF;                 /* take humidity part */
 			data[5] = (value * 2 + 1) & 0xFF;
+#if 1   /* temporary for Windshield temperature */
+            value = temp * 10 + 396;                /* formula: [byte3->][byte2] / 10 - 39.6 */
+            data[3] = (value >> 8) & 0x3;           /* take the higher 2 bits of the total 10 bits */
+            data[2] = value & 0xFF;                 /* take the lower 8 bits of total 10 bits */
+#endif
 			break;
 		case APP_OPT_DEV_SEND_SYSID:
 			data[4] = (uint8_t)value;

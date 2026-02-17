@@ -11,9 +11,9 @@
 #define PROJECT_C3
 //#define PROJECT_ID4
 #ifdef PROJECT_ID4				   /* ID4, BZ4X and G3 all are based on PROJECT_ID4, the differences are CAN messages */
-//#define PROJECT_CAN_ID4
+#define PROJECT_CAN_ID4
 //#define PROJECT_CAN_BZ4X
-#define PROJECT_CAN_G3
+//#define PROJECT_CAN_G3
 #endif
 #define PROJECT_ID_DEFAULT		2
 
