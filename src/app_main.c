@@ -6,6 +6,7 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 #include <unistd.h>
 #include <time.h>
@@ -43,6 +44,10 @@ static char *project_canopt[PROJECT_ID_TOTAL] = {
 	PROJECT_CANOPT_VOLVO,
 };
 
+struct dataRaw dataInput = {
+    0, 0, 0, 0, 0, 0, 0, 0
+};
+
 void app_main_displayHelp(const char *app)
 {
 	fprintf(stderr,
@@ -56,7 +61,7 @@ void app_main_displayHelp(const char *app)
 		"\t c3:     c3 project\n"
 		"\t navy:   navy project\n"
 		"\t volvo:  volvo project\n"
-		"Options for sending CAN message(s):\n"
+		"Options for specifying value for CAN message(s):\n"
 		"\t -l <number>: loop numbers (default 1; 0 for infinite loop).\n"
 		"\t -i <number>: interval time (millisecond, default in spec.). \n"
 		"\t -p <number>: total running time (seconds, default 60; 0 for continuous run).\n"
@@ -67,24 +72,41 @@ void app_main_displayHelp(const char *app)
 		"\t -s <number>: Send Speed (Km/h).\n"
 		"\t -t <number>: Send Cabin Temperature (celsius degree).\n"
 		"\t -h <number>: Send Humidity (%%).\n"
+	    "\t -w <number>: Send Windshiled Temperature (celsius degree).\n"
 		"\t -d <number>: Send System ID.\n"
 		"\t -r <number>: Send Current (A).\n"
 		"\t -o <0 / 1>: Send Op Mode (0 or 1).\n"
-		"\t -b <number>: Send Ambient Air Temperature (celsius degree).\n"
-		"\t -w <number>: Send Wheel Based Vehicle Speed (Km/h).\n"
-		"\t -n <number>: Send Powertrain Driveline Status.\n"
-		"\t -g <number>: Send High Voltage (V).\n"
 		"\t -u <number>: Send Timestamp.\n"
-		"Options for functions (default to run remote control):\n"
+		"Options for functions (default to set CAN message value):\n"
 		"\t -m: run manual test.\n"
 		"\t -z: run auto test.\n"
-		"\t -y: run CAN test.\n",
+		"\t -y: run CAN test.\n"
+	    "\t -x: run remote control.\n",
 		app);
 }
 
+static void (*app_main_initData_arr[PROJECT_ID_TOTAL])(void) = {
+    app_main_id4_initData,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,//app_main_volvo_initData,
+};
+
 void app_main_initData(sysData_type *sdata)
 {
+    if(app_main_initData_arr[sdata->project_id]) {
+        app_main_initData_arr[sdata->project_id]();
+    }
+    else {
+        iPrintf("Function app_main_initData for %s not available!\n", project_name[sdata->project_id]);
+        //abort_program();
+    }
 
+    for(uint32_t i=0; i<sdata->msg_num; i++) {
+        ndPrintf("msg count: #%d %d - mode %d - value %ld\n", i, msg[i].num, msg[i].mode, msg[i].val);
+    }
 }
 
 int app_main_getMsgnum(sysData_type *sdata)
@@ -92,6 +114,7 @@ int app_main_getMsgnum(sysData_type *sdata)
 	return (int)strlen(project_canopt[sdata->project_id]);
 }
 
+/* check if a particular project has a particular CAN message */
 static int app_main_checkOpt(uint32_t prj_num, char ch)
 {
 	int status = -1;
@@ -108,7 +131,7 @@ static int app_main_checkOpt(uint32_t prj_num, char ch)
 	return status;
 }
 
-/* interrupt command options:
+/* interpret command options:
  * return	0: valid CAN message parameter option
  * 			1: valid CAN option
  * 			2: valid function option
@@ -118,10 +141,14 @@ static int app_main_checkOpt(uint32_t prj_num, char ch)
 int app_main_parseOption(sysData_type *sdata, int numOpt, char *strArg, app_opt_t *appOpt)
 {
 	int retVal = -1;
+	static bool mark_humidity = false;     /* mark to remember when CAN message for humidity and ws temp. already added */
+	static int32_t num_humidity = 0;       /* num to remember message number for humidity and ws temp. */
+
 	switch(numOpt) {
 		case PROJECT_FUNC_MT:
 		case PROJECT_FUNC_AT:
 		case PROJECT_FUNC_CAN:
+		case PROJECT_FUNC_RC:
 			appOpt->function = numOpt;
 			retVal = 2;
 			break;
@@ -143,6 +170,7 @@ int app_main_parseOption(sysData_type *sdata, int numOpt, char *strArg, app_opt_
 			if(1 >= appOpt->val) {
 				dData.display = appOpt->val + 1;
 				dData.number = appOpt->val;
+				dataInput.fsh = appOpt->val;
 				if(0 == app_main_checkOpt(sdata->project_id, 'f')) {
 					retVal++;
 				}
@@ -152,56 +180,105 @@ int app_main_parseOption(sysData_type *sdata, int numOpt, char *strArg, app_opt_
 				retVal = -1;
 				iPrintf("Invalid FSH option %d!\n", appOpt->val);
 			}
-			ndPrintf("\nFSH Sts:\tNo.%d mode %d", timer_num, appOpt->mode);
+			ndPrintf("\nFSH Sts:\tNo.%d mode %d", sdata->msg_num + 1, appOpt->mode);
 			break;
 		case 'a':
 			appOpt->mode = APP_OPT_DEV_SEND_ATEMP;
 			appOpt->val = (int32_t)atoi(strArg);
 			dData.display = 3;
 			dData.number = appOpt->val;
-			ndPrintf("\nAmb.Temp.:\tNo.%d mode %d", timer_num, appOpt->mode);
+			dataInput.outside_temp = appOpt->val;
+			ndPrintf("\nAmb.Temp.:\tNo.%d mode %d", sdata->msg_num + 1, appOpt->mode);
 			if(0 == app_main_checkOpt(sdata->project_id, 'a')) {
 				retVal++;
 			}
 			break;
 		case 'v':
 			appOpt->mode = APP_OPT_DEV_SEND_VOLTAGE;
-			ndPrintf("\nVoltage:\tNo.%d mode %d", timer_num, appOpt->mode);
+			appOpt->val = (int32_t)atoi(strArg);
+			dataInput.bat_vol = appOpt->val;
+			ndPrintf("\nVoltage:\tNo.%d mode %d", sdata->msg_num + 1, appOpt->mode);
 			if(0 == app_main_checkOpt(sdata->project_id, 'v')) {
 				retVal++;
 			}
 			break;
 		case 'c':
 			appOpt->mode = APP_OPT_DEV_SEND_SOC;
-			ndPrintf("\nS.Charge:\tNo.%d mode %d", timer_num, appOpt->mode);
+			appOpt->val = (int32_t)atoi(strArg);
+			dataInput.bat_soc = appOpt->val;
+			ndPrintf("\nS.Charge:\tNo.%d mode %d", sdata->msg_num + 1, appOpt->mode);
 			if(0 == app_main_checkOpt(sdata->project_id, 'c')) {
 				retVal++;
 			}
 			break;
 		case 's':
 			appOpt->mode = APP_OPT_DEV_SEND_SPEED;
-			ndPrintf("\nV. Speed:\tNo.%d mode %d", timer_num, appOpt->mode);
+			appOpt->val = (int32_t)atoi(strArg);
+			dataInput.speed = appOpt->val;
+			ndPrintf("\n Speed is %d", dataInput.speed);
+			ndPrintf("\nV. Speed:\tNo.%d mode %d", sdata->msg_num + 1, appOpt->mode);
 			if(0 == app_main_checkOpt(sdata->project_id, 's')) {
 				retVal++;
 			}
 			break;
 		case 't':
 			appOpt->mode = APP_OPT_DEV_SEND_CTEMP;
-			ndPrintf("\nCab Temp.:\tNo.%d mode %d", timer_num, appOpt->mode);
+			appOpt->val = (int32_t)atoi(strArg);
+			dataInput.inside_temp = appOpt->val;
+			ndPrintf("\nCab Temp.:\tNo.%d mode %d", sdata->msg_num + 1, appOpt->mode);
 			if(0 == app_main_checkOpt(sdata->project_id, 't')) {
 				retVal++;
 			}
 			break;
 		case 'h':
 			appOpt->mode = APP_OPT_DEV_SEND_HUMIDITY;
-			ndPrintf("\nHumidity:\tNo.%d mode %d", timer_num, appOpt->mode);
+			appOpt->val = (int32_t)atoi(strArg);
+			dataInput.humidity = appOpt->val;
+			ndPrintf("\nHumidity:\tNo.%d mode %d", sdata->msg_num + 1, appOpt->mode);
+			appOpt->val = ((uint32_t)((uint16_t)dataInput.ws_temp) << 16) | (uint16_t)dataInput.humidity;
 			if(0 == app_main_checkOpt(sdata->project_id, 'h')) {
-				retVal++;
+			    if(!mark_humidity) {
+			        retVal++;
+			        /* do the following for project ID4 */
+			        if(PROJECT_ID_ID4 == sdata->project_id) {
+                        mark_humidity = true;
+                        num_humidity = sdata->msg_num;
+			        }
+			    }
+			    else {
+			        /* change value only */
+		            msg[num_humidity].val = appOpt->val;
+		            dPrintf("rNo. %d - Mode %d - Value %d\n", num_humidity, appOpt->mode, appOpt->val);
+			        retVal = 3;
+			    }
 			}
 			break;
+		case 'w':
+		    appOpt->mode = APP_OPT_DEV_SEND_HUMIDITY;
+		    appOpt->val = (int32_t)atoi(strArg);
+		    dataInput.ws_temp = appOpt->val;
+            ndPrintf("\nWS temp.:\tNo.%d mode %d", sdata->msg_num + 1, appOpt->mode);
+            appOpt->val = ((uint32_t)((uint16_t)dataInput.ws_temp) << 16) | (uint16_t)dataInput.humidity;
+            if(0 == app_main_checkOpt(sdata->project_id, 'w')) {
+                if(!mark_humidity) {
+                    retVal++;
+                    /* do the following for project ID4 */
+                    if(PROJECT_ID_ID4 == sdata->project_id) {
+                        mark_humidity = true;
+                        num_humidity = sdata->msg_num;
+                    }
+                }
+                else {
+                    /* change value only */
+                    msg[num_humidity].val = appOpt->val;
+                    dPrintf("rNo. %d - Mode %d - Value %d\n", num_humidity, appOpt->mode, appOpt->val);
+                    retVal = 3;
+                }
+            }
+		    break;
 		case 'd':
 			appOpt->mode = APP_OPT_DEV_SEND_SYSID;
-			ndPrintf("\nSystem ID:\tNo.%d mode %d", timer_num, appOpt->mode);
+			ndPrintf("\nSystem ID:\tNo.%d mode %d", sdata->msg_num + 1, appOpt->mode);
 			if(0 == app_main_checkOpt(sdata->project_id, 'd')) {
 				retVal++;
 			}
@@ -211,7 +288,7 @@ int app_main_parseOption(sysData_type *sdata, int numOpt, char *strArg, app_opt_
 			break;
 		case 'r':
 			appOpt->mode = APP_OPT_DEV_SEND_CURRENT;
-			ndPrintf("\nCurrent:\tNo.%d mode %d", timer_num, appOpt->mode);
+			ndPrintf("\nCurrent:\tNo.%d mode %d", sdata->msg_num + 1, appOpt->mode);
 			if(0 == app_main_checkOpt(sdata->project_id, 'r')) {
 				retVal++;
 			}
@@ -252,11 +329,10 @@ int app_main_parseOption(sysData_type *sdata, int numOpt, char *strArg, app_opt_
 	}
 
 	if(0 == retVal) {
-		/* get a valid option with parameter */
-		appOpt->val = (int32_t)atoi(strArg);
-		msg[sdata->msg_num].mode = appOpt->mode;
-		msg[sdata->msg_num].val = appOpt->val;
-		ndPrintf("\t Value %d", appOpt->val);
+        /* for any new message, get valid option with parameter */
+        msg[sdata->msg_num].mode = appOpt->mode;
+        msg[sdata->msg_num].val = appOpt->val;
+        dPrintf("No. %d - Mode %d - Value %d\n", sdata->msg_num, appOpt->mode, appOpt->val);
 	}
 
 	return retVal;
@@ -281,6 +357,7 @@ void app_main_sendCommand(sysData_type *sdata, int cmd)
 	}
 }
 
+/* get message value */
 static void (*app_main_getMsgvalue_arr[PROJECT_ID_TOTAL])(msg_opt_t *) = {
 	app_main_id4_getMsgvalue,
 	app_main_g3_getMsgvalue,
@@ -315,6 +392,7 @@ static void app_main_getMsgvalue(sysData_type *sdata)
 #endif
 }
 
+/* get message interval and repeating number */
 static void (*app_main_getMsginfo_arr[PROJECT_ID_TOTAL])(msg_opt_t *) = {
 	app_main_id4_getMsginfo,
 	app_main_g3_getMsginfo,
@@ -529,29 +607,44 @@ int app_main_canTest(sysData_type *sdata, app_opt_t *appOpt)
     time_t time_ori;							/* CAN message submission start timing */
     uint32_t msg_done_count = 0;				/* this is to count the message that its submission is complete */
 
+    /* set message mode and value pair */
     if(PROJECT_FUNC_CAN == sdata->project_func) {
     	/* use the value in the spec (source code) */
     	dPrintf("app_main_canTest: set message mode and value\n");
     	app_main_getMsgvalue(sdata);
     	appOpt->period = 0;
     }
+    else if (PROJECT_FUNC_DEF == sdata->project_func) {
+        /* values for message are already set */
+        dPrintf("app_main_canTest: message mode and value set from command\n");
+    }
 
 #if 0
     app_main_initMsgsend(sdata);
 #else
+    /* get message interval and repeating number */
     app_main_initMsg(sdata);
+    /* reset internal and number and project function for PROJECT_DEF */
+    if (PROJECT_FUNC_DEF == sdata->project_func) {
+        /* use the interval and loop number from command */
+        for(uint32_t i=0; i<sdata->msg_num; i++) {
+            /* use the num from command -l and -i option */
+            msg[i].num = appOpt->num;               /* from -l option, default is 1 (0 is infinite loop) */
+            if(0xFFFF != appOpt->interval) {
+                msg[i].interval = appOpt->interval;     /* from -i option, default is in source code (structure initialized) */
+            }
+            ndPrintf("msg count: #%d %d - mode %d - value %ld\n", i, msg[i].num, msg[i].mode, msg[i].val);
+        }
+        if(0xFFFF != appOpt->interval) {
+            iPrintf("Message interval all adjusted as commanded %d ms\n", appOpt->interval);
+        }
+        /* need to reset project function for following operations */
+        sdata->project_func = PROJECT_FUNC_CAN;
+    }
+    /* start timer to send messages */
+    iPrintf("\nStart timer to send messages ...\n");
     app_main_startMsgtimer(sdata);
 #endif
-
-    /* use the interval and loop number from command */
-	for(uint32_t i=0; i<sdata->msg_num; i++) {
-		if(PROJECT_FUNC_CAN != sdata->project_func) {
-			/* use the num from command -l option */
-			//msg[i].interval = appOpt->interval;	/* from -i option, default is in source code (structure initialized) */
-			msg[i].num = appOpt->num;				/* from -l option, default is 1 (0 is infinite loop) */
-		}
-		ndPrintf("msg count: #%d %d\n", i, msg[i].num);
-	}
 
     time_ori = time(NULL);
 	for(;;) {
@@ -614,7 +707,7 @@ static int app_main_updateMsg_volvo(int cmd, uint32_t total)
 		case (PROJECT_MT_FUNC1 - 32):
 			ndPrintf("Set ambient air temperature ...\n");
 			for (i = 0; i < total; i++) {
-				if(APP_OPT_DEV_SEND_AATEMP == (msg[i].mode + MSGNO_OFFSET)) {
+				if(APP_OPT_DEV_SEND_ATEMP == (msg[i].mode + MSGNO_OFFSET)) {
 					msg[i].val = get_a_number_mt("ambient air temperature");
 					retval = cmd;
 				}
@@ -624,27 +717,27 @@ static int app_main_updateMsg_volvo(int cmd, uint32_t total)
 		case (PROJECT_MT_FUNC2 - 32):
 			ndPrintf("Set wheel based vehicle speed ...\n");
 			for (i = 0; i < total; i++) {
-				if(APP_OPT_DEV_SEND_WBVEHSPEED == (msg[i].mode + MSGNO_OFFSET)) {
+				if(APP_OPT_DEV_SEND_SPEED == (msg[i].mode + MSGNO_OFFSET)) {
 					msg[i].val = get_a_number_mt("wheel based vehicle speed");
 					retval = cmd;
 				}
 			}
 			break;
-		case PROJECT_MT_FUNC3:
-		case (PROJECT_MT_FUNC3 - 32):
-			ndPrintf("Set powertrain driveline status ...\n");
-			for (i = 0; i < total; i++) {
-				if(APP_OPT_DEV_SEND_PTDRVLNSTATUS == (msg[i].mode + MSGNO_OFFSET)) {
-					msg[i].val = get_a_number_mt("powertrain driveline status");
-					retval = cmd;
-				}
-			}
-			break;
+//		case PROJECT_MT_FUNC3:
+//		case (PROJECT_MT_FUNC3 - 32):
+//			ndPrintf("Set powertrain driveline status ...\n");
+//			for (i = 0; i < total; i++) {
+//				if(APP_OPT_DEV_SEND_PTDRVLNSTATUS == (msg[i].mode + MSGNO_OFFSET)) {
+//					msg[i].val = get_a_number_mt("powertrain driveline status");
+//					retval = cmd;
+//				}
+//			}
+//			break;
 		case PROJECT_MT_FUNC4:
 		case (PROJECT_MT_FUNC4 - 32):
 			ndPrintf("Set high voltage ...\n");
 			for (i = 0; i < total; i++) {
-				if(APP_OPT_DEV_SEND_HIGHVOLTAGE == (msg[i].mode + MSGNO_OFFSET)) {
+				if(APP_OPT_DEV_SEND_VOLTAGE == (msg[i].mode + MSGNO_OFFSET)) {
 					msg[i].val = get_a_number_mt("high voltage");
 					retval = cmd;
 				}
@@ -1008,6 +1101,7 @@ void app_main_test(void)
 #endif
 }
 
+/* need to differentiate protocol to use corresponding functions to send and receive! */
 void app_main_testApp(void)
 {
 #if 0	/* TODO: check why it doesn't work to received and send at the same time!

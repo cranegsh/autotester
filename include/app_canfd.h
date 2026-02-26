@@ -64,7 +64,7 @@ typedef enum {
     CAN_DLC_64
 } CAN_DLC;
 
-/* The sequence of below enumeration should be the same as the sequence of data in id4_vehData and ic3canDataInfo!!! */
+/* The sequence of below enumeration should be the same as the sequence of data in id4_vehData and c3canDataInfo!!! */
 typedef enum {
 	APP_OPT_DEV_SEND_SOC,
 	APP_OPT_DEV_SEND_FSH,
@@ -76,11 +76,8 @@ typedef enum {
 	APP_OPT_DEV_SEND_SYSID,
 	APP_OPT_DEV_SEND_CURRENT,
 	APP_OPT_DEV_SEND_OPMODE,
-	APP_OPT_DEV_SEND_AATEMP,
-	APP_OPT_DEV_SEND_WBVEHSPEED,
-	APP_OPT_DEV_SEND_PTDRVLNSTATUS,
-	APP_OPT_DEV_SEND_HIGHVOLTAGE,
 	APP_OPT_DEV_SEND_TIME,
+	APP_OPT_DEV_SEND_WTEMP,
 	APP_OPT_UNKNOWN
 } msg_mode_t;
 
@@ -128,7 +125,11 @@ void msg_canfd_send_veh(uint32_t prj_num, msg_mode_t msgno, int64_t value);
 void msg_canfd_send_tester(uint32_t prj_num, uint32_t cmd);
 
 int canfd_messageReceive(uint32_t *mid, uint8_t *data, uint32_t *num);
+int canfd_messageReceive_can20b(uint32_t *mid, uint8_t *data, uint32_t *num);
+int canfd_messageReceive_canfd(uint32_t *mid, uint8_t *data, uint32_t *num);
 int canfd_messageSend(uint32_t mid, uint8_t *data, uint32_t num);
+int canfd_messageSend_can20b(uint32_t mid, uint8_t *data, uint32_t num);
+int canfd_messageSend_canfd(uint32_t mid, uint8_t *data, uint32_t num);
 void msg_canfd_cleanData(uint32_t prj_num);
 int msg_canfd_receive(uint32_t prj_num);
 void msg_canfd_copyData(uint32_t number, uint32_t length, uint8_t *source, uint8_t *dest);
@@ -137,7 +138,7 @@ int msg_canfd_rcvCanConfigs(uint32_t prj_num);
 int msg_canfd_rcvCanLog(uint32_t prj_num);
 
 /* Function to initialize CAN FD device */
-int msg_canfd_init(void);
+int msg_canfd_init(uint32_t);
 void msg_canfd_deinit(void);
 
 #endif /* APPLICATION_CANFDCOMM_H_ */

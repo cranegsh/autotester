@@ -40,7 +40,19 @@ typedef struct {
 	uint32_t project_func;	/* project function: manual test, automatic test, remote control */
 	uint32_t msg_num;		/* CAN message number requested in command options; each message has a timer and timer number is message number */
 	int canfd_status;		/* CAN communication status */
+	int update_default;     /* 1 to update CAN message default value */
 } sysData_type;
+
+struct dataRaw {
+    int32_t bat_soc;
+    int32_t bat_vol;
+    int32_t fsh;
+    int32_t outside_temp;
+    int32_t inside_temp;
+    int32_t humidity;
+    int32_t ws_temp;
+    int32_t speed;
+};
 
 void app_main_displayHelp(const char *app);
 void app_main_initData(sysData_type *sdata);

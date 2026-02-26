@@ -126,6 +126,56 @@ int canfd_messageReceive(uint32_t *mid, uint8_t *data, uint32_t *num)
 
     return status;
 }
+int canfd_messageReceive_can20b(uint32_t *mid, uint8_t *data, uint32_t *num)
+{
+    int status = -100;
+    TPCANMsg Message;
+    TPCANTimestamp ts;
+    TPCANTimestamp ts_prev;
+    TPCANTimestamp ts_diff;
+    TPCANStatus Status;
+
+    Status = CAN_Read(PCAN_DEVICE, &Message, &ts);
+    if(PCAN_ERROR_OK == Status)
+    {   // Copy the message
+        status = 0;
+        *mid = (int)Message.ID;
+        *num = (uint16_t)(Message.LEN);
+        ndebugPrintf("MID %8X\tnum %d:\t", *mid, *num);
+        for(uint32_t i=0; i<*num; i++) {
+            data[i] = Message.DATA[i];
+            ndPrintf(" %2X | ", data[i]);
+        }
+        ndPrintf("\n");
+    }
+
+    return status;
+}
+int canfd_messageReceive_canfd(uint32_t *mid, uint8_t *data, uint32_t *num)
+{
+    int status = -100;
+    TPCANMsgFD Message;
+    TPCANTimestampFD ts;
+    //TPCANTimestampFD ts_prev;
+    //TPCANTimestampFD ts_diff;
+    TPCANStatus Status;
+
+    Status = CAN_ReadFD(PCAN_DEVICE, &Message, &ts);
+    if(PCAN_ERROR_OK == Status)
+    {   // Copy the message
+        status = 0;
+        *mid = (int)Message.ID;
+        *num = canfd_DlcToDataBytes((CAN_DLC)Message.DLC);
+        ndebugPrintf("MID %8X\tnum %d:\t", *mid, *num);
+        for(uint32_t i=0; i<*num; i++) {
+            data[i] = Message.DATA[i];
+            ndPrintf(" %2X | ", data[i]);
+        }
+        ndPrintf("\n");
+    }
+
+    return status;
+}
 
 /* Function to send a message by calling another function to request send after loading message */
 int canfd_messageSend(uint32_t mid, uint8_t *data, uint32_t num)
@@ -189,6 +239,100 @@ int canfd_messageSend(uint32_t mid, uint8_t *data, uint32_t num)
 
     //return (int32_t)Status;		// The value is not used other than judging 0 and non-0 in caller
 }
+int canfd_messageSend_can20b(uint32_t mid, uint8_t *data, uint32_t num)
+{
+    TPCANMsg Message;
+    TPCANStatus Status;
+
+    // Initialize ID and control
+    if(0 == (mid & CAN_IDMASK_EID)) {
+        Message.ID = (mid & CAN_IDMASK_SID) >> CAN_EID_BITS;            // set Standard ID (first 11 bits)
+        Message.MSGTYPE = PCAN_MESSAGE_STANDARD;                        // set Standard type
+    }
+    else {
+        Message.ID = mid;                                   // set Extended ID (total 29 bits)
+        Message.MSGTYPE = PCAN_MESSAGE_EXTENDED;                    // set Extended type
+    }
+    Message.LEN = (BYTE)(canfd_DataBytesToDlc((uint8_t)num));
+    ndPrintf("\nmid %8X, DLC %02d", Message.ID, Message.LEN);
+
+    // Initialize transmit data
+    uint32_t i;
+    for(i=0; i<num; i++) {
+        Message.DATA[i] = data[i];
+    }
+
+    // transmit message
+    i = 0;
+    do {
+        Status = CAN_Write(PCAN_DEVICE, &Message);
+        if(PCAN_ERROR_OK != Status) {
+            usleep(100);                                    // Check every 100us
+            i++;
+        }
+    }
+    while((PCAN_ERROR_OK != Status) && (200 > i));                  // Checking if message is sent for 20ms
+
+    /* check if the data are submitted successfully */
+    if (PCAN_ERROR_OK == Status) {
+        ndPrintf("\t[Sent] %X | 0x%02X", Message.ID, Message.DATA[0]);
+        return 0;
+    }
+    else {
+        ndPrintf("\t[Failed to send] %X | 0x%02X", Message.ID, Status);
+        return -1;
+    }
+
+    //return (int32_t)Status;       // The value is not used other than judging 0 and non-0 in caller
+}
+int canfd_messageSend_canfd(uint32_t mid, uint8_t *data, uint32_t num)
+{
+    TPCANMsgFD Message;
+    TPCANStatus Status;
+
+    // Initialize ID and control
+    if(0 == (mid & CAN_IDMASK_EID)) {
+        Message.ID = (mid & CAN_IDMASK_SID) >> CAN_EID_BITS;            // set Standard ID (first 11 bits)
+        Message.MSGTYPE = PCAN_MESSAGE_STANDARD;                        // set Standard type
+    }
+    else {
+        Message.ID = mid;                                   // set Extended ID (total 29 bits)
+        Message.MSGTYPE = PCAN_MESSAGE_EXTENDED;                    // set Extended type
+    }
+    Message.DLC = (BYTE)(canfd_DataBytesToDlc(num));
+    Message.MSGTYPE |= PCAN_MESSAGE_FD;
+    Message.MSGTYPE |= PCAN_MESSAGE_BRS;
+    ndPrintf("\nmid %8X, DLC %02d", Message.ID, Message.DLC);
+
+    // Initialize transmit data
+    uint32_t i;
+    for(i=0; i<num; i++) {
+        Message.DATA[i] = data[i];
+    }
+
+    // transmit message
+    i = 0;
+    do {
+        Status = CAN_WriteFD(PCAN_DEVICE, &Message);
+        if(PCAN_ERROR_OK != Status) {
+            usleep(100);                                    // Check every 100us
+            i++;
+        }
+    }
+    while((PCAN_ERROR_OK != Status) && (200 > i));                  // Checking if message is sent for 20ms
+
+    /* check if the data are submitted successfully */
+    if (PCAN_ERROR_OK == Status) {
+        ndPrintf("\t[Sent] %X | 0x%02X", Message.ID, Message.DATA[0]);
+        return 0;
+    }
+    else {
+        ndPrintf("\t[Failed to send] %X | 0x%02X", Message.ID, Status);
+        return -1;
+    }
+
+    //return (int32_t)Status;       // The value is not used other than judging 0 and non-0 in caller
+}
 
 static int (*msg_canfd_prepare_veh_arr[PROJECT_ID_TOTAL])(msg_mode_t, int64_t, uint8_t*) = {
 	msg_canfd_prepare_id4Veh,
@@ -242,7 +386,13 @@ void msg_canfd_send_veh(uint32_t prj_num, msg_mode_t msgno, int64_t value)
 		abort_program();
 	}
 
-    status = canfd_messageSend(messageID, messageData, dataNumber);
+    //status = canfd_messageSend(messageID, messageData, dataNumber);
+    if(PROJECT_ID_VOLVO == prj_num) {
+        status = canfd_messageSend_can20b(messageID, messageData, dataNumber);
+    }
+    else {
+        status = canfd_messageSend_canfd(messageID, messageData, dataNumber);
+    }
     ndPrintf("\n Status %d, Sent message: 0x%X, %d | ", status, messageID >> EID_BITS, dataNumber);
     if(0 != status)
     {	/* submission failed. Resend the data! */
@@ -362,7 +512,13 @@ int msg_canfd_receive(uint32_t prj_num)
     time( &now );
     systime = localtime( &now );
 
-    status = canfd_messageReceive(&messageID, messageData, &dataNumber);
+    //status = canfd_messageReceive(&messageID, messageData, &dataNumber);
+    if(PROJECT_ID_VOLVO == prj_num) {
+        status = canfd_messageReceive_can20b(&messageID, messageData, &dataNumber);
+    }
+    else {
+        status = canfd_messageReceive_canfd(&messageID, messageData, &dataNumber);
+    }
     /* TODO: investigate Why there are garbage messages with message ID of 0? */
 
     if((0 == status) && ( 0 != messageID))
@@ -443,18 +599,28 @@ void msg_canfd_receive(uint32_t prj_num)
     return;
 }
 #endif
-int msg_canfd_init(void)
+int msg_canfd_init(uint32_t project_num)
 {
 	 int retVal = -1;
      TPCANStatus Status;
 
+/*
 #if (CAN_BUS_TYPE_CAN == CAN_BUS_TYPE)
      Status = CAN_Initialize(PCAN_DEVICE, PCAN_BAUD_250K, 0, 0, 0);
-     iPrintf("CAN_Initialize(%xh): Status=0x%x\n", PCAN_DEVICE, (int)Status);
+     iPrintf("CAN_2.0B_250K(%xh): Status=0x%x\n", PCAN_DEVICE, (int)Status);
 #else
      Status = CAN_InitializeFD(PCAN_DEVICE, CANFD_BIT_RATE);
-     iPrintf("CANFD_Initialize(%xh): Status=0x%x\n", PCAN_DEVICE, (int)Status);
+     iPrintf("CANFD_500K/2M(%xh): Status=0x%x\n", PCAN_DEVICE, (int)Status);
 #endif
+*/
+	if(PROJECT_ID_VOLVO == project_num) {
+     		Status = CAN_Initialize(PCAN_DEVICE, PCAN_BAUD_250K, 0, 0, 0);
+     		iPrintf("CAN_2.0B_250K(%xh): Status=0x%x\n", PCAN_DEVICE, (int)Status);
+	}
+	else {
+     		Status = CAN_InitializeFD(PCAN_DEVICE, CANFD_BIT_RATE);
+     		iPrintf("CANFD_500K/2M(%xh): Status=0x%x\n", PCAN_DEVICE, (int)Status);
+	}
 
 	 if(PCAN_ERROR_OK == Status)
 	 {
@@ -508,7 +674,13 @@ int msg_canfd_rcvCanConfigs(uint32_t prj_num)
 	int status;
 
 	do {
-		status = canfd_messageReceive(&messageID, messageData, &dataNumber);
+		//status = canfd_messageReceive(&messageID, messageData, &dataNumber);
+		if(PROJECT_ID_VOLVO == prj_num) {
+		    status = canfd_messageReceive_can20b(&messageID, messageData, &dataNumber);
+		}
+		else {
+		    status = canfd_messageReceive_canfd(&messageID, messageData, &dataNumber);
+		}
 	} while ((0 != status) || ( ID_RCV_DATA_CFG != (messageID >> CAN_EID_BITS)));
 
 	ndebugPrintf("Received 0x%X | %d\t", messageID, dataNumber);
@@ -529,7 +701,13 @@ int msg_canfd_rcvCanLog(uint32_t prj_num)
 	int status;
 
 	do {
-		status = canfd_messageReceive(&messageID, messageData, &dataNumber);
+		//status = canfd_messageReceive(&messageID, messageData, &dataNumber);
+        if(PROJECT_ID_VOLVO == prj_num) {
+            status = canfd_messageReceive_can20b(&messageID, messageData, &dataNumber);
+        }
+        else {
+            status = canfd_messageReceive_canfd(&messageID, messageData, &dataNumber);
+        }
 	} while ((0 != status) || ( ID_RCV_LOG != (messageID >> CAN_EID_BITS)));
 
 	ndebugPrintf("Received 0x%X | %d\t", messageID, dataNumber);

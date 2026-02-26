@@ -57,6 +57,8 @@
  */
 //#define CAN_STANDARD_ONLY
 
+extern struct dataRaw dataInput;
+
 static struct canfdData_id4 canfdio = {
    .id4Dataveh = {0, },
    .id4DataIn = { {0, 0, }, },
@@ -71,14 +73,14 @@ static struct canfdData_id4 canfdio = {
    .id4DataOut_cfgPwm = { {0, 0 }, },
    .id4_vehData = {
 	/* The sequence of the members in the array must follow the sequence in msg_mode_t enum !!! */
-//		{ BMS_22, "S. of Charge", 1000, 0 },
-		{ LiSi_01, "SW on Dash", 100, 0 },
-		{ KLIMA_16, "FSH status", 500, 0 },
-		{ TEMP_01, "Amb. Temp.", 1000, 0 },
-		{ BMS_20<<CAN_EID_BITS, "Voltage", 200, 0 },
-		{ ESP_21<<CAN_EID_BITS, "Veh. Speed", 100, 0 },
-		{ KLIMA_03<<CAN_EID_BITS, "Cab. Temp.", 1000, 0 },
-		{ KLIMA_S_01<<CAN_EID_BITS, "Humidity", 1000, 0 }
+//		{ BMS_22, "S. of Charge", 1000, 0, 77 },
+		{ LiSi_01, "SW on Dash", 100, 0, 1 },
+		{ KLIMA_16, "FSH status", 500, 0, 0 },
+		{ TEMP_01, "Amb. Temp.", 1000, 0, -9 },
+		{ BMS_20<<CAN_EID_BITS, "Voltage", 200, 0, 360 },
+		{ ESP_21<<CAN_EID_BITS, "Veh. Speed", 100, 0, 129 },
+		{ KLIMA_03<<CAN_EID_BITS, "Cab. Temp.", 1000, 0, 19 },
+		{ KLIMA_S_01<<CAN_EID_BITS, "Humidity", 1000, 0, (5 << 16) + 34 }
    }
 };
 
@@ -182,6 +184,19 @@ uint32_t msg_canfd_getMid_g3(uint32_t number)
 
 uint32_t msg_canfd_getMid_g4r(uint32_t number) 	{ return (canfdio_g4r.id4_vehData[number].mid); }
 
+/* Function to initialize CAN messages' initial data for "CAN test" function */
+void app_main_id4_initData(void)
+{
+    canfdio.id4_vehData[0].value = dataInput.bat_soc;
+    canfdio.id4_vehData[1].value = dataInput.fsh;
+    canfdio.id4_vehData[2].value = dataInput.outside_temp;
+    canfdio.id4_vehData[3].value = dataInput.bat_vol;
+    canfdio.id4_vehData[4].value = dataInput.speed;
+    canfdio.id4_vehData[5].value = dataInput.inside_temp;
+    canfdio.id4_vehData[6].value = ((uint32_t)((uint16_t)dataInput.ws_temp) << 16) | (uint16_t)dataInput.humidity;
+    ndPrintf("\nVehicle speed is set %ld from %d\n", canfdio.id4_vehData[4].value, dataInput.speed);
+}
+
 /* Function to prepare CANFD data for ID4 vehicle messages */
 int msg_canfd_prepare_id4Veh(msg_mode_t msgno, int64_t value, uint8_t *data)
 {
@@ -193,11 +208,13 @@ int msg_canfd_prepare_id4Veh(msg_mode_t msgno, int64_t value, uint8_t *data)
 			break;
 		case APP_OPT_DEV_SEND_ATEMP:
 			data[2] = ((value + 50 ) * 2 ) & 0xFF;
+			ndPrintf("\nAmbient temp is %ld\t", value);
 			break;
 		case APP_OPT_DEV_SEND_VOLTAGE:
 			value = value * 4;
 			data[7] = (value >> 4) & 0xFF;			/* take the higher 8 bits of total 12 bits and right shift 4 bits */
 			data[6] = (value & 0x0F) << 4;			/* take the lower 4 bits and left shift 4 bits */
+			ndPrintf("\nVoltage is %ld\t", value);
 			break;
 		case APP_OPT_DEV_SEND_SOC:
 #if 0	// change SOC to LiSi_01
@@ -213,7 +230,8 @@ int msg_canfd_prepare_id4Veh(msg_mode_t msgno, int64_t value, uint8_t *data)
 		case APP_OPT_DEV_SEND_SPEED:
 			value = value * 100;
 			data[5] = (value >> 8 ) & 0xFF;			/* take the higher 8 bits of total 16 bits and right shift 8 bits */
-			data[4] = value & 8;					/* take the lower 8 bits */
+			data[4] = value & 0xFF;					/* take the lower 8 bits */
+			ndPrintf("\nSpeed is %ld\t", value);
 			break;
 		case APP_OPT_DEV_SEND_CTEMP:
 			data[4] = ((value + 50 ) * 2) & 0xFF;
@@ -221,9 +239,15 @@ int msg_canfd_prepare_id4Veh(msg_mode_t msgno, int64_t value, uint8_t *data)
 			if(1 == value) {
 				data[6] = 0x08;
 			}
+			ndPrintf("\nCabin temp is %ld\t", value);
 			break;
 		case APP_OPT_DEV_SEND_HUMIDITY:
-//			data[5] = value * 2 + 1;
+		    /* Humidity. */
+		    ndPrintf("\nHumidity is %ld\t", (int64_t)((int16_t)(value & 0xFFFF)));
+			data[5] = ((int16_t)(value & 0xFFFF)) * 2 + 1;
+			/* WS temp. */
+			value = (int16_t)((value >> 16) & 0xFFFF);
+			ndPrintf("\nWS temp. is %ld\t", (int64_t)value);
 			value = value * 10 + 396;
 			data[2] = value & 0xFF;
 			data[3] = (value >> 8) & 0x03;
@@ -618,7 +642,7 @@ static int msg_canfd_receiveConfigs_id4(void)
 	int status;
 
 	do {
-		status = canfd_messageReceive(&messageID, messageData, &dataNumber);
+		status = canfd_messageReceive_canfd(&messageID, messageData, &dataNumber);
 	} while ((0 != status) || ( ID_RCV_LOG != (messageID >> CAN_EID_BITS)));
 
 	ndebugPrintf("Received 0x%X | %d\t", messageID, dataNumber);
@@ -636,7 +660,7 @@ static int msg_canfd_receiveLog_id4(void)
 	int status;
 
 	do {
-		status = canfd_messageReceive(&messageID, messageData, &dataNumber);
+		status = canfd_messageReceive_canfd(&messageID, messageData, &dataNumber);
 	} while ((0 != status) || ( ID_RCV_LOG != (messageID >> CAN_EID_BITS)));
 
 	msg_canfd_copyData(dataNumber, CAN_DATA_LOG_LEN_ID4, (uint8_t*)messageData, (uint8_t *)&canfdio.id4DataLog.byte);

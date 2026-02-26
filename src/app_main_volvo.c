@@ -11,9 +11,9 @@
 #include "utility.h"
 
 /* CAN Message IDs for C3 project */
-#define AMB_IC						0x18FEF517
+#define AMB_IC						0x18FEF500//0x18FEF517
 #define CCVS_V						0x18FEF111
-#define VP155_T						0x0CFF9B03
+#define VP155_T						0x18FEF531//0x0CFF9B03
 #define VP152						0x18FF98EF
 #define TD_IC						0x18FEE617
 
@@ -76,20 +76,20 @@ uint32_t msg_canfd_getMid_Volvo(uint32_t number)
 int msg_canfd_prepare_VolvoVeh(msg_mode_t msgno, int64_t value, uint8_t *data)
 {
 	switch((int)msgno + MSGNO_OFFSET) {
-		case APP_OPT_DEV_SEND_AATEMP:
+		case APP_OPT_DEV_SEND_ATEMP:
 			value = ((value + 273) * 32);
 			data[4] = (value >> 8) & 0xFF;
 			data[3] = value & 0xFF;
 			break;
-		case APP_OPT_DEV_SEND_WBVEHSPEED:
+		case APP_OPT_DEV_SEND_SPEED:
 			value *= 256;
 			data[2] = (value >> 8) & 0xFF;
 			data[1] = value & 0xFF;
 			break;
-		case APP_OPT_DEV_SEND_PTDRVLNSTATUS:
-			data[0] = (value & 0x7) << 3;
-			break;
-		case APP_OPT_DEV_SEND_HIGHVOLTAGE:
+//		case APP_OPT_DEV_SEND_PTDRVLNSTATUS:
+//			data[0] = (value & 0x7) << 3;
+//			break;
+		case APP_OPT_DEV_SEND_VOLTAGE:
 			value *= 0.25;
 			data[0] = value & 0xFF;
 			break;

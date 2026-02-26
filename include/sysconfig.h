@@ -19,9 +19,9 @@
 /* select project by a variable from command line argument */
 #define PROJECT_ID_TOTAL		6
 #define PROJECT_ID_ID4			0			/* project id4 */
-#define PROJECT_ID_G3			1			/* project g3 */
+#define PROJECT_ID_G3			1			/* project g3 (BZ4X) */
 #define PROJECT_ID_G4R			2			/* project g4r */
-#define PROJECT_ID_C3			3			/* project c3 */
+#define PROJECT_ID_C3			3			/* project c3 (generic based on id4)*/
 #define PROJECT_ID_NAVY			4			/* project navy */
 #define PROJECT_ID_VOLVO		5
 
@@ -32,14 +32,15 @@
 #define PROJECT_ARGU_NAVY		"navy"		/* argument: navy */
 #define PROJECT_ARGU_VOLVO		"volvo"
 
-#define PROJECT_CANOPT_ID4		"cfavsth"	/* CAN message options */
-#define PROJECT_CANOPT_C3		"cfavsthdro"/* CAN message options */
+#define PROJECT_CANOPT_ID4		"cfavsthw"	/* CAN message options */
+#define PROJECT_CANOPT_C3		"cfavsthwdro"/* CAN message options */
 #define PROJECT_CANOPT_NAVY		""			/* CAN message options */
-#define PROJECT_CANOPT_VOLVO	"bwngu"
+#define PROJECT_CANOPT_VOLVO	"cfavsthwu"
 
-#define PROJECT_FUNC_MT			'm'			/* manual test */
+#define PROJECT_FUNC_DEF        'd'         /* CAN test with values from command */
+#define PROJECT_FUNC_MT			'm'			/* manual test: test setting specific CAN message */
 #define PROJECT_FUNC_AT			'z'			/* automatic test */
-#define PROJECT_FUNC_CAN		'y'			/* CAN test */
+#define PROJECT_FUNC_CAN		'y'			/* CAN test: test if CAN messages can be received */
 #define PROJECT_FUNC_RC			'x'			/* remote control */
 
 #define PROJECT_MT_FUNC1		'a'			/* Turn ON defrost */

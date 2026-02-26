@@ -7,3 +7,5 @@ farviewpcan
 .cproject
 .settings
 .settings/*
+*.bak
+*/*.bak

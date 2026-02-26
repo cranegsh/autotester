@@ -9,3 +9,15 @@ It is for backup and convenience to place these libraries together with source f
 They are supposed to copied to standard library path /usr/lib and standard header path /usr/include under system rootfs when being used to compile this project natively.
 They are supposed to copied to standard library path usr/lib and standard header path usr/include under the path specified by "--sysroot=..." in Makefile when being used to compile this project crossly.
 It also works to keep them in where they are now and specify searching path in Makefile (option "-I" for CFLAGS and option "-L" for LDFLAGS) when being used in compiling this project either natively or crossly.
+
+2026.02.26:
+add comment: PCAN package driver is in pcan-8.18.0.tar.gz
+
+Allow project, function and CAN message related configuration to be set in the command line.
+But not all messages for all functions and all project are done.
+CAN init has only two options: CAN2.0 500K and CANFD 500K/2M
+
+This commit is with default function (select messages with their values from command line)
+and CAN test (default message configuration and allow modification by command line) for all ID4 messages
+that are tested. 
+Details in help information.

@@ -199,6 +199,7 @@ struct canfdData_id4 *msg_canfd_getData_id4(void);
 uint32_t msg_canfd_getMid_id4(uint32_t number);
 uint32_t msg_canfd_getMid_g3(uint32_t number);
 uint32_t msg_canfd_getMid_g4r(uint32_t number);
+void app_main_id4_initData(void);
 int msg_canfd_prepare_id4Veh(msg_mode_t msgno, int64_t value, uint8_t *data);
 int msg_canfd_prepare_g3Veh(msg_mode_t msgno, int64_t value, uint8_t *data);
 //int msg_canfd_prepare_g4rVeh(msg_mode_t msgno, int32_t value, uint8_t *data);		/* same as g3 now */
