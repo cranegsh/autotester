@@ -4,18 +4,24 @@
  *  Created on:    May 05, 2024
  *  Last modified: May 09, 2024
  *  Created from: app_main_c3.c
- *      Author: Sameed Sohani
  */
 
 #include "app_main_volvo.h"
 #include "utility.h"
 
-/* CAN Message IDs for C3 project */
-#define AMB_IC						0x18FEF500//0x18FEF517
+/* CAN Message IDs for Volvo project */
+#ifndef VOLVO_ALASKA
+#define AMB_IC						0x18FEF517
+#define VP152						0x18FF98EF      /* HV_SOC */
+#define VP155_T						0x0CFF9B03      /* HV_READY */
+#else
+#define AMB_IC						0x18FEF500
+#define BAT_SOC                     0x18FCB631      /* Battery SoC */
+#define BAT_VOL                     0x18FEF717      /* Battery Voltage */
+#endif
 #define CCVS_V						0x18FEF111
-#define VP155_T						0x18FEF531//0x0CFF9B03
-#define VP152						0x18FF98EF
 #define TD_IC						0x18FEE617
+#define DEFROST_SIG                 0x381
 
 /* CANFD data should be interpreted according to the below DBC information:
  * BO_ 207 BMS_20: 8
@@ -53,10 +59,20 @@ const uint64_t TIMESTAMP = 			(SECONDS 			<< SECONDS_BIT_START)
 static struct canfdData_Volvo canfdio = {
    .volvocanDataInfo = {
 		/* The sequence of the members in the array must follow the sequence in msg_mode_t enum !!! */
-		{ AMB_IC, "Amb.AirTemp.", 1000, 0, 1500 },
-		{ CCVS_V, "WB.Veh.Speed", 100, 0, 250 },
-		{ VP155_T, "PTDrvLn.Sts", 200, 0, 4 },
+#ifndef VOLVO_ALASKA
+        { VP152, "S. of Charge", 1000, 0, 55 },
+#else
+        { BAT_SOC, "S. of Charge", 1000, 0, 55 },
+#endif
+        { DEFROST_SIG<<CAN_EID_BITS, "Defrost S.", 500, 0, 0 },
+#ifndef VOLVO_ALASKA
+        { AMB_IC, "Amb.Temp.", 1000, 0, -5 },
 		{ VP152, "HighVoltage", 500, 0, 648 },
+#else
+        { AMB_IC, "Amb.&Cab.Temp.", 1000, 0, (18 << 16) + (uint16_t)(-5) },      /* with Cab. temp in the same message */
+        { BAT_VOL, "BatVoltage", 500, 0, 24 },
+#endif
+		{ CCVS_V, "Veh.Speed", 100, 0, 250 },
 		{ TD_IC, "Time", 1000, 0, TIMESTAMP },
    },
    .volvodataIn.data = { 0, 0, 0, 0, 0},
@@ -72,14 +88,50 @@ uint32_t msg_canfd_getMid_Volvo(uint32_t number)
 	return canfdio.volvocanDataInfo[number].mid;
 }
 
-/* Function to prepare CANFD data for C3 vehicle messages */
+/* Function to prepare CANFD data for Volvo vehicle messages */
 int msg_canfd_prepare_VolvoVeh(msg_mode_t msgno, int64_t value, uint8_t *data)
 {
+    int32_t temp_value = (int32_t)value;
+
+    for(uint32_t i=0; i<CAN_MSG_LEN; i++) {
+        data[i] = 0;
+    }
+
 	switch((int)msgno + MSGNO_OFFSET) {
+	    case APP_OPT_DEV_SEND_SOC:
+#ifndef VOLVO_ALASKA
+#else
+            value = value * 400;
+            data[1] = (value >> 8 ) & 0xFF;
+            data[0] = (value & 0xFF) << 1;
+#endif
+	        break;
+	    case APP_OPT_DEV_SEND_FSH:
+            if(0 != value) {
+                data[3] = 0x10;
+            }
+            break;
 		case APP_OPT_DEV_SEND_ATEMP:
-			value = ((value + 273) * 32);
+		    /* get amb. temp from lower 16-bit */
+		    value = (int64_t)(temp_value & 0xFFFF);
+		    value = ((value + 273) * 32);
 			data[4] = (value >> 8) & 0xFF;
 			data[3] = value & 0xFF;
+			/* get cab. temp from higher 16-bit */
+			value = (int64_t)((temp_value >> 16) & 0xFFFF);
+            value = ((value + 273) * 32);
+            data[2] = (value >> 8) & 0xFF;
+            data[1] = value & 0xFF;
+			break;
+		case APP_OPT_DEV_SEND_VOLTAGE:
+#ifndef VOLVO_ALASKA
+			value *= 0.25;
+			data[0] = value & 0xFF;
+#else
+            value *= 20;
+            data[4] = value & 0xFF;
+            data[5] = (value >> 8) & 0xFF;
+#endif
 			break;
 		case APP_OPT_DEV_SEND_SPEED:
 			value *= 256;
@@ -89,11 +141,7 @@ int msg_canfd_prepare_VolvoVeh(msg_mode_t msgno, int64_t value, uint8_t *data)
 //		case APP_OPT_DEV_SEND_PTDRVLNSTATUS:
 //			data[0] = (value & 0x7) << 3;
 //			break;
-		case APP_OPT_DEV_SEND_VOLTAGE:
-			value *= 0.25;
-			data[0] = value & 0xFF;
-			break;
-		case APP_OPT_DEV_SEND_TIME:
+		case (APP_OPT_DEV_SEND_TIME - 5):   /* relevant to the position in enum msg_mode_t */
 			data[5] = ((value >> 40) & 0xFF) - 1985;
 			data[4] = ((value >> 32) & 0xFF) * 4;
 			data[3] = (value >> 24) & 0xFF;

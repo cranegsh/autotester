@@ -23,7 +23,8 @@
 #define PROJECT_ID_G4R			2			/* project g4r */
 #define PROJECT_ID_C3			3			/* project c3 (generic based on id4)*/
 #define PROJECT_ID_NAVY			4			/* project navy */
-#define PROJECT_ID_VOLVO		5
+#define PROJECT_ID_VOLVO		5           /* project Volvo Alaska, different from Volvo */
+#define CAN_MSG_LEN             8           /* CAN message length */
 
 #define PROJECT_ARGU_ID4		"id4"		/* argument: id4 */
 #define PROJECT_ARGU_G3			"g3"		/* argument: g3 */
@@ -33,9 +34,10 @@
 #define PROJECT_ARGU_VOLVO		"volvo"
 
 #define PROJECT_CANOPT_ID4		"cfavsthw"	/* CAN message options */
+#define PROJECT_CANOPT_G3       "cfavsth"   /* CAN message options */
 #define PROJECT_CANOPT_C3		"cfavsthwdro"/* CAN message options */
 #define PROJECT_CANOPT_NAVY		""			/* CAN message options */
-#define PROJECT_CANOPT_VOLVO	"cfavsthwu"
+#define PROJECT_CANOPT_VOLVO	"cfavsut"
 
 #define PROJECT_FUNC_DEF        'd'         /* CAN test with values from command */
 #define PROJECT_FUNC_MT			'm'			/* manual test: test setting specific CAN message */

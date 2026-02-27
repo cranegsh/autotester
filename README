@@ -21,3 +21,14 @@ This commit is with default function (select messages with their values from com
 and CAN test (default message configuration and allow modification by command line) for all ID4 messages
 that are tested. 
 Details in help information.
+
+Where messages are set in the source code:
+1. total message number: main() in farview_main.c; when parsing the command options in the while loop
+2. message value: app_main_getMsgvalue() in app_main_canTest() or app_main_parseOption() in app_main.c
+3. message interval and loop number: app_main_initMsg() and modified in below code in in app_main_canTest() in app_main.c
+
+Project C3 and G3(BZ4X) and G4R:
+couldn't modify message value in "CAN test" function; need to add a function for C3
+
+
+

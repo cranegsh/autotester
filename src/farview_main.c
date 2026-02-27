@@ -87,7 +87,7 @@ int main(int argc, char *argv[]) {
 			/* set parameters for manual test or automatic test or CAN test */
 			farview_data.msg_num = (uint32_t)app_main_getMsgnum(&farview_data);
 			/* adjust total message number */
-			if(PROJECT_ID_ID4 == farview_data.project_id) {
+			if((PROJECT_ID_ID4 == farview_data.project_id) || (PROJECT_ID_C3 == farview_data.project_id)) {
 			    /* decrease one due to two values in one message */
 			    farview_data.msg_num--;
 			}

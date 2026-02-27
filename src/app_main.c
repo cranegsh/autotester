@@ -37,8 +37,8 @@ static msg_opt_t msg[CAN_VEH_MSG_NUM] = {
 
 static char *project_canopt[PROJECT_ID_TOTAL] = {
 	PROJECT_CANOPT_ID4,
-	PROJECT_CANOPT_ID4,
-	PROJECT_CANOPT_ID4,
+	PROJECT_CANOPT_G3,
+	PROJECT_CANOPT_G3,
 	PROJECT_CANOPT_C3,
 	PROJECT_CANOPT_NAVY,
 	PROJECT_CANOPT_VOLVO,
@@ -141,8 +141,12 @@ static int app_main_checkOpt(uint32_t prj_num, char ch)
 int app_main_parseOption(sysData_type *sdata, int numOpt, char *strArg, app_opt_t *appOpt)
 {
 	int retVal = -1;
+	/* below two variables are for ID4 as humidity and ws temp are in the same message */
 	static bool mark_humidity = false;     /* mark to remember when CAN message for humidity and ws temp. already added */
 	static int32_t num_humidity = 0;       /* num to remember message number for humidity and ws temp. */
+    /* below two variables are for Volvo as amb temp. and cabin temp are in the same message */
+	static bool mark_ambtemp = false;
+	static int32_t num_ambtemp = 0;
 
 	switch(numOpt) {
 		case PROJECT_FUNC_MT:
@@ -189,9 +193,26 @@ int app_main_parseOption(sysData_type *sdata, int numOpt, char *strArg, app_opt_
 			dData.number = appOpt->val;
 			dataInput.outside_temp = appOpt->val;
 			ndPrintf("\nAmb.Temp.:\tNo.%d mode %d", sdata->msg_num + 1, appOpt->mode);
-			if(0 == app_main_checkOpt(sdata->project_id, 'a')) {
-				retVal++;
-			}
+            if(PROJECT_ID_VOLVO == sdata->project_id) {
+                /* combine amb temp and cab temp; place cab temp in the higher 16-bit */
+                appOpt->val = ((uint32_t)((uint16_t)dataInput.inside_temp) << 16) | (uint16_t)dataInput.outside_temp;
+            }
+            if(0 == app_main_checkOpt(sdata->project_id, 'a')) {
+                if(!mark_ambtemp) {
+                    retVal++;
+                    /* do the following for project Volvo */
+                    if(PROJECT_ID_VOLVO == sdata->project_id) {
+                        mark_ambtemp = true;
+                        num_ambtemp = sdata->msg_num;
+                    }
+                }
+                else {
+                    /* change value only */
+                    msg[num_ambtemp].val = appOpt->val;
+                    dPrintf("rNo. %d - Mode %d - Value %d\n", num_ambtemp, appOpt->mode, appOpt->val);
+                    retVal = 3;
+                }
+            }
 			break;
 		case 'v':
 			appOpt->mode = APP_OPT_DEV_SEND_VOLTAGE;
@@ -226,21 +247,42 @@ int app_main_parseOption(sysData_type *sdata, int numOpt, char *strArg, app_opt_
 			appOpt->val = (int32_t)atoi(strArg);
 			dataInput.inside_temp = appOpt->val;
 			ndPrintf("\nCab Temp.:\tNo.%d mode %d", sdata->msg_num + 1, appOpt->mode);
-			if(0 == app_main_checkOpt(sdata->project_id, 't')) {
-				retVal++;
+			if(PROJECT_ID_VOLVO == sdata->project_id) {
+			    appOpt->mode = APP_OPT_DEV_SEND_ATEMP;
+                /* combine amb temp and cab temp; place cab temp in the higher 16-bit */
+                appOpt->val = ((uint32_t)((uint16_t)dataInput.inside_temp) << 16) | (uint16_t)dataInput.outside_temp;
 			}
+            if(0 == app_main_checkOpt(sdata->project_id, 'a')) {
+                if(!mark_ambtemp) {
+                    retVal++;
+                    /* do the following for project Volvo */
+                    if(PROJECT_ID_VOLVO == sdata->project_id) {
+                        mark_ambtemp = true;
+                        num_ambtemp = sdata->msg_num;
+                    }
+                }
+                else {
+                    /* change value only */
+                    msg[num_ambtemp].val = appOpt->val;
+                    dPrintf("rNo. %d - Mode %d - Value %d\n", num_ambtemp, appOpt->mode, appOpt->val);
+                    retVal = 3;
+                }
+            }
 			break;
 		case 'h':
 			appOpt->mode = APP_OPT_DEV_SEND_HUMIDITY;
 			appOpt->val = (int32_t)atoi(strArg);
 			dataInput.humidity = appOpt->val;
 			ndPrintf("\nHumidity:\tNo.%d mode %d", sdata->msg_num + 1, appOpt->mode);
-			appOpt->val = ((uint32_t)((uint16_t)dataInput.ws_temp) << 16) | (uint16_t)dataInput.humidity;
+			if((PROJECT_ID_ID4 == sdata->project_id) || (PROJECT_ID_C3 == sdata->project_id)) {
+			    /* combine humidity and ws temp; place ws temp in the higher 16-bit */
+			    appOpt->val = ((uint32_t)((uint16_t)dataInput.ws_temp) << 16) | (uint16_t)dataInput.humidity;
+			}
 			if(0 == app_main_checkOpt(sdata->project_id, 'h')) {
 			    if(!mark_humidity) {
 			        retVal++;
 			        /* do the following for project ID4 */
-			        if(PROJECT_ID_ID4 == sdata->project_id) {
+			        if((PROJECT_ID_ID4 == sdata->project_id) || (PROJECT_ID_C3 == sdata->project_id)) {
                         mark_humidity = true;
                         num_humidity = sdata->msg_num;
 			        }
@@ -254,16 +296,20 @@ int app_main_parseOption(sysData_type *sdata, int numOpt, char *strArg, app_opt_
 			}
 			break;
 		case 'w':
-		    appOpt->mode = APP_OPT_DEV_SEND_HUMIDITY;
+		    appOpt->mode = APP_OPT_DEV_SEND_WTEMP;
 		    appOpt->val = (int32_t)atoi(strArg);
 		    dataInput.ws_temp = appOpt->val;
             ndPrintf("\nWS temp.:\tNo.%d mode %d", sdata->msg_num + 1, appOpt->mode);
-            appOpt->val = ((uint32_t)((uint16_t)dataInput.ws_temp) << 16) | (uint16_t)dataInput.humidity;
+            if((PROJECT_ID_ID4 == sdata->project_id) || (PROJECT_ID_C3 == sdata->project_id)) {
+                appOpt->mode = APP_OPT_DEV_SEND_HUMIDITY;
+                /* combine humidity and ws temp; place ws temp in the higher 16-bit */
+                appOpt->val = ((uint32_t)((uint16_t)dataInput.ws_temp) << 16) | (uint16_t)dataInput.humidity;
+            }
             if(0 == app_main_checkOpt(sdata->project_id, 'w')) {
                 if(!mark_humidity) {
                     retVal++;
                     /* do the following for project ID4 */
-                    if(PROJECT_ID_ID4 == sdata->project_id) {
+                    if((PROJECT_ID_ID4 == sdata->project_id) || (PROJECT_ID_C3 == sdata->project_id)) {
                         mark_humidity = true;
                         num_humidity = sdata->msg_num;
                     }
@@ -617,6 +663,12 @@ int app_main_canTest(sysData_type *sdata, app_opt_t *appOpt)
     else if (PROJECT_FUNC_DEF == sdata->project_func) {
         /* values for message are already set */
         dPrintf("app_main_canTest: message mode and value set from command\n");
+        /* for Volvo project, need to adjust msg mode enum number */
+        if(PROJECT_ID_VOLVO == sdata->project_id) {
+            for(uint32_t i=0; i<sdata->msg_num; i++) {
+                msg[i].mode = msg[i].mode - MSGNO_OFFSET;
+            }
+        }
     }
 
 #if 0
@@ -624,7 +676,7 @@ int app_main_canTest(sysData_type *sdata, app_opt_t *appOpt)
 #else
     /* get message interval and repeating number */
     app_main_initMsg(sdata);
-    /* reset internal and number and project function for PROJECT_DEF */
+    /* make adjustment for specific project and specific function */
     if (PROJECT_FUNC_DEF == sdata->project_func) {
         /* use the interval and loop number from command */
         for(uint32_t i=0; i<sdata->msg_num; i++) {

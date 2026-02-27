@@ -614,8 +614,13 @@ int msg_canfd_init(uint32_t project_num)
 #endif
 */
 	if(PROJECT_ID_VOLVO == project_num) {
-     		Status = CAN_Initialize(PCAN_DEVICE, PCAN_BAUD_250K, 0, 0, 0);
-     		iPrintf("CAN_2.0B_250K(%xh): Status=0x%x\n", PCAN_DEVICE, (int)Status);
+#ifndef VOLVO_ALASKA
+        Status = CAN_Initialize(PCAN_DEVICE, PCAN_BAUD_250K, 0, 0, 0);
+        iPrintf("CAN_2.0B_250K(%xh): Status=0x%x\n", PCAN_DEVICE, (int)Status);
+#else
+     		Status = CAN_Initialize(PCAN_DEVICE, PCAN_BAUD_500K, 0, 0, 0);
+     		iPrintf("CAN_2.0B_500K(%xh): Status=0x%x\n", PCAN_DEVICE, (int)Status);
+#endif
 	}
 	else {
      		Status = CAN_InitializeFD(PCAN_DEVICE, CANFD_BIT_RATE);

@@ -60,8 +60,8 @@ static struct canfdData_c3 canfdio = {
 		{ KLIMA_03<<CAN_EID_BITS, "Cab.Temp.", 2000, 0, 22 },
 		{ KLIMA_S_01<<CAN_EID_BITS, "Humidity", 2000, 0, 37 },
 		{ SYSTEMINFO_01<<CAN_EID_BITS, "Sys. ID", 1000, 0, 85 },
+		{ LiSi_01, "SW on Dash", 200, 0, 0 },
 		{ CAN_CUR<<CAN_EID_BITS, "Current", 10, 0, 0 }, //1000, 0 },//
-		{ CAN_OP_MODE<<CAN_EID_BITS, "Op.mode", 1000, 0, 0 },
    },
    .c3dataIn.data = { 0, 0, 0, 0, 0},
 };
@@ -101,13 +101,19 @@ int msg_canfd_prepare_c3Veh(msg_mode_t msgno, int64_t value, uint8_t *data)
 		case APP_OPT_DEV_SEND_SPEED:
 			value = value * 100;
 			data[5] = (value >> 8 ) & 0xFF;			/* take the higher 8 bits of total 16 bits and right shift 8 bits */
-			data[4] = value & 8;					/* take the lower 8 bits */
+			data[4] = value & 0xFF;					/* take the lower 8 bits */
 			break;
 		case APP_OPT_DEV_SEND_CTEMP:
 			data[4] = ((value + 50 ) * 2 ) & 0xFF;
 			break;
 		case APP_OPT_DEV_SEND_HUMIDITY:
+		    /* humidity */
 			data[5] = (value * 2 + 1) & 0xFF;
+			/* WS temp. */
+            value = (int16_t)((value >> 16) & 0xFFFF);
+            value = value * 10 + 396;
+            data[2] = value & 0xFF;
+            data[3] = (value >> 8) & 0x03;
 			break;
 		case APP_OPT_DEV_SEND_SYSID:
 			data[4] = (uint8_t)value;

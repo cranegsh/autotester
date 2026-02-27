@@ -4,7 +4,6 @@
  *  Created on:    May 05, 2024
  *  Last modified: May 09, 2024
  *  Created from: app_main_c3.h
- *      Author: Sameed Sohani
  */
 
 #ifndef APPLICATION_CANFDCOMM_VOLVO_H_
@@ -13,7 +12,9 @@
 #include "app_canfd.h"
 #include "app_main.h"
 
-#define MSGNO_OFFSET							10
+#define VOLVO_ALASKA                            /* CAN2.5B 500K instead of 250K, some messages' ID different */
+
+#define MSGNO_OFFSET							0       /* position of first message in enum msg_mode_t */
 
 #define SECONDS_BIT_START			    		0
 #define MINUTES_BIT_START			    		8
